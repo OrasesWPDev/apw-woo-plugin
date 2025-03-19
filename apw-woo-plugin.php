@@ -16,6 +16,17 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit; // Exit if accessed directly
 }
 
+// Add HPOS compatibility
+add_action('before_woocommerce_init', function() {
+    if (class_exists(\Automattic\WooCommerce\Utilities\FeaturesUtil::class)) {
+        \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility(
+            'custom_order_tables',
+            __FILE__,
+            true
+        );
+    }
+});
+
 // Define plugin constants
 define( 'APW_WOO_VERSION', '1.0.0' );
 define( 'APW_WOO_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
