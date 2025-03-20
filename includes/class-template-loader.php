@@ -12,6 +12,9 @@ if (!defined('ABSPATH')) {
 
 /**
  * Template Loader
+ *
+ * Handles the loading of custom templates for WooCommerce pages,
+ * including product, category, and shop pages.
  */
 class APW_Woo_Template_Loader {
     /**
@@ -22,6 +25,7 @@ class APW_Woo_Template_Loader {
     private const PARTIALS_DIRECTORY = 'partials/';
     private const SHOP_TEMPLATE = 'woocommerce/partials/shop-categories-display.php';
     private const CATEGORY_TEMPLATE = 'woocommerce/partials/category-products-display.php';
+    private const PRODUCT_TEMPLATE = 'woocommerce/single-product.php';
 
     /**
      * Hook priority constants
@@ -48,11 +52,11 @@ class APW_Woo_Template_Loader {
      */
     private function __construct() {
         $this->template_path = APW_WOO_PLUGIN_DIR . self::TEMPLATE_DIRECTORY;
-
-        // Initialize hooks
         $this->init_hooks();
 
-        apw_woo_log('Template loader initialized');
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('Template loader initialized');
+        }
     }
 
     /**
@@ -103,12 +107,11 @@ class APW_Woo_Template_Loader {
         // Look for template in our plugin
         $custom_template = $this->find_template_in_plugin($template_name);
 
-        // Debug
-        apw_woo_log("TEST: woocommerce_locate_template filter triggered for {$template_name}");
-
         // Return our plugin template if it exists, otherwise return the original template
         if ($custom_template) {
-            apw_woo_log("Using custom template: {$custom_template}");
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log("Using custom template: {$custom_template}");
+            }
             return $custom_template;
         }
 
@@ -132,7 +135,9 @@ class APW_Woo_Template_Loader {
 
         // Return our plugin template if it exists, otherwise return the original template
         if ($custom_template) {
-            apw_woo_log("Using custom template part: {$custom_template}");
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log("Using custom template part: {$custom_template}");
+            }
             return $custom_template;
         }
 
@@ -152,12 +157,8 @@ class APW_Woo_Template_Loader {
             $this->template_path . $template_name
         ];
 
-        // Log the template we're looking for and the full paths being checked
-        apw_woo_log("Looking for template: {$template_name}");
-        apw_woo_log("Template path base: {$this->template_path}");
-        apw_woo_log("Full template paths to check:");
-        foreach ($locations as $index => $location) {
-            apw_woo_log("  Path {$index}: {$location} (exists: " . (file_exists($location) ? 'yes' : 'no') . ")");
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log("Looking for template: {$template_name}");
         }
 
         // Check each location
@@ -167,7 +168,6 @@ class APW_Woo_Template_Loader {
             }
         }
 
-        apw_woo_log("No template found for: {$template_name} in any location");
         return false;
     }
 
@@ -180,7 +180,7 @@ class APW_Woo_Template_Loader {
     private function template_exists($template_path) {
         $exists = file_exists($template_path);
 
-        if ($exists) {
+        if ($exists && APW_WOO_DEBUG_MODE) {
             apw_woo_log("Template found: {$template_path}");
         }
 
@@ -188,36 +188,56 @@ class APW_Woo_Template_Loader {
     }
 
     /**
-     * Maybe load custom template based on the current view
+     * Load custom template based on the current view
+     * Handles custom URL structures for products, categories, and shop
      */
     public function maybe_load_custom_template() {
-        // Add debug info about the current page
-        apw_woo_log('Checking page type for custom template: ' .
-            (is_woocommerce() ? 'Is WooCommerce page' : 'Not WooCommerce page') . ', ' .
-            (is_shop() ? 'Is Shop page' : 'Not Shop page') . ', ' .
-            (is_product_category() ? 'Is Category page' : 'Not Category page') . ', ' .
-            (is_product() ? 'Is Product page' : 'Not Product page')
-        );
+        global $post, $wp;
 
         // Only affect WooCommerce pages
         if (!is_woocommerce()) {
-            apw_woo_log('Not a WooCommerce page, exiting template loader');
             return;
         }
 
-        // Different templates for different views
-        if ($this->is_main_shop_page()) {
-            apw_woo_log('Attempting to load shop template');
-            $this->load_shop_template();
+        // Detect single product pages using multiple methods
+        $is_single_product = $this->detect_product_page($wp);
+
+        // Load appropriate template based on page type
+        if ($is_single_product) {
+            $this->load_template_and_remove_defaults(self::PRODUCT_TEMPLATE);
+        } elseif ($this->is_main_shop_page()) {
+            $this->load_template_and_remove_defaults(self::SHOP_TEMPLATE);
         } elseif (is_product_category()) {
-            apw_woo_log('Attempting to load category template');
-            $this->load_category_template();
-        } elseif (is_product()) {
-            apw_woo_log('Attempting to load product template');
-            $this->load_product_customizations();
-        } else {
-            apw_woo_log('No matching template condition found');
+            $this->load_template_and_remove_defaults(self::CATEGORY_TEMPLATE);
         }
+    }
+
+    /**
+     * Detect if current page is a product page using multiple methods
+     *
+     * @param object $wp The WordPress environment object
+     * @return bool True if page is a product page
+     */
+    private function detect_product_page($wp) {
+        // Method 1: Standard WooCommerce function
+        if (is_product()) {
+            return true;
+        }
+
+        // Method 2: WordPress singular check
+        if (get_post_type() === 'product' && is_singular('product')) {
+            return true;
+        }
+
+        // Method 3: Custom URL structure detection for sites using /products/category/product-name
+        if (get_post_type() === 'product') {
+            $url_parts = explode('/', trim($wp->request, '/'));
+            if (count($url_parts) >= 3 && $url_parts[0] === 'products' && !is_post_type_archive('product')) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -230,52 +250,27 @@ class APW_Woo_Template_Loader {
     }
 
     /**
-     * Load shop page template
-     */
-    private function load_shop_template() {
-        apw_woo_log('Loading shop categories template');
-
-        if ($this->load_template(self::SHOP_TEMPLATE)) {
-            $this->remove_default_woocommerce_content();
-        }
-    }
-
-    /**
-     * Load category page template
-     */
-    private function load_category_template() {
-        apw_woo_log('Loading category products template');
-
-        if ($this->load_template(self::CATEGORY_TEMPLATE)) {
-            $this->remove_default_woocommerce_content();
-        }
-    }
-
-    /**
-     * Load product customizations
-     */
-    private function load_product_customizations() {
-        apw_woo_log('Loading single product customizations');
-        // No need to prevent default content here, as we'll use template overrides
-    }
-
-    /**
-     * Load a template file
+     * Load template and remove default WooCommerce content
      *
-     * @param string $template_relative_path Relative path to template from template directory.
-     * @return bool True if template was loaded, false otherwise.
+     * @param string $template_relative_path Relative path to template from template directory
+     * @return bool True if template was loaded, false otherwise
      */
-    private function load_template($template_relative_path) {
+    private function load_template_and_remove_defaults($template_relative_path) {
         $template_path = $this->template_path . $template_relative_path;
-        apw_woo_log('Trying to load template: ' . $template_path . ' (exists: ' . (file_exists($template_path) ? 'yes' : 'no') . ')');
 
         if (file_exists($template_path)) {
-            apw_woo_log('Including template: ' . $template_path);
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log('Including template: ' . $template_path);
+            }
             include($template_path);
+            $this->remove_default_woocommerce_content();
             return true;
         }
 
-        apw_woo_log("Template not found: {$template_path}");
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log("Template not found: {$template_path}");
+        }
+
         return false;
     }
 
@@ -289,14 +284,11 @@ class APW_Woo_Template_Loader {
             ['woocommerce_before_shop_loop', 'woocommerce_output_all_notices', 10],
             ['woocommerce_before_shop_loop', 'woocommerce_result_count', 20],
             ['woocommerce_before_shop_loop', 'woocommerce_catalog_ordering', 30],
-
             // Shop loop hooks
             ['woocommerce_shop_loop', 'woocommerce_product_loop_start', 10],
             ['woocommerce_shop_loop', 'woocommerce_product_loop_end', 10],
-
             // After shop loop hooks
             ['woocommerce_after_shop_loop', 'woocommerce_pagination', 10],
-
             // No products found hook
             ['woocommerce_no_products_found', 'wc_no_products_found', 10]
         ];
@@ -307,6 +299,8 @@ class APW_Woo_Template_Loader {
             remove_action($hook_name, $callback, $priority);
         }
 
-        apw_woo_log('Removed default WooCommerce content hooks');
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('Removed default WooCommerce content hooks');
+        }
     }
 }

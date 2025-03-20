@@ -15,7 +15,6 @@ apw_woo_log('Loading shop categories display template');
 get_header();
 ?>
     <main id="main" class="apw-woo-shop-categories-main">
-    <main id="main" class="apw-woo-shop-categories-main">
         <!-- APW-WOO-TEMPLATE: shop-categories-display.php is loaded -->
         <!-- Header Block - Contains hero image, page title, and breadcrumbs -->
         <div class="apw-woo-section-wrapper apw-woo-header-block">

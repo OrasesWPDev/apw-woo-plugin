@@ -45,12 +45,13 @@ class APW_Woo_Plugin {
      */
     public function init() {
         apw_woo_log('Initializing main plugin class');
-
         // Initialize template loader
         $template_loader = APW_Woo_Template_Loader::get_instance();
 
-        // Add test notice to admin to show plugin is working
-        add_action('admin_notices', [$this, 'display_test_notice']);
+        // Only add test notice when debug mode is enabled
+        if (APW_WOO_DEBUG_MODE) {
+            add_action('admin_notices', [$this, 'display_test_notice']);
+        }
     }
 
     /**
