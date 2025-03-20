@@ -19,7 +19,6 @@ $current_category = get_queried_object();
 apw_woo_log('Displaying products for category: ' . $current_category->name);
 ?>
     <main id="main" class="apw-woo-category-products-main">
-    <main id="main" class="apw-woo-category-products-main">
         <!-- APW-WOO-TEMPLATE: category-products-display.php is loaded -->
         <!-- Header Block - Contains hero image, page title, and breadcrumbs -->
         <div class="apw-woo-section-wrapper apw-woo-header-block">
