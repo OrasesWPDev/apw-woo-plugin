@@ -105,18 +105,22 @@ function apw_woo_setup_logs() {
 /**
  * Log messages when debug mode is enabled
  */
-function apw_woo_log( $message ) {
-    if ( APW_WOO_DEBUG_MODE ) {
-        $log_file = APW_WOO_PLUGIN_DIR . 'logs/debug-' . date( 'Y-m-d' ) . '.log';
+function apw_woo_log($message) {
+    if (APW_WOO_DEBUG_MODE) {
+        // Set timezone to EST (New York)
+        $timezone = new DateTimeZone('America/New_York');
+        $date = new DateTime('now', $timezone);
 
-        if ( is_array( $message ) || is_object( $message ) ) {
-            $message = print_r( $message, true );
+        // Format the date for file name and timestamp
+        $log_file = APW_WOO_PLUGIN_DIR . 'logs/debug-' . $date->format('Y-m-d') . '.log';
+
+        if (is_array($message) || is_object($message)) {
+            $message = print_r($message, true);
         }
 
-        $timestamp = date( '[Y-m-d H:i:s]' );
+        $timestamp = $date->format('[Y-m-d H:i:s T]'); // T will show timezone abbreviation
         $formatted_message = $timestamp . ' ' . $message . PHP_EOL;
-
-        error_log( $formatted_message, 3, $log_file );
+        error_log($formatted_message, 3, $log_file);
     }
 }
 
