@@ -52,6 +52,7 @@ if (!empty($faqs)) {
 
     <!-- FAQ Section -->
     <div class="apw-woo-faq-section">
+        <!-- APW-WOO-TEMPLATE: faq-display.php is loaded -->
         <?php
         /**
          * Hook: apw_woo_before_faq_title

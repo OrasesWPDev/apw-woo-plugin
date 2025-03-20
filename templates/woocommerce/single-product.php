@@ -56,6 +56,8 @@ if ($product) :
     ?>
 
     <main id="main" class="apw-woo-single-product-main">
+        <main id="main" class="apw-woo-single-product-main">
+        <!-- APW-WOO-TEMPLATE: single-product.php is loaded -->
         <!-- Header Block -->
         <div class="apw-woo-section-wrapper apw-woo-header-block">
             <?php

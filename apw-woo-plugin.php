@@ -282,3 +282,16 @@ register_deactivation_hook( __FILE__, 'apw_woo_deactivate' );
 
 // Initialize the plugin
 add_action( 'plugins_loaded', 'apw_woo_init' );
+
+/**
+ * Simple test function to verify WooCommerce template filters are working
+ */
+function apw_woo_test_template_override($template, $template_name, $template_path) {
+    // Log when this filter runs
+    apw_woo_log('TEST: woocommerce_locate_template filter triggered for ' . $template_name);
+    error_log('APW WOO TEST: woocommerce_locate_template filter triggered for ' . $template_name);
+
+    // Return the original template
+    return $template;
+}
+add_filter('woocommerce_locate_template', 'apw_woo_test_template_override', 999, 3);

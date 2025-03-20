@@ -10,6 +10,9 @@
 
 defined('ABSPATH') || exit;
 
+// Direct test to see if this file is being loaded
+error_log('APW WOO TEST: archive-product.php is being loaded');
+
 // Log which template we're loading
 apw_woo_log('Determining which template to display for current WooCommerce page');
 

@@ -103,6 +103,9 @@ class APW_Woo_Template_Loader {
         // Look for template in our plugin
         $custom_template = $this->find_template_in_plugin($template_name);
 
+        // Debug
+        apw_woo_log("TEST: woocommerce_locate_template filter triggered for {$template_name}");
+
         // Return our plugin template if it exists, otherwise return the original template
         if ($custom_template) {
             apw_woo_log("Using custom template: {$custom_template}");
@@ -149,8 +152,13 @@ class APW_Woo_Template_Loader {
             $this->template_path . $template_name
         ];
 
-        // Log the template we're looking for
+        // Log the template we're looking for and the full paths being checked
         apw_woo_log("Looking for template: {$template_name}");
+        apw_woo_log("Template path base: {$this->template_path}");
+        apw_woo_log("Full template paths to check:");
+        foreach ($locations as $index => $location) {
+            apw_woo_log("  Path {$index}: {$location} (exists: " . (file_exists($location) ? 'yes' : 'no') . ")");
+        }
 
         // Check each location
         foreach ($locations as $location) {
@@ -159,6 +167,7 @@ class APW_Woo_Template_Loader {
             }
         }
 
+        apw_woo_log("No template found for: {$template_name} in any location");
         return false;
     }
 
@@ -182,18 +191,32 @@ class APW_Woo_Template_Loader {
      * Maybe load custom template based on the current view
      */
     public function maybe_load_custom_template() {
+        // Add debug info about the current page
+        apw_woo_log('Checking page type for custom template: ' .
+            (is_woocommerce() ? 'Is WooCommerce page' : 'Not WooCommerce page') . ', ' .
+            (is_shop() ? 'Is Shop page' : 'Not Shop page') . ', ' .
+            (is_product_category() ? 'Is Category page' : 'Not Category page') . ', ' .
+            (is_product() ? 'Is Product page' : 'Not Product page')
+        );
+
         // Only affect WooCommerce pages
         if (!is_woocommerce()) {
+            apw_woo_log('Not a WooCommerce page, exiting template loader');
             return;
         }
 
         // Different templates for different views
         if ($this->is_main_shop_page()) {
+            apw_woo_log('Attempting to load shop template');
             $this->load_shop_template();
         } elseif (is_product_category()) {
+            apw_woo_log('Attempting to load category template');
             $this->load_category_template();
         } elseif (is_product()) {
+            apw_woo_log('Attempting to load product template');
             $this->load_product_customizations();
+        } else {
+            apw_woo_log('No matching template condition found');
         }
     }
 
@@ -244,8 +267,10 @@ class APW_Woo_Template_Loader {
      */
     private function load_template($template_relative_path) {
         $template_path = $this->template_path . $template_relative_path;
+        apw_woo_log('Trying to load template: ' . $template_path . ' (exists: ' . (file_exists($template_path) ? 'yes' : 'no') . ')');
 
         if (file_exists($template_path)) {
+            apw_woo_log('Including template: ' . $template_path);
             include($template_path);
             return true;
         }
