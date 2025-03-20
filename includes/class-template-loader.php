@@ -322,6 +322,7 @@ class APW_Woo_Template_Loader {
             }
             include($template_path);
             $this->remove_default_woocommerce_content();
+            exit; // Stop execution to prevent additional content after our template
             return true;
         }
         if (APW_WOO_DEBUG_MODE) {
