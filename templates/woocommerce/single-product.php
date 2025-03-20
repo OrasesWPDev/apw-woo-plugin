@@ -77,25 +77,124 @@ foreach ($hooks_to_visualize as $hook) {
     add_action($hook, apw_woo_hook_visualizer($hook), 999);
 }
 
-// Add our custom action to display Product Add-Ons
-add_action('woocommerce_product_meta_end', 'apw_woo_display_product_addons', 15);
+// Remove Product Add-Ons from default location and add to our location
+add_action('init', 'apw_woo_move_product_addons');
 
+function apw_woo_move_product_addons() {
+    // Remove from default location
+    if (class_exists('WC_Product_Addons_Display')) {
+        remove_action('woocommerce_before_add_to_cart_button', array('WC_Product_Addons_Display', 'display'), 10);
+    }
+    
+    // Add to our desired location
+    add_action('woocommerce_product_meta_end', 'apw_woo_display_product_addons', 15);
+}
+
+// Add our custom action to display Product Add-Ons
 function apw_woo_display_product_addons() {
     global $product;
-
-    if (function_exists('get_product_addons') && is_a($product, 'WC_Product')) {
+    
+    if (!is_a($product, 'WC_Product')) {
+        return;
+    }
+    
+    // Check if Product Add-Ons are available for this product
+    if (function_exists('get_product_addons')) {
         $product_addons = get_product_addons($product->get_id());
-
+        
         if (!empty($product_addons)) {
             echo '<div class="apw-woo-product-addons">';
             echo '<h3 class="apw-woo-product-addons-title">' . esc_html__('Product Options', 'apw-woo-plugin') . '</h3>';
-
-            // Display the add-ons data for debugging
-            echo '<pre class="apw-woo-debug-addons">';
-            echo esc_html(print_r($product_addons, true));
-            echo '</pre>';
-
-            echo '</div>';
+            
+            // Display the actual add-ons form
+            if (class_exists('WC_Product_Addons_Display') && method_exists('WC_Product_Addons_Display', 'display')) {
+                // This will display the actual form fields customers interact with
+                WC_Product_Addons_Display::display();
+            } else {
+                // If the display class isn't available, try to render the fields manually
+                foreach ($product_addons as $addon) {
+                    echo '<div class="product-addon product-addon-' . esc_attr($addon['field_name']) . '">';
+                    echo '<h3 class="addon-name">' . esc_html($addon['name']) . '</h3>';
+                    
+                    if (!empty($addon['description'])) {
+                        echo '<div class="addon-description">' . wp_kses_post($addon['description']) . '</div>';
+                    }
+                    
+                    echo '<div class="addon-options">';
+                    
+                    // Display different field types
+                    switch ($addon['type']) {
+                        case 'checkbox':
+                            foreach ($addon['options'] as $option) {
+                                echo '<label>';
+                                echo '<input type="checkbox" name="addon-' . esc_attr($addon['field_name']) . '[]" value="' . esc_attr($option['label']) . '" /> ';
+                                echo esc_html($option['label']);
+                                if (!empty($option['price'])) {
+                                    echo ' (' . wc_price($option['price']) . ')';
+                                }
+                                echo '</label><br>';
+                            }
+                            break;
+                            
+                        case 'select':
+                            echo '<select name="addon-' . esc_attr($addon['field_name']) . '">';
+                            echo '<option value="">' . esc_html__('Choose an option...', 'apw-woo-plugin') . '</option>';
+                            foreach ($addon['options'] as $option) {
+                                echo '<option value="' . esc_attr($option['label']) . '">';
+                                echo esc_html($option['label']);
+                                if (!empty($option['price'])) {
+                                    echo ' (' . wc_price($option['price']) . ')';
+                                }
+                                echo '</option>';
+                            }
+                            echo '</select>';
+                            break;
+                            
+                        case 'radio':
+                            foreach ($addon['options'] as $option) {
+                                echo '<label>';
+                                echo '<input type="radio" name="addon-' . esc_attr($addon['field_name']) . '" value="' . esc_attr($option['label']) . '" /> ';
+                                echo esc_html($option['label']);
+                                if (!empty($option['price'])) {
+                                    echo ' (' . wc_price($option['price']) . ')';
+                                }
+                                echo '</label><br>';
+                            }
+                            break;
+                            
+                        case 'custom_text':
+                        case 'custom_textarea':
+                            $field_type = ($addon['type'] === 'custom_textarea') ? 'textarea' : 'text';
+                            $price_display = !empty($addon['price']) ? ' (' . wc_price($addon['price']) . ')' : '';
+                            
+                            if ($field_type === 'textarea') {
+                                echo '<textarea name="addon-' . esc_attr($addon['field_name']) . '" placeholder="' . esc_attr($addon['placeholder']) . '"></textarea>';
+                            } else {
+                                echo '<input type="text" name="addon-' . esc_attr($addon['field_name']) . '" placeholder="' . esc_attr($addon['placeholder']) . '" />';
+                            }
+                            
+                            if (!empty($price_display)) {
+                                echo '<span class="addon-price">' . $price_display . '</span>';
+                            }
+                            break;
+                    }
+                    
+                    echo '</div>'; // .addon-options
+                    echo '</div>'; // .product-addon
+                }
+            }
+            
+            // Also display the raw data for debugging if needed
+            if (APW_WOO_DEBUG_MODE) {
+                echo '<div class="apw-woo-debug-section">';
+                echo '<h4>Debug: Raw Add-Ons Data</h4>';
+                echo '<pre class="apw-woo-debug-addons">';
+                echo esc_html(print_r($product_addons, true));
+                echo '</pre>';
+                echo '</div>';
+            }
+            
+            echo '</div>'; // .apw-woo-product-addons
         }
     }
 }
