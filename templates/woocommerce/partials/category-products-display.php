@@ -210,7 +210,17 @@ get_header();
                             // Include the FAQ display partial, passing the current category
                             if (file_exists(APW_WOO_PLUGIN_DIR . 'templates/partials/faq-display.php')) {
                                 // Set the category object that will be accessible in the included file
-                                $faq_category = apply_filters('apw_woo_faq_category', $current_category);
+                                if (!isset($current_category) || !is_object($current_category)) {
+                                    if (APW_WOO_DEBUG_MODE) {
+                                        apw_woo_log('ERROR: Invalid category object passed to FAQ display');
+                                    }
+                                    $faq_category = null;
+                                } else {
+                                    $faq_category = apply_filters('apw_woo_faq_category', $current_category);
+                                    if (APW_WOO_DEBUG_MODE) {
+                                        apw_woo_log('Passing category to FAQ display: ' . $faq_category->name);
+                                    }
+                                }
                                 include(APW_WOO_PLUGIN_DIR . 'templates/partials/faq-display.php');
                             } else {
                                 if (APW_WOO_DEBUG_MODE) {

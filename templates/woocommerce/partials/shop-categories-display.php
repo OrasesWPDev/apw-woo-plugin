@@ -256,7 +256,7 @@ get_header();
                             // Include the FAQ display partial, passing the page ID from which to pull the FAQs
                             if (file_exists(APW_WOO_PLUGIN_DIR . 'templates/partials/faq-display.php')) {
                                 // Set the page ID variable that will be accessible in the included file
-                                $faq_page_id = apply_filters('apw_woo_shop_faq_page_id', 66); // Page ID for shop page FAQs
+                                $faq_page_id = apw_woo_get_faq_page_id('shop');
                                 include(APW_WOO_PLUGIN_DIR . 'templates/partials/faq-display.php');
                             } else {
                                 if (APW_WOO_DEBUG_MODE) {

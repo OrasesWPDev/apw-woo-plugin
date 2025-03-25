@@ -286,8 +286,23 @@ if ($product) :
 
                             // Include the FAQ display partial
                             if (file_exists(APW_WOO_PLUGIN_DIR . 'templates/partials/faq-display.php')) {
-                                $faq_product = $product;
+                                // Verify product is valid before passing to FAQ display
+                                if (!is_a($product, 'WC_Product')) {
+                                    if (APW_WOO_DEBUG_MODE) {
+                                        apw_woo_log('ERROR: Invalid product object passed to FAQ display');
+                                    }
+                                    $faq_product = null;
+                                } else {
+                                    $faq_product = apply_filters('apw_woo_faq_product', $product);
+                                    if (APW_WOO_DEBUG_MODE) {
+                                        apw_woo_log('Passing product to FAQ display: ' . $faq_product->get_name() . ' (ID: ' . $faq_product->get_id() . ')');
+                                    }
+                                }
                                 include(APW_WOO_PLUGIN_DIR . 'templates/partials/faq-display.php');
+                            } else {
+                                if (APW_WOO_DEBUG_MODE) {
+                                    apw_woo_log('FAQ display partial not found');
+                                }
                             }
 
                             /**
