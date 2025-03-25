@@ -171,35 +171,59 @@
 
     /**
      * Register and enqueue CSS/JS assets with cache busting
+     * Only loads assets on WooCommerce pages to optimize performance
      */
     function apw_woo_register_assets() {
+        // Only load on WooCommerce pages
+        if (!is_woocommerce() && !is_cart() && !is_checkout() && !is_account_page()) {
+            return;
+        }
+
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('Loading APW WooCommerce Plugin assets on ' .
+                (is_shop() ? 'shop page' :
+                    (is_product() ? 'product page' :
+                        (is_product_category() ? 'category page' :
+                            (is_cart() ? 'cart page' :
+                                (is_checkout() ? 'checkout page' :
+                                    (is_account_page() ? 'account page' : 'WooCommerce page')))))));
+        }
+
         // Define asset paths
         $css_file = APW_WOO_PLUGIN_DIR . 'assets/css/apw-woo-public.css';
         $js_file = APW_WOO_PLUGIN_DIR . 'assets/js/apw-woo-public.js';
+
         // CSS with cache busting
-        if ( file_exists( $css_file ) ) {
-            $css_ver = filemtime( $css_file );
+        if (file_exists($css_file)) {
+            $css_ver = filemtime($css_file);
             wp_register_style(
                 'apw-woo-styles',
                 APW_WOO_PLUGIN_URL . 'assets/css/apw-woo-public.css',
                 array(),
                 $css_ver
             );
-            wp_enqueue_style( 'apw-woo-styles' );
-            apw_woo_log( 'Enqueued CSS with version: ' . $css_ver );
+            wp_enqueue_style('apw-woo-styles');
+
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log('Enqueued CSS with version: ' . $css_ver);
+            }
         }
+
         // JS with cache busting
-        if ( file_exists( $js_file ) ) {
-            $js_ver = filemtime( $js_file );
+        if (file_exists($js_file)) {
+            $js_ver = filemtime($js_file);
             wp_register_script(
                 'apw-woo-scripts',
                 APW_WOO_PLUGIN_URL . 'assets/js/apw-woo-public.js',
-                array( 'jquery' ),
+                array('jquery'),
                 $js_ver,
                 true
             );
-            wp_enqueue_script( 'apw-woo-scripts' );
-            apw_woo_log( 'Enqueued JS with version: ' . $js_ver );
+            wp_enqueue_script('apw-woo-scripts');
+    
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log('Enqueued JS with version: ' . $js_ver);
+            }
         }
     }
 
