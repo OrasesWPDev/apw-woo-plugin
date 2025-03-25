@@ -26,6 +26,7 @@ class APW_Woo_Template_Loader {
     private const PRODUCT_TEMPLATE = 'woocommerce/single-product.php';
     private const CART_TEMPLATE = 'woocommerce/cart/cart.php';
     private const CHECKOUT_TEMPLATE = 'woocommerce/checkout/form-checkout.php';
+    private const MY_ACCOUNT_TEMPLATE = 'woocommerce/myaccount/my-account.php';
     /**
      * Hook priority constants
      */
@@ -64,8 +65,6 @@ class APW_Woo_Template_Loader {
         }
         return self::$instance;
     }
-
-
     /**
      * Initialize hooks
      */
@@ -77,7 +76,6 @@ class APW_Woo_Template_Loader {
             self::TEMPLATE_FILTER_PRIORITY,
             self::TEMPLATE_FILTER_ARGS
         );
-
         // Modify shop templates
         add_filter(
             'wc_get_template_part',
@@ -85,34 +83,27 @@ class APW_Woo_Template_Loader {
             self::TEMPLATE_FILTER_PRIORITY,
             self::TEMPLATE_FILTER_ARGS
         );
-
         // Register template include filter for better template control
         $this->register_template_include_filter();
-
         // Keep the legacy method for backward compatibility during transition
         // Can be removed in a future version once we confirm the new method works
         add_action('woocommerce_before_main_content', [$this, 'maybe_load_custom_template']);
-
         // Remove default Flatsome/WooCommerce elements
         $this->remove_default_woocommerce_elements();
-
         // Debug product permalinks
         if (APW_WOO_DEBUG_MODE) {
             add_filter('post_type_link', [$this, 'debug_product_permalinks'], 99, 2);
         }
-
         if (APW_WOO_DEBUG_MODE) {
             apw_woo_log('Template loader hooks initialized with template_include filter');
         }
     }
-
     /**
      * Remove default WooCommerce and Flatsome elements that we don't want
      */
     private function remove_default_woocommerce_elements() {
         // Remove Flatsome page title (which includes breadcrumbs)
         remove_action('flatsome_after_header', 'flatsome_pages_title', 12);
-
         // Additional Flatsome-specific removals for shop title
         if (function_exists('flatsome_remove_shop_header')) {
             flatsome_remove_shop_header();
@@ -123,18 +114,15 @@ class APW_Woo_Template_Loader {
             remove_action('woocommerce_archive_description', 'woocommerce_taxonomy_archive_description', 10);
             remove_action('woocommerce_archive_description', 'woocommerce_product_archive_description', 10);
         }
-
         // Remove shop tools (ordering, result count)
         remove_action('woocommerce_before_shop_loop', 'woocommerce_result_count', 20);
         remove_action('woocommerce_before_shop_loop', 'woocommerce_catalog_ordering', 30);
-
         // Target Flatsome's shop-page-title container directly
         add_action('wp_head', function() {
             if (is_woocommerce()) {
                 echo '<style>.shop-page-title { display: none !important; }</style>';
             }
         });
-
         // Additional safety: remove at higher priority
         add_action('init', function() {
             remove_action('flatsome_after_header', 'flatsome_pages_title', 12);
@@ -142,13 +130,10 @@ class APW_Woo_Template_Loader {
             remove_action('woocommerce_before_shop_loop', 'woocommerce_result_count', 20);
             remove_action('woocommerce_before_shop_loop', 'woocommerce_catalog_ordering', 30);
         }, 20);
-
         if (APW_WOO_DEBUG_MODE) {
             apw_woo_log('Removed default WooCommerce and Flatsome UI elements');
         }
     }
-
-
     /**
      * Debug product permalinks
      *
@@ -162,7 +147,6 @@ class APW_Woo_Template_Loader {
         }
         return $permalink;
     }
-
     /**
      * Debug permalink generation
      *
@@ -174,7 +158,6 @@ class APW_Woo_Template_Loader {
             apw_woo_log("Permalink Debug - Product Slug: {$product_slug}, Requested URL: {$requested_url}");
         }
     }
-
     /**
      * Locate a template and return the path for inclusion.
      *
@@ -259,28 +242,22 @@ class APW_Woo_Template_Loader {
      */
     public function maybe_load_custom_template() {
         global $post, $wp;
-
         // Only affect WooCommerce pages
         if (!is_woocommerce()) {
             return;
         }
-
         if (APW_WOO_DEBUG_MODE) {
             apw_woo_log("maybe_load_custom_template - Current post: " . ($post ? $post->post_name : 'No post'));
         }
-
         // Detect single product pages using multiple methods
         $is_single_product = $this->detect_product_page($wp);
-
         // Load appropriate template based on page type
         if ($is_single_product && $post) {
             // Force WooCommerce to use the correct product
             $GLOBALS['product'] = wc_get_product($post);
-
             if (APW_WOO_DEBUG_MODE) {
                 apw_woo_log("Loading product template for: " . $post->post_name . " (ID: " . $post->ID . ")");
             }
-
             $this->load_template_and_remove_defaults(self::PRODUCT_TEMPLATE);
         } elseif ($this->is_main_shop_page()) {
             if (APW_WOO_DEBUG_MODE) {
@@ -302,19 +279,16 @@ class APW_Woo_Template_Loader {
      */
     private function detect_product_page($wp) {
         global $post;
-
         // Debug the current request
         if (APW_WOO_DEBUG_MODE) {
             apw_woo_log("PRODUCT DETECTION: Starting product page detection");
             apw_woo_log("PRODUCT DETECTION: Request URL: " . print_r($wp->request, true));
-
             if ($post) {
                 apw_woo_log("PRODUCT DETECTION: Current post: " . $post->post_name . " (ID: " . $post->ID . ", Type: " . get_post_type($post) . ")");
             } else {
                 apw_woo_log("PRODUCT DETECTION: No current post object found");
             }
         }
-
         // Method 1: Standard WooCommerce function
         if (is_product()) {
             if (APW_WOO_DEBUG_MODE) {
@@ -324,7 +298,6 @@ class APW_Woo_Template_Loader {
         } else if (APW_WOO_DEBUG_MODE) {
             apw_woo_log("PRODUCT DETECTION: Method 1 FAILED - is_product() returned false");
         }
-
         // Method 2: WordPress singular check
         if (get_post_type() === 'product' && is_singular('product')) {
             if (APW_WOO_DEBUG_MODE) {
@@ -334,24 +307,19 @@ class APW_Woo_Template_Loader {
         } else if (APW_WOO_DEBUG_MODE) {
             apw_woo_log("PRODUCT DETECTION: Method 2 FAILED - get_post_type: " . get_post_type() . ", is_singular('product'): " . (is_singular('product') ? 'true' : 'false'));
         }
-
         // Method 3: Custom URL structure detection
         if ($wp->request) {
             $url_parts = explode('/', trim($wp->request, '/'));
-
             if (APW_WOO_DEBUG_MODE) {
                 apw_woo_log("PRODUCT DETECTION: Method 3 - URL parts: " . print_r($url_parts, true));
             }
-
             // Check if URL starts with 'products'
             if (count($url_parts) >= 2 && $url_parts[0] === 'products') {
                 // Get the last part of the URL as the product slug
                 $product_slug = end($url_parts);
-
                 if (APW_WOO_DEBUG_MODE) {
                     apw_woo_log("PRODUCT DETECTION: Method 3 - Trying to find product with slug: " . $product_slug);
                 }
-
                 // Try to find this product
                 $args = array(
                     'name'        => $product_slug,
@@ -359,20 +327,15 @@ class APW_Woo_Template_Loader {
                     'post_status' => 'publish',
                     'numberposts' => 1
                 );
-
                 $products = get_posts($args);
-
                 if (!empty($products)) {
                     $product_post = $products[0];
-
                     if (APW_WOO_DEBUG_MODE) {
                         apw_woo_log("PRODUCT DETECTION: Method 3 SUCCESS - Found product by slug: " . $product_slug . " (ID: " . $product_post->ID . ")");
                     }
-
                     // Make sure WP knows we're on this product
                     $post = $product_post;
                     setup_postdata($post);
-
                     // Override the main query
                     global $wp_query;
                     $wp_query->is_single = true;
@@ -382,16 +345,13 @@ class APW_Woo_Template_Loader {
                     $wp_query->is_archive = false;
                     $wp_query->queried_object = $post;
                     $wp_query->queried_object_id = $post->ID;
-
                     if (APW_WOO_DEBUG_MODE) {
                         apw_woo_log("PRODUCT DETECTION: Method 3 - Override main query settings to force product page");
                     }
-
                     return true;
                 } else {
                     if (APW_WOO_DEBUG_MODE) {
                         apw_woo_log("PRODUCT DETECTION: Method 3 FAILED - No product found with slug: " . $product_slug);
-
                         // Check if this is potentially a category
                         $term = get_term_by('slug', $product_slug, 'product_cat');
                         if ($term) {
@@ -405,15 +365,11 @@ class APW_Woo_Template_Loader {
         } else if (APW_WOO_DEBUG_MODE) {
             apw_woo_log("PRODUCT DETECTION: Method 3 FAILED - No request URL found");
         }
-
         if (APW_WOO_DEBUG_MODE) {
             apw_woo_log("PRODUCT DETECTION: All methods failed - not a product page");
         }
-
         return false;
     }
-
-
     /**
      * Check if we're on the main shop page
      *
@@ -422,7 +378,6 @@ class APW_Woo_Template_Loader {
     private function is_main_shop_page() {
         return is_shop() && !is_search();
     }
-
     /**
      * Load template and remove default WooCommerce content
      *
@@ -432,35 +387,27 @@ class APW_Woo_Template_Loader {
      */
     public function load_template_and_remove_defaults($template_relative_path, $preserve_hooks = array()) {
         $template_path = $this->template_path . $template_relative_path;
-
         if (file_exists($template_path)) {
             if (APW_WOO_DEBUG_MODE) {
                 apw_woo_log('Loading template with buffering: ' . $template_path);
             }
-
             // Remove default WooCommerce content hooks, but preserve specified ones
             $this->remove_default_woocommerce_content($preserve_hooks);
-
             // Start output buffering
             ob_start();
             include($template_path);
             $content = ob_get_clean();
-
             // Validate template structure if in debug mode
             if (APW_WOO_DEBUG_MODE) {
                 $this->validate_template_structure($content, $template_path);
             }
-
             return $content;
         }
-
         if (APW_WOO_DEBUG_MODE) {
             apw_woo_log("Template not found: {$template_path}");
         }
-
         return false;
     }
-
     /**
      * Validate template structure to catch common template issues
      *
@@ -471,27 +418,23 @@ class APW_Woo_Template_Loader {
     private function validate_template_structure($content, $template_path) {
         $validation_passed = true;
         $template_name = basename($template_path);
-
         // Check for multiple get_header calls
         $header_count = substr_count($content, 'get_header');
         if ($header_count > 1) {
             apw_woo_log("TEMPLATE ERROR: {$template_name} contains multiple get_header() calls ({$header_count})");
             $validation_passed = false;
         }
-
         // Check for multiple get_footer calls
         $footer_count = substr_count($content, 'get_footer');
         if ($footer_count > 1) {
             apw_woo_log("TEMPLATE ERROR: {$template_name} contains multiple get_footer() calls ({$footer_count})");
             $validation_passed = false;
         }
-
         // Check for direct HTML output outside of PHP (potential leaks)
         if (preg_match('/^\s*<(?!php|!DOCTYPE|!--|!$)/im', $content)) {
             apw_woo_log("TEMPLATE WARNING: {$template_name} might contain direct HTML output outside of PHP tags");
             $validation_passed = false;
         }
-
         // Check for common WooCommerce hooks that should be preserved
         $required_hooks = [
             'woocommerce_before_single_product',
@@ -499,7 +442,6 @@ class APW_Woo_Template_Loader {
             'woocommerce_before_main_content',
             'woocommerce_after_main_content'
         ];
-
         foreach ($required_hooks as $hook) {
             if (!strpos($content, "do_action('{$hook}'") &&
                 !strpos($content, "do_action(\"{$hook}\"")) {
@@ -510,18 +452,14 @@ class APW_Woo_Template_Loader {
                 }
             }
         }
-
         // Log overall validation status
         if ($validation_passed) {
             apw_woo_log("TEMPLATE VALIDATED: {$template_name} structure looks good");
         } else {
             apw_woo_log("TEMPLATE ISSUES: {$template_name} has structural issues that should be addressed");
         }
-
         return $validation_passed;
     }
-
-
     /**
      * Remove default WooCommerce loop content while preserving specified hooks
      *
@@ -544,11 +482,9 @@ class APW_Woo_Template_Loader {
             // Additional hooks that might interfere with extensions
             ['woocommerce_before_single_product', 'woocommerce_output_all_notices', 10]
         ];
-
         // Process hooks to remove
         foreach ($hooks_to_remove as $hook) {
             list($hook_name, $callback, $priority) = $hook;
-
             // Check if this hook should be preserved
             $preserve = false;
             if (isset($preserve_hooks[$hook_name])) {
@@ -560,11 +496,9 @@ class APW_Woo_Template_Loader {
                     }
                 }
             }
-
             // Only remove if not preserved
             if (!$preserve) {
                 remove_action($hook_name, $callback, $priority);
-
                 if (APW_WOO_DEBUG_MODE) {
                     apw_woo_log("Removed hook: {$hook_name}, callback: {$callback}, priority: {$priority}");
                 }
@@ -574,24 +508,20 @@ class APW_Woo_Template_Loader {
                 }
             }
         }
-
         if (APW_WOO_DEBUG_MODE) {
             apw_woo_log('Finished processing WooCommerce content hooks');
         }
     }
-
     /**
      * Register a filter to intercept WordPress template inclusion
      * This allows us to override templates at the WordPress level
      */
     public function register_template_include_filter() {
         add_filter('template_include', array($this, 'maybe_override_template'), 99);
-
         if (APW_WOO_DEBUG_MODE) {
             apw_woo_log('Registered template_include filter');
         }
     }
-
     /**
      * Override template based on current page type
      *
@@ -601,18 +531,26 @@ class APW_Woo_Template_Loader {
     public function maybe_override_template($template) {
         global $wp, $post;
 
-        // First check for custom product permalink structure
+        // Initialize $custom_template to avoid undefined variable warning
+        $custom_template = null;
+
+        // Debug information
         if (APW_WOO_DEBUG_MODE) {
             apw_woo_log("TEMPLATE OVERRIDE: Checking URL: " . $wp->request);
+            apw_woo_log("TEMPLATE OVERRIDE: is_shop(): " . (is_shop() ? 'true' : 'false'));
+            apw_woo_log("TEMPLATE OVERRIDE: is_product_category(): " . (is_product_category() ? 'true' : 'false'));
+            apw_woo_log("TEMPLATE OVERRIDE: is_product(): " . (is_product() ? 'true' : 'false'));
+            apw_woo_log("TEMPLATE OVERRIDE: is_cart(): " . (is_cart() ? 'true' : 'false'));
+            apw_woo_log("TEMPLATE OVERRIDE: is_checkout(): " . (is_checkout() ? 'true' : 'false'));
+            apw_woo_log("TEMPLATE OVERRIDE: is_account_page(): " . (is_account_page() ? 'true' : 'false'));
         }
 
-        // Special handling for /products/%product_cat%/ permalink structure
+        // PRIORITY CHECK: First check for custom URL product detection - MUST BE FIRST
+        // Check if URL has the pattern /products/category/product-slug
         $url_parts = explode('/', trim($wp->request, '/'));
-
         if (count($url_parts) >= 3 && $url_parts[0] === 'products') {
             // Get the product slug (last part of URL)
             $product_slug = end($url_parts);
-
             if (APW_WOO_DEBUG_MODE) {
                 apw_woo_log("TEMPLATE OVERRIDE: Checking for product with slug: " . $product_slug);
             }
@@ -624,12 +562,9 @@ class APW_Woo_Template_Loader {
                 'post_status' => 'publish',
                 'numberposts' => 1
             );
-
             $products = get_posts($args);
-
             if (!empty($products)) {
                 $product_post = $products[0];
-
                 if (APW_WOO_DEBUG_MODE) {
                     apw_woo_log("TEMPLATE OVERRIDE: Found product '" . $product_post->post_title . "' (ID: " . $product_post->ID . ") at URL: " . $wp->request);
                 }
@@ -650,12 +585,12 @@ class APW_Woo_Template_Loader {
                 $wp_query->is_post_type_archive = false;
                 $wp_query->is_tax = false;
                 $wp_query->is_category = false;
+                $wp_query->is_product_category = false; // Explicitly set to false
                 $wp_query->queried_object = $post;
                 $wp_query->queried_object_id = $post->ID;
 
                 // Load the single product template
                 $custom_template = $this->template_path . self::PRODUCT_TEMPLATE;
-
                 if (file_exists($custom_template)) {
                     if (APW_WOO_DEBUG_MODE) {
                         apw_woo_log("TEMPLATE OVERRIDE: Loading single product template: " . $custom_template);
@@ -668,6 +603,134 @@ class APW_Woo_Template_Loader {
                 }
             } else if (APW_WOO_DEBUG_MODE) {
                 apw_woo_log("TEMPLATE OVERRIDE: No product found with slug: " . $product_slug);
+            }
+        }
+
+        // Standard page type checks
+
+        // CASE 1: Main Shop Page - handle both standard detection and custom URL
+        if (is_shop() || $wp->request === 'products' || $wp->request === 'products/') {
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log("TEMPLATE OVERRIDE: Detected shop page");
+            }
+
+            // Force WordPress to treat this as a shop page
+            global $wp_query;
+            $wp_query->is_post_type_archive = true;
+            $wp_query->is_archive = true;
+            $wp_query->is_shop = true;
+            $wp_query->is_product_category = false;
+            $wp_query->is_single = false;
+            $wp_query->is_singular = false;
+
+            // Load the custom shop categories template
+            $custom_template = $this->template_path . self::SHOP_TEMPLATE;
+            if (file_exists($custom_template)) {
+                if (APW_WOO_DEBUG_MODE) {
+                    apw_woo_log("TEMPLATE OVERRIDE: Loading shop categories template: " . $custom_template);
+                }
+                return $custom_template;
+            } else {
+                if (APW_WOO_DEBUG_MODE) {
+                    apw_woo_log("TEMPLATE OVERRIDE ERROR: Could not find shop template at: " . $custom_template);
+                }
+            }
+        }
+
+        // CASE 2: Category Page
+        elseif (is_product_category()) {
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log("TEMPLATE OVERRIDE: Detected product category page");
+            }
+
+            // Load the category template
+            $custom_template = $this->template_path . self::CATEGORY_TEMPLATE;
+            if (file_exists($custom_template)) {
+                if (APW_WOO_DEBUG_MODE) {
+                    apw_woo_log("TEMPLATE OVERRIDE: Loading category template: " . $custom_template);
+                }
+                return $custom_template;
+            } else {
+                if (APW_WOO_DEBUG_MODE) {
+                    apw_woo_log("TEMPLATE OVERRIDE ERROR: Could not find category template at: " . $custom_template);
+                }
+            }
+        }
+
+        // CASE 3: Single Product Page - standard detection
+        elseif (is_product()) {
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log("TEMPLATE OVERRIDE: Detected standard product page");
+            }
+
+            // Load the product template
+            $custom_template = $this->template_path . self::PRODUCT_TEMPLATE;
+            if (file_exists($custom_template)) {
+                if (APW_WOO_DEBUG_MODE) {
+                    apw_woo_log("TEMPLATE OVERRIDE: Loading product template: " . $custom_template);
+                }
+                return $custom_template;
+            } else {
+                if (APW_WOO_DEBUG_MODE) {
+                    apw_woo_log("TEMPLATE OVERRIDE ERROR: Could not find product template at: " . $custom_template);
+                }
+            }
+        }
+
+        // CASE 4: Cart Page
+        elseif (is_cart()) {
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log("TEMPLATE OVERRIDE: Detected cart page");
+            }
+
+            $custom_template = $this->template_path . self::CART_TEMPLATE;
+            if (file_exists($custom_template)) {
+                if (APW_WOO_DEBUG_MODE) {
+                    apw_woo_log("TEMPLATE OVERRIDE: Loading cart template: " . $custom_template);
+                }
+                return $custom_template;
+            } else {
+                if (APW_WOO_DEBUG_MODE) {
+                    apw_woo_log("TEMPLATE OVERRIDE: No custom cart template found, using default");
+                }
+            }
+        }
+
+        // CASE 5: Checkout Page
+        elseif (is_checkout()) {
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log("TEMPLATE OVERRIDE: Detected checkout page");
+            }
+
+            $custom_template = $this->template_path . self::CHECKOUT_TEMPLATE;
+            if (file_exists($custom_template)) {
+                if (APW_WOO_DEBUG_MODE) {
+                    apw_woo_log("TEMPLATE OVERRIDE: Loading checkout template: " . $custom_template);
+                }
+                return $custom_template;
+            } else {
+                if (APW_WOO_DEBUG_MODE) {
+                    apw_woo_log("TEMPLATE OVERRIDE: No custom checkout template found, using default");
+                }
+            }
+        }
+
+        // CASE 6: My Account Page
+        elseif (is_account_page()) {
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log("TEMPLATE OVERRIDE: Detected my account page");
+            }
+
+            $custom_template = $this->template_path . self::MY_ACCOUNT_TEMPLATE;
+            if (file_exists($custom_template)) {
+                if (APW_WOO_DEBUG_MODE) {
+                    apw_woo_log("TEMPLATE OVERRIDE: Loading my account template: " . $custom_template);
+                }
+                return $custom_template;
+            } else {
+                if (APW_WOO_DEBUG_MODE) {
+                    apw_woo_log("TEMPLATE OVERRIDE: No custom my account template found, using default");
+                }
             }
         }
 
