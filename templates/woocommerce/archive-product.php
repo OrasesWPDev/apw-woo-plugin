@@ -30,9 +30,9 @@ if (is_shop() && !is_search()) {
     include(APW_WOO_PLUGIN_DIR . 'templates/woocommerce/partials/shop-categories-display.php');
 } elseif (is_product_category()) {
     // Category page - load the category products display template
-    $category = get_queried_object();
+    $current_category = get_queried_object();
     if (APW_WOO_DEBUG_MODE) {
-        apw_woo_log('Current page is category page: ' . $category->name . ' - loading category products template');
+        apw_woo_log('Current page is category page: ' . $current_category->name . ' - loading category products template');
     }
     include(APW_WOO_PLUGIN_DIR . 'templates/woocommerce/partials/category-products-display.php');
 } else {

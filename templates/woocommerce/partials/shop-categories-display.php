@@ -14,6 +14,22 @@ if (APW_WOO_DEBUG_MODE) {
     apw_woo_log('Loading shop categories display template');
 }
 
+// Ensure we're on a shop page
+if (!is_shop() && APW_WOO_DEBUG_MODE) {
+    apw_woo_log('Shop categories template: Not on a shop page');
+}
+
+// If the template is included directly, we may need shop data
+if (function_exists('wc_get_page_id') && function_exists('get_option')) {
+    $shop_page_id = wc_get_page_id('shop');
+    $shop_page_display = get_option('woocommerce_shop_page_display', '');
+
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log('Shop categories template: Shop page ID: ' . $shop_page_id);
+        apw_woo_log('Shop categories template: Shop page display mode: ' . $shop_page_display);
+    }
+}
+
 get_header();
 ?>
     <main id="main" class="apw-woo-shop-categories-main">

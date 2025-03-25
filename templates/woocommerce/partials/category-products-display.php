@@ -4,14 +4,28 @@
  *
  * @package APW_Woo_Plugin
  */
-
 // Exit if accessed directly
 if (!defined('ABSPATH')) {
     exit;
 }
-
 if (APW_WOO_DEBUG_MODE) {
     apw_woo_log('Loading category products display template');
+}
+
+// Add defensive code here - before get_header()
+// Ensure we have a valid category object
+if (!isset($current_category) || !is_object($current_category)) {
+    $current_category = get_queried_object();
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log('Category template: Valid $current_category not provided, fetching from queried object');
+    }
+
+    // Additional verification that we got a valid term
+    if (!is_a($current_category, 'WP_Term') || $current_category->taxonomy !== 'product_cat') {
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('Category template WARNING: Not on a valid product category page');
+        }
+    }
 }
 
 get_header();
