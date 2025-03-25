@@ -24,6 +24,8 @@ class APW_Woo_Template_Loader {
     private const SHOP_TEMPLATE = 'woocommerce/partials/shop-categories-display.php';
     private const CATEGORY_TEMPLATE = 'woocommerce/partials/category-products-display.php';
     private const PRODUCT_TEMPLATE = 'woocommerce/single-product.php';
+    private const CART_TEMPLATE = 'woocommerce/cart/cart.php';
+    private const CHECKOUT_TEMPLATE = 'woocommerce/checkout/form-checkout.php';
     /**
      * Hook priority constants
      */
@@ -62,6 +64,8 @@ class APW_Woo_Template_Loader {
         }
         return self::$instance;
     }
+
+
     /**
      * Initialize hooks
      */
@@ -82,14 +86,23 @@ class APW_Woo_Template_Loader {
             self::TEMPLATE_FILTER_ARGS
         );
 
-        // Load custom partials when needed
+        // Register template include filter for better template control
+        $this->register_template_include_filter();
+
+        // Keep the legacy method for backward compatibility during transition
+        // Can be removed in a future version once we confirm the new method works
         add_action('woocommerce_before_main_content', [$this, 'maybe_load_custom_template']);
 
         // Debug product permalinks
         if (APW_WOO_DEBUG_MODE) {
             add_filter('post_type_link', [$this, 'debug_product_permalinks'], 99, 2);
         }
+
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('Template loader hooks initialized with template_include filter');
+        }
     }
+
 
     /**
      * Debug product permalinks
@@ -308,32 +321,112 @@ class APW_Woo_Template_Loader {
     private function is_main_shop_page() {
         return is_shop() && !is_search();
     }
+
     /**
      * Load template and remove default WooCommerce content
      *
      * @param string $template_relative_path Relative path to template from template directory
-     * @return bool True if template was loaded, false otherwise
+     * @param array $preserve_hooks Optional array of hooks to preserve
+     * @return string|bool Template content if successful, false otherwise
      */
-    private function load_template_and_remove_defaults($template_relative_path) {
+    public function load_template_and_remove_defaults($template_relative_path, $preserve_hooks = array()) {
         $template_path = $this->template_path . $template_relative_path;
+
         if (file_exists($template_path)) {
             if (APW_WOO_DEBUG_MODE) {
-                apw_woo_log('Including template: ' . $template_path);
+                apw_woo_log('Loading template with buffering: ' . $template_path);
             }
+
+            // Remove default WooCommerce content hooks, but preserve specified ones
+            $this->remove_default_woocommerce_content($preserve_hooks);
+
+            // Start output buffering
+            ob_start();
             include($template_path);
-            $this->remove_default_woocommerce_content();
-            exit; // Stop execution to prevent additional content after our template
-            return true;
+            $content = ob_get_clean();
+
+            // Validate template structure if in debug mode
+            if (APW_WOO_DEBUG_MODE) {
+                $this->validate_template_structure($content, $template_path);
+            }
+
+            return $content;
         }
+
         if (APW_WOO_DEBUG_MODE) {
             apw_woo_log("Template not found: {$template_path}");
         }
+
         return false;
     }
+
     /**
-     * Remove default WooCommerce loop content
+     * Validate template structure to catch common template issues
+     *
+     * @param string $content The template content
+     * @param string $template_path The template path for reference in logs
+     * @return bool True if validation passes, false if issues found
      */
-    private function remove_default_woocommerce_content() {
+    private function validate_template_structure($content, $template_path) {
+        $validation_passed = true;
+        $template_name = basename($template_path);
+
+        // Check for multiple get_header calls
+        $header_count = substr_count($content, 'get_header');
+        if ($header_count > 1) {
+            apw_woo_log("TEMPLATE ERROR: {$template_name} contains multiple get_header() calls ({$header_count})");
+            $validation_passed = false;
+        }
+
+        // Check for multiple get_footer calls
+        $footer_count = substr_count($content, 'get_footer');
+        if ($footer_count > 1) {
+            apw_woo_log("TEMPLATE ERROR: {$template_name} contains multiple get_footer() calls ({$footer_count})");
+            $validation_passed = false;
+        }
+
+        // Check for direct HTML output outside of PHP (potential leaks)
+        if (preg_match('/^\s*<(?!php|!DOCTYPE|!--|!$)/im', $content)) {
+            apw_woo_log("TEMPLATE WARNING: {$template_name} might contain direct HTML output outside of PHP tags");
+            $validation_passed = false;
+        }
+
+        // Check for common WooCommerce hooks that should be preserved
+        $required_hooks = [
+            'woocommerce_before_single_product',
+            'woocommerce_after_single_product',
+            'woocommerce_before_main_content',
+            'woocommerce_after_main_content'
+        ];
+
+        foreach ($required_hooks as $hook) {
+            if (!strpos($content, "do_action('{$hook}'") &&
+                !strpos($content, "do_action(\"{$hook}\"")) {
+                // Only log a warning for product template if it's a product-related hook
+                if (strpos($template_name, 'product') !== false && strpos($hook, 'product') !== false) {
+                    apw_woo_log("TEMPLATE WARNING: {$template_name} might be missing required hook: {$hook}");
+                    $validation_passed = false;
+                }
+            }
+        }
+
+        // Log overall validation status
+        if ($validation_passed) {
+            apw_woo_log("TEMPLATE VALIDATED: {$template_name} structure looks good");
+        } else {
+            apw_woo_log("TEMPLATE ISSUES: {$template_name} has structural issues that should be addressed");
+        }
+
+        return $validation_passed;
+    }
+
+
+    /**
+     * Remove default WooCommerce loop content while preserving specified hooks
+     *
+     * @param array $preserve_hooks Optional array of hooks to preserve in format ['hook_name' => ['callback' => 'function_name', 'priority' => 10]]
+     */
+    public function remove_default_woocommerce_content($preserve_hooks = array()) {
         // Store all hooks to remove in an array for easier maintenance
         $hooks_to_remove = [
             // Before shop loop hooks
@@ -346,15 +439,121 @@ class APW_Woo_Template_Loader {
             // After shop loop hooks
             ['woocommerce_after_shop_loop', 'woocommerce_pagination', 10],
             // No products found hook
-            ['woocommerce_no_products_found', 'wc_no_products_found', 10]
+            ['woocommerce_no_products_found', 'wc_no_products_found', 10],
+            // Additional hooks that might interfere with extensions
+            ['woocommerce_before_single_product', 'woocommerce_output_all_notices', 10]
         ];
-        // Remove all hooks
+
+        // Process hooks to remove
         foreach ($hooks_to_remove as $hook) {
             list($hook_name, $callback, $priority) = $hook;
-            remove_action($hook_name, $callback, $priority);
+
+            // Check if this hook should be preserved
+            $preserve = false;
+            if (isset($preserve_hooks[$hook_name])) {
+                foreach ($preserve_hooks[$hook_name] as $preserved_callback) {
+                    if ($preserved_callback['callback'] === $callback &&
+                        $preserved_callback['priority'] === $priority) {
+                        $preserve = true;
+                        break;
+                    }
+                }
+            }
+
+            // Only remove if not preserved
+            if (!$preserve) {
+                remove_action($hook_name, $callback, $priority);
+
+                if (APW_WOO_DEBUG_MODE) {
+                    apw_woo_log("Removed hook: {$hook_name}, callback: {$callback}, priority: {$priority}");
+                }
+            } else {
+                if (APW_WOO_DEBUG_MODE) {
+                    apw_woo_log("Preserved hook: {$hook_name}, callback: {$callback}, priority: {$priority}");
+                }
+            }
         }
+
         if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log('Removed default WooCommerce content hooks');
+            apw_woo_log('Finished processing WooCommerce content hooks');
         }
+    }
+
+    /**
+     * Register a filter to intercept WordPress template inclusion
+     * This allows us to override templates at the WordPress level
+     */
+    public function register_template_include_filter() {
+        add_filter('template_include', array($this, 'maybe_override_template'), 99);
+
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('Registered template_include filter');
+        }
+    }
+
+    /**
+     * Override template based on current page type
+     *
+     * @param string $template The current template path
+     * @return string Modified template path
+     */
+    public function maybe_override_template($template) {
+        // Only affect WooCommerce templates
+        if (!is_woocommerce() && !is_cart() && !is_checkout()) {
+            return $template;
+        }
+
+        // Log the override attempt
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('Attempting to override template: ' . $template);
+        }
+
+        // Get custom template based on page type
+        $custom_template = false;
+
+        if (is_shop() && !is_search()) {
+            // Main shop page
+            $custom_template = $this->template_path . self::SHOP_TEMPLATE;
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log('Shop page detected - trying template: ' . $custom_template);
+            }
+        } elseif (is_product_category()) {
+            // Product category page
+            $custom_template = $this->template_path . self::CATEGORY_TEMPLATE;
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log('Category page detected - trying template: ' . $custom_template);
+            }
+        } elseif (is_product()) {
+            // Single product page
+            $custom_template = $this->template_path . self::PRODUCT_TEMPLATE;
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log('Product page detected - trying template: ' . $custom_template);
+            }
+        } elseif (is_cart()) {
+            // Cart page
+            $custom_template = $this->template_path . self::CART_TEMPLATE;
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log('Cart page detected - trying template: ' . $custom_template);
+            }
+        } elseif (is_checkout()) {
+            // Checkout page
+            $custom_template = $this->template_path . self::CHECKOUT_TEMPLATE;
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log('Checkout page detected - trying template: ' . $custom_template);
+            }
+        }
+
+        // Return custom template if it exists, otherwise return default
+        if ($custom_template && file_exists($custom_template)) {
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log('Using custom template: ' . $custom_template);
+            }
+            return $custom_template;
+        }
+
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('No custom template found, using default: ' . $template);
+        }
+        return $template;
     }
 }
