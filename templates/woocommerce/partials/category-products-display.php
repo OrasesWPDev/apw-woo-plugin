@@ -10,16 +10,15 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-apw_woo_log('Loading category products display template');
+if (APW_WOO_DEBUG_MODE) {
+    apw_woo_log('Loading category products display template');
+}
 
 get_header();
-
-// Get the current category
-$current_category = get_queried_object();
-apw_woo_log('Displaying products for category: ' . $current_category->name);
 ?>
     <main id="main" class="apw-woo-category-products-main">
         <!-- APW-WOO-TEMPLATE: category-products-display.php is loaded -->
+
         <!-- Header Block - Contains hero image, page title, and breadcrumbs -->
         <div class="apw-woo-section-wrapper apw-woo-header-block">
             <?php
@@ -29,12 +28,14 @@ apw_woo_log('Displaying products for category: ' . $current_category->name);
              */
             do_action('apw_woo_before_category_header', $current_category);
 
-            apw_woo_log('Rendering category page header');
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log('Rendering category page header');
+            }
+
             if (shortcode_exists('block')) {
                 echo do_shortcode('[block id="third-level-page-header"]');
             } else {
                 // Fallback if shortcode doesn't exist
-                apw_woo_log('Block shortcode not available, using fallback header');
                 echo '<h1 class="apw-woo-page-title">' . esc_html(single_term_title('', false)) . '</h1>';
             }
 
@@ -57,8 +58,15 @@ apw_woo_log('Displaying products for category: ' . $current_category->name);
                      */
                     do_action('apw_woo_before_category_content', $current_category);
 
-                    // Product Grid Section
+                    // Get the current category
+                    $current_category = get_queried_object();
+
+                    if (APW_WOO_DEBUG_MODE) {
+                        apw_woo_log('Displaying products for category: ' . $current_category->name);
+                    }
                     ?>
+
+                    <!-- Product Grid Section -->
                     <div class="row apw-woo-row">
                         <div class="col apw-woo-products-section">
                             <?php
@@ -68,7 +76,10 @@ apw_woo_log('Displaying products for category: ' . $current_category->name);
                              */
                             do_action('apw_woo_before_products_grid', $current_category);
 
-                            apw_woo_log('Fetching products for category: ' . $current_category->slug);
+                            if (APW_WOO_DEBUG_MODE) {
+                                apw_woo_log('Fetching products for category: ' . $current_category->slug);
+                            }
+
                             // Get products in this category
                             $products = apply_filters('apw_woo_category_products', wc_get_products([
                                 'status' => 'publish',
@@ -77,8 +88,11 @@ apw_woo_log('Displaying products for category: ' . $current_category->name);
                             ]), $current_category);
 
                             if (!empty($products)) {
-                                apw_woo_log('Found ' . count($products) . ' products to display');
+                                if (APW_WOO_DEBUG_MODE) {
+                                    apw_woo_log('Found ' . count($products) . ' products to display');
+                                }
                                 ?>
+
                                 <div class="apw-woo-products-grid">
                                     <?php
                                     foreach ($products as $product) {
@@ -89,7 +103,9 @@ apw_woo_log('Displaying products for category: ' . $current_category->name);
                                         $product_image_id = $product->get_image_id();
                                         $product_image = wp_get_attachment_url($product_image_id);
 
-                                        apw_woo_log('Rendering product: ' . $product_title);
+                                        if (APW_WOO_DEBUG_MODE) {
+                                            apw_woo_log('Rendering product: ' . $product_title);
+                                        }
 
                                         /**
                                          * Hook: apw_woo_before_product_item
@@ -107,7 +123,7 @@ apw_woo_log('Displaying products for category: ' . $current_category->name);
                                                     <div class="apw-woo-product-header">
                                                         <h1 class="apw-woo-product-title"><?php echo esc_html($product_title); ?></h1>
                                                         <a href="<?php echo esc_url($product_link); ?>" class="apw-woo-view-product-button">
-                                                            <?php echo apply_filters('apw_woo_view_product_text', __('View Product', 'apw-woo-plugin'), $product); ?>
+                                                            <?php echo esc_html(apply_filters('apw_woo_view_product_text', __('View Product', 'apw-woo-plugin'), $product)); ?>
                                                         </a>
                                                     </div>
                                                 </div>
@@ -146,19 +162,25 @@ apw_woo_log('Displaying products for category: ' . $current_category->name);
                                     }
                                     ?>
                                 </div>
+
                                 <?php
                             } else {
-                                apw_woo_log('No products found in category: ' . $current_category->slug);
+                                if (APW_WOO_DEBUG_MODE) {
+                                    apw_woo_log('No products found in category: ' . $current_category->slug);
+                                }
+
                                 /**
                                  * Hook: apw_woo_no_products_found
                                  * @param WP_Term $current_category Current category object
                                  */
                                 do_action('apw_woo_no_products_found', $current_category);
                                 ?>
+
                                 <!-- No Products Found Message -->
                                 <div class="apw-woo-no-products">
-                                    <p><?php echo apply_filters('apw_woo_no_products_text', esc_html__('No products found in this category.', 'apw-woo-plugin'), $current_category); ?></p>
+                                    <p><?php echo esc_html(apply_filters('apw_woo_no_products_text', __('No products found in this category.', 'apw-woo-plugin'), $current_category)); ?></p>
                                 </div>
+
                                 <?php
                             }
 
@@ -181,14 +203,19 @@ apw_woo_log('Displaying products for category: ' . $current_category->name);
                              */
                             do_action('apw_woo_before_category_faqs', $current_category);
 
-                            apw_woo_log('Loading FAQ display for category: ' . $current_category->name);
+                            if (APW_WOO_DEBUG_MODE) {
+                                apw_woo_log('Loading FAQ display for category: ' . $current_category->name);
+                            }
+
                             // Include the FAQ display partial, passing the current category
                             if (file_exists(APW_WOO_PLUGIN_DIR . 'templates/partials/faq-display.php')) {
                                 // Set the category object that will be accessible in the included file
                                 $faq_category = apply_filters('apw_woo_faq_category', $current_category);
                                 include(APW_WOO_PLUGIN_DIR . 'templates/partials/faq-display.php');
                             } else {
-                                apw_woo_log('FAQ display partial not found');
+                                if (APW_WOO_DEBUG_MODE) {
+                                    apw_woo_log('FAQ display partial not found');
+                                }
                             }
 
                             /**
@@ -212,5 +239,9 @@ apw_woo_log('Displaying products for category: ' . $current_category->name);
         </div>
     </main>
 <?php
-apw_woo_log('Completed rendering category products template for: ' . $current_category->name);
+if (APW_WOO_DEBUG_MODE) {
+    apw_woo_log('Completed rendering category products template for: ' . $current_category->name);
+}
+
 get_footer();
+?>

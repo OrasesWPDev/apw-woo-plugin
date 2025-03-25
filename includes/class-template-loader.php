@@ -93,6 +93,9 @@ class APW_Woo_Template_Loader {
         // Can be removed in a future version once we confirm the new method works
         add_action('woocommerce_before_main_content', [$this, 'maybe_load_custom_template']);
 
+        // Remove default Flatsome/WooCommerce elements
+        $this->remove_default_woocommerce_elements();
+
         // Debug product permalinks
         if (APW_WOO_DEBUG_MODE) {
             add_filter('post_type_link', [$this, 'debug_product_permalinks'], 99, 2);
@@ -100,6 +103,27 @@ class APW_Woo_Template_Loader {
 
         if (APW_WOO_DEBUG_MODE) {
             apw_woo_log('Template loader hooks initialized with template_include filter');
+        }
+    }
+
+    /**
+     * Remove default WooCommerce and Flatsome elements that we don't want
+     */
+    private function remove_default_woocommerce_elements() {
+        // Remove Flatsome page title (which includes breadcrumbs)
+        remove_action('flatsome_after_header', 'flatsome_pages_title', 12);
+
+        // Remove WooCommerce breadcrumbs
+        remove_action('woocommerce_before_main_content', 'woocommerce_breadcrumb', 20);
+
+        // Remove result count
+        remove_action('woocommerce_before_shop_loop', 'woocommerce_result_count', 20);
+
+        // Remove ordering dropdown
+        remove_action('woocommerce_before_shop_loop', 'woocommerce_catalog_ordering', 30);
+
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('Removed default WooCommerce and Flatsome UI elements');
         }
     }
 

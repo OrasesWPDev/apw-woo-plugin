@@ -10,12 +10,15 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-apw_woo_log('Loading shop categories display template');
+if (APW_WOO_DEBUG_MODE) {
+    apw_woo_log('Loading shop categories display template');
+}
 
 get_header();
 ?>
     <main id="main" class="apw-woo-shop-categories-main">
         <!-- APW-WOO-TEMPLATE: shop-categories-display.php is loaded -->
+
         <!-- Header Block - Contains hero image, page title, and breadcrumbs -->
         <div class="apw-woo-section-wrapper apw-woo-header-block">
             <?php
@@ -24,12 +27,14 @@ get_header();
              */
             do_action('apw_woo_before_shop_header');
 
-            apw_woo_log('Rendering shop page header');
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log('Rendering shop page header');
+            }
+
             if (shortcode_exists('block')) {
                 echo do_shortcode('[block id="second-level-page-header"]');
             } else {
                 // Fallback if shortcode doesn't exist
-                apw_woo_log('Block shortcode not available, using fallback header');
                 echo '<h1 class="apw-woo-page-title">' . esc_html(woocommerce_page_title(false)) . '</h1>';
             }
 
@@ -62,9 +67,9 @@ get_header();
                             ?>
 
                             <div class="apw-woo-product-intro">
-                                <h1 class="apw-woo-section-title"><?php echo apply_filters('apw_woo_shop_intro_title', __('Our Products', 'apw-woo-plugin')); ?></h1>
+                                <h1 class="apw-woo-section-title"><?php echo esc_html(apply_filters('apw_woo_shop_intro_title', __('Our Products', 'apw-woo-plugin'))); ?></h1>
                                 <div class="apw-woo-section-description">
-                                    <?php echo apply_filters('apw_woo_shop_intro_description', '<p>' . __('This is a placeholder paragraph that can be edited later. It will provide an introduction to the product categories offered by the company.', 'apw-woo-plugin') . '</p>'); ?>
+                                    <?php echo wp_kses_post(apply_filters('apw_woo_shop_intro_description', '<p>' . __('This is a placeholder paragraph that can be edited later. It will provide an introduction to the product categories offered by the company.', 'apw-woo-plugin') . '</p>')); ?>
                                 </div>
                             </div>
 
@@ -86,7 +91,10 @@ get_header();
                              */
                             do_action('apw_woo_before_categories_grid');
 
-                            apw_woo_log('Fetching product categories for shop page');
+                            if (APW_WOO_DEBUG_MODE) {
+                                apw_woo_log('Fetching product categories for shop page');
+                            }
+
                             // Get product categories
                             $product_categories = apply_filters('apw_woo_shop_categories', get_terms([
                                 'taxonomy'   => 'product_cat',
@@ -95,18 +103,25 @@ get_header();
                             ]));
 
                             if (!empty($product_categories) && !is_wp_error($product_categories)) {
-                                apw_woo_log('Found ' . count($product_categories) . ' product categories to display');
+                                if (APW_WOO_DEBUG_MODE) {
+                                    apw_woo_log('Found ' . count($product_categories) . ' product categories to display');
+                                }
                                 ?>
+
                                 <div class="apw-woo-categories-grid">
                                     <?php
                                     foreach ($product_categories as $category) {
                                         // Skip the "Uncategorized" category
                                         if (apply_filters('apw_woo_skip_uncategorized', $category->slug === 'uncategorized', $category)) {
-                                            apw_woo_log('Skipping uncategorized category');
+                                            if (APW_WOO_DEBUG_MODE) {
+                                                apw_woo_log('Skipping uncategorized category');
+                                            }
                                             continue;
                                         }
 
-                                        apw_woo_log('Rendering category: ' . $category->name);
+                                        if (APW_WOO_DEBUG_MODE) {
+                                            apw_woo_log('Rendering category: ' . $category->name);
+                                        }
 
                                         // Get category image
                                         $thumbnail_id = get_term_meta($category->term_id, 'thumbnail_id', true);
@@ -130,7 +145,7 @@ get_header();
                                                     <div class="apw-woo-category-header">
                                                         <h1 class="apw-woo-category-title"><?php echo esc_html($category->name); ?></h1>
                                                         <a href="<?php echo esc_url($category_link); ?>" class="apw-woo-view-all-button">
-                                                            <?php echo apply_filters('apw_woo_view_all_text', __('View All', 'apw-woo-plugin')); ?>
+                                                            <?php echo esc_html(apply_filters('apw_woo_view_all_text', __('View All', 'apw-woo-plugin'))); ?>
                                                         </a>
                                                     </div>
                                                 </div>
@@ -160,16 +175,20 @@ get_header();
                                                     do_action('apw_woo_before_category_description', $category);
 
                                                     if (!empty($category->description)) :
-                                                        apw_woo_log('Using custom description for category: ' . $category->name);
+                                                        if (APW_WOO_DEBUG_MODE) {
+                                                            apw_woo_log('Using custom description for category: ' . $category->name);
+                                                        }
                                                         ?>
                                                         <div class="apw-woo-category-description">
                                                             <?php echo wp_kses_post($category->description); ?>
                                                         </div>
                                                     <?php else :
-                                                        apw_woo_log('Using default description for category: ' . $category->name);
+                                                        if (APW_WOO_DEBUG_MODE) {
+                                                            apw_woo_log('Using default description for category: ' . $category->name);
+                                                        }
                                                         ?>
                                                         <div class="apw-woo-category-description">
-                                                            <?php echo apply_filters('apw_woo_default_category_description', '<p>' . __('Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumyt, consetetur sadipscing elitr, sed diam nonumy eirmod tem tempor invidunt ut.', 'apw-woo-plugin') . '</p>', $category); ?>
+                                                            <?php echo wp_kses_post(apply_filters('apw_woo_default_category_description', '<p>' . __('Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumyt, consetetur sadipscing elitr, sed diam nonumy eirmod tem tempor invidunt ut.', 'apw-woo-plugin') . '</p>', $category)); ?>
                                                         </div>
                                                     <?php endif;
 
@@ -192,18 +211,24 @@ get_header();
                                     }
                                     ?>
                                 </div>
+
                                 <?php
                             } else {
-                                apw_woo_log('No product categories found');
+                                if (APW_WOO_DEBUG_MODE) {
+                                    apw_woo_log('No product categories found');
+                                }
+
                                 /**
                                  * Hook: apw_woo_no_categories_found
                                  */
                                 do_action('apw_woo_no_categories_found');
                                 ?>
+
                                 <!-- No Categories Found Message -->
                                 <div class="apw-woo-no-categories">
-                                    <p><?php echo apply_filters('apw_woo_no_categories_text', esc_html__('No product categories found.', 'apw-woo-plugin')); ?></p>
+                                    <p><?php echo esc_html(apply_filters('apw_woo_no_categories_text', __('No product categories found.', 'apw-woo-plugin'))); ?></p>
                                 </div>
+
                                 <?php
                             }
 
@@ -224,14 +249,19 @@ get_header();
                              */
                             do_action('apw_woo_before_shop_faqs');
 
-                            apw_woo_log('Loading FAQ display for shop page');
+                            if (APW_WOO_DEBUG_MODE) {
+                                apw_woo_log('Loading FAQ display for shop page');
+                            }
+
                             // Include the FAQ display partial, passing the page ID from which to pull the FAQs
                             if (file_exists(APW_WOO_PLUGIN_DIR . 'templates/partials/faq-display.php')) {
                                 // Set the page ID variable that will be accessible in the included file
                                 $faq_page_id = apply_filters('apw_woo_shop_faq_page_id', 66); // Page ID for shop page FAQs
                                 include(APW_WOO_PLUGIN_DIR . 'templates/partials/faq-display.php');
                             } else {
-                                apw_woo_log('FAQ display partial not found');
+                                if (APW_WOO_DEBUG_MODE) {
+                                    apw_woo_log('FAQ display partial not found');
+                                }
                             }
 
                             /**
@@ -253,5 +283,9 @@ get_header();
         </div>
     </main>
 <?php
-apw_woo_log('Completed rendering shop categories template');
+if (APW_WOO_DEBUG_MODE) {
+    apw_woo_log('Completed rendering shop categories template');
+}
+
 get_footer();
+?>

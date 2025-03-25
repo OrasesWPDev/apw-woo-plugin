@@ -10,34 +10,36 @@
 
 defined('ABSPATH') || exit;
 
-// Direct test to see if this file is being loaded
-error_log('APW WOO TEST: archive-product.php is being loaded');
+if (APW_WOO_DEBUG_MODE) {
+    apw_woo_log('archive-product.php template loaded');
+}
 
-// Log which template we're loading
-apw_woo_log('Determining which template to display for current WooCommerce page');
+/**
+ * Hook: woocommerce_before_main_content.
+ */
+do_action('woocommerce_before_main_content');
 
-// Determine which template to load based on current view
+// Start buffering output
+ob_start();
+
 if (is_shop() && !is_search()) {
     // Main shop page - load the shop categories display template
-    apw_woo_log('Current page is shop page - loading shop categories template');
-    include(APW_WOO_PLUGIN_DIR . 'templates/partials/shop-categories-display.php');
-
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log('Current page is shop page - loading shop categories template');
+    }
+    include(APW_WOO_PLUGIN_DIR . 'templates/woocommerce/partials/shop-categories-display.php');
 } elseif (is_product_category()) {
     // Category page - load the category products display template
     $category = get_queried_object();
-    apw_woo_log('Current page is category page: ' . $category->name . ' - loading category products template');
-    include(APW_WOO_PLUGIN_DIR . 'templates/partials/category-products-display.php');
-
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log('Current page is category page: ' . $category->name . ' - loading category products template');
+    }
+    include(APW_WOO_PLUGIN_DIR . 'templates/woocommerce/partials/category-products-display.php');
 } else {
     // Other WooCommerce pages (search results, etc.) - use default WooCommerce template
-    apw_woo_log('Current page is another WooCommerce archive page - using default template');
-
-    get_header('shop');
-
-    /**
-     * Hook: woocommerce_before_main_content.
-     */
-    do_action('woocommerce_before_main_content');
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log('Current page is another WooCommerce archive page - using default template');
+    }
 
     if (woocommerce_product_loop()) {
         do_action('woocommerce_before_shop_loop');
@@ -56,7 +58,15 @@ if (is_shop() && !is_search()) {
     } else {
         do_action('woocommerce_no_products_found');
     }
-
-    do_action('woocommerce_after_main_content');
-    get_footer('shop');
 }
+
+// Get the buffered content
+$archive_content = ob_get_clean();
+
+// Output the content
+echo $archive_content;
+
+/**
+ * Hook: woocommerce_after_main_content.
+ */
+do_action('woocommerce_after_main_content');
