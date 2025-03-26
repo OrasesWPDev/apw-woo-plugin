@@ -28,6 +28,19 @@ class APW_Woo_Template_Loader {
     private const CHECKOUT_TEMPLATE = 'woocommerce/checkout/form-checkout.php';
     private const MY_ACCOUNT_TEMPLATE = 'woocommerce/myaccount/my-account.php';
     /**
+     * Store the original product ID to prevent template issues
+     *
+     * @var int
+     */
+    private static $original_product_id = 0;
+
+    /**
+     * Store the original product object
+     *
+     * @var WC_Product
+     */
+    private static $original_product = null;
+    /**
      * Hook priority constants
      */
     private const TEMPLATE_FILTER_PRIORITY = 10;
@@ -529,12 +542,9 @@ class APW_Woo_Template_Loader {
      * @return string Modified template path
      */
     public function maybe_override_template($template) {
-        global $wp, $post;
+        global $wp, $post, $product;
 
-        // Initialize $custom_template to avoid undefined variable warning
-        $custom_template = null;
-
-        // Debug information
+        // First check for custom product permalink structure
         if (APW_WOO_DEBUG_MODE) {
             apw_woo_log("TEMPLATE OVERRIDE: Checking URL: " . $wp->request);
             apw_woo_log("TEMPLATE OVERRIDE: is_shop(): " . (is_shop() ? 'true' : 'false'));
@@ -545,12 +555,12 @@ class APW_Woo_Template_Loader {
             apw_woo_log("TEMPLATE OVERRIDE: is_account_page(): " . (is_account_page() ? 'true' : 'false'));
         }
 
-        // PRIORITY CHECK: First check for custom URL product detection - MUST BE FIRST
-        // Check if URL has the pattern /products/category/product-slug
+        // Special handling for /products/%product_cat%/ permalink structure
         $url_parts = explode('/', trim($wp->request, '/'));
         if (count($url_parts) >= 3 && $url_parts[0] === 'products') {
             // Get the product slug (last part of URL)
             $product_slug = end($url_parts);
+
             if (APW_WOO_DEBUG_MODE) {
                 apw_woo_log("TEMPLATE OVERRIDE: Checking for product with slug: " . $product_slug);
             }
@@ -563,10 +573,20 @@ class APW_Woo_Template_Loader {
                 'numberposts' => 1
             );
             $products = get_posts($args);
+
             if (!empty($products)) {
                 $product_post = $products[0];
+
                 if (APW_WOO_DEBUG_MODE) {
                     apw_woo_log("TEMPLATE OVERRIDE: Found product '" . $product_post->post_title . "' (ID: " . $product_post->ID . ") at URL: " . $wp->request);
+                }
+
+                // Store the original product ID and object to ensure we can restore it
+                self::$original_product_id = $product_post->ID;
+                self::$original_product = wc_get_product($product_post->ID);
+
+                if (APW_WOO_DEBUG_MODE && self::$original_product) {
+                    apw_woo_log("PRODUCT DEBUG: Stored original product: " . self::$original_product->get_name() . " (ID: " . self::$original_product_id . ")");
                 }
 
                 // Setup the product post data
@@ -585,9 +605,21 @@ class APW_Woo_Template_Loader {
                 $wp_query->is_post_type_archive = false;
                 $wp_query->is_tax = false;
                 $wp_query->is_category = false;
-                $wp_query->is_product_category = false; // Explicitly set to false
                 $wp_query->queried_object = $post;
                 $wp_query->queried_object_id = $post->ID;
+
+                // Add hooks to restore the original product during template rendering
+                add_action('woocommerce_before_single_product', array($this, 'restore_original_product'));
+                add_action('woocommerce_before_template_part', array($this, 'restore_original_product'));
+                add_action('woocommerce_after_template_part', array($this, 'restore_original_product'));
+                add_action('woocommerce_before_shop_loop_item', array($this, 'restore_original_product'));
+                add_action('woocommerce_before_single_product_summary', array($this, 'restore_original_product'));
+                add_action('woocommerce_after_single_product_summary', array($this, 'restore_original_product'));
+
+                // Add hooks to fix Yoast SEO breadcrumbs and page title
+                add_filter('wpseo_breadcrumb_links', array($this, 'fix_yoast_breadcrumbs'), 5);
+                add_filter('wpseo_title', array($this, 'fix_yoast_title'), 5);
+                add_filter('pre_get_document_title', array($this, 'fix_document_title'), 5);
 
                 // Load the single product template
                 $custom_template = $this->template_path . self::PRODUCT_TEMPLATE;
@@ -606,79 +638,38 @@ class APW_Woo_Template_Loader {
             }
         }
 
-        // Standard page type checks
-
-        // CASE 1: Main Shop Page - handle both standard detection and custom URL
-        if (is_shop() || $wp->request === 'products' || $wp->request === 'products/') {
-            if (APW_WOO_DEBUG_MODE) {
-                apw_woo_log("TEMPLATE OVERRIDE: Detected shop page");
-            }
-
-            // Force WordPress to treat this as a shop page
-            global $wp_query;
-            $wp_query->is_post_type_archive = true;
-            $wp_query->is_archive = true;
-            $wp_query->is_shop = true;
-            $wp_query->is_product_category = false;
-            $wp_query->is_single = false;
-            $wp_query->is_singular = false;
-
-            // Load the custom shop categories template
-            $custom_template = $this->template_path . self::SHOP_TEMPLATE;
-            if (file_exists($custom_template)) {
-                if (APW_WOO_DEBUG_MODE) {
-                    apw_woo_log("TEMPLATE OVERRIDE: Loading shop categories template: " . $custom_template);
-                }
-                return $custom_template;
-            } else {
-                if (APW_WOO_DEBUG_MODE) {
-                    apw_woo_log("TEMPLATE OVERRIDE ERROR: Could not find shop template at: " . $custom_template);
-                }
-            }
-        }
-
-        // CASE 2: Category Page
-        elseif (is_product_category()) {
+        // Handle category pages - check if we're on a product category page
+        if (is_product_category()) {
             if (APW_WOO_DEBUG_MODE) {
                 apw_woo_log("TEMPLATE OVERRIDE: Detected product category page");
             }
 
-            // Load the category template
             $custom_template = $this->template_path . self::CATEGORY_TEMPLATE;
             if (file_exists($custom_template)) {
                 if (APW_WOO_DEBUG_MODE) {
                     apw_woo_log("TEMPLATE OVERRIDE: Loading category template: " . $custom_template);
                 }
                 return $custom_template;
-            } else {
-                if (APW_WOO_DEBUG_MODE) {
-                    apw_woo_log("TEMPLATE OVERRIDE ERROR: Could not find category template at: " . $custom_template);
-                }
             }
         }
 
-        // CASE 3: Single Product Page - standard detection
-        elseif (is_product()) {
+        // Handle shop page
+        if (is_shop() && !is_search()) {
             if (APW_WOO_DEBUG_MODE) {
-                apw_woo_log("TEMPLATE OVERRIDE: Detected standard product page");
+                apw_woo_log("TEMPLATE OVERRIDE: Detected main shop page");
             }
 
-            // Load the product template
-            $custom_template = $this->template_path . self::PRODUCT_TEMPLATE;
+            $custom_template = $this->template_path . self::SHOP_TEMPLATE;
             if (file_exists($custom_template)) {
                 if (APW_WOO_DEBUG_MODE) {
-                    apw_woo_log("TEMPLATE OVERRIDE: Loading product template: " . $custom_template);
+                    apw_woo_log("TEMPLATE OVERRIDE: Loading shop template: " . $custom_template);
                 }
                 return $custom_template;
-            } else {
-                if (APW_WOO_DEBUG_MODE) {
-                    apw_woo_log("TEMPLATE OVERRIDE ERROR: Could not find product template at: " . $custom_template);
-                }
             }
         }
 
-        // CASE 4: Cart Page
-        elseif (is_cart()) {
+        // Handle cart page
+        if (is_cart()) {
             if (APW_WOO_DEBUG_MODE) {
                 apw_woo_log("TEMPLATE OVERRIDE: Detected cart page");
             }
@@ -689,15 +680,11 @@ class APW_Woo_Template_Loader {
                     apw_woo_log("TEMPLATE OVERRIDE: Loading cart template: " . $custom_template);
                 }
                 return $custom_template;
-            } else {
-                if (APW_WOO_DEBUG_MODE) {
-                    apw_woo_log("TEMPLATE OVERRIDE: No custom cart template found, using default");
-                }
             }
         }
 
-        // CASE 5: Checkout Page
-        elseif (is_checkout()) {
+        // Handle checkout page
+        if (is_checkout()) {
             if (APW_WOO_DEBUG_MODE) {
                 apw_woo_log("TEMPLATE OVERRIDE: Detected checkout page");
             }
@@ -708,43 +695,115 @@ class APW_Woo_Template_Loader {
                     apw_woo_log("TEMPLATE OVERRIDE: Loading checkout template: " . $custom_template);
                 }
                 return $custom_template;
-            } else {
-                if (APW_WOO_DEBUG_MODE) {
-                    apw_woo_log("TEMPLATE OVERRIDE: No custom checkout template found, using default");
-                }
             }
         }
 
-        // CASE 6: My Account Page
-        elseif (is_account_page()) {
+        // Handle account page
+        if (is_account_page()) {
             if (APW_WOO_DEBUG_MODE) {
-                apw_woo_log("TEMPLATE OVERRIDE: Detected my account page");
+                apw_woo_log("TEMPLATE OVERRIDE: Detected account page");
             }
 
             $custom_template = $this->template_path . self::MY_ACCOUNT_TEMPLATE;
             if (file_exists($custom_template)) {
                 if (APW_WOO_DEBUG_MODE) {
-                    apw_woo_log("TEMPLATE OVERRIDE: Loading my account template: " . $custom_template);
+                    apw_woo_log("TEMPLATE OVERRIDE: Loading account template: " . $custom_template);
                 }
                 return $custom_template;
-            } else {
-                if (APW_WOO_DEBUG_MODE) {
-                    apw_woo_log("TEMPLATE OVERRIDE: No custom my account template found, using default");
-                }
             }
         }
 
-        // Return custom template if it exists, otherwise return default
-        if ($custom_template && file_exists($custom_template)) {
-            if (APW_WOO_DEBUG_MODE) {
-                apw_woo_log('Using custom template: ' . $custom_template);
-            }
-            return $custom_template;
-        }
-
+        // If we've made it here, no custom template was found
         if (APW_WOO_DEBUG_MODE) {
             apw_woo_log('No custom template found, using default: ' . $template);
         }
         return $template;
+    }
+
+    /**
+     * Restore the original product during template rendering
+     * This prevents WooCommerce hooks or related product displays from
+     * causing the wrong product to be displayed
+     */
+    public function restore_original_product() {
+        global $post, $product;
+
+        // Only proceed if we have stored an original product and either:
+        // 1. The current product is not a valid product object, or
+        // 2. The current product ID doesn't match our original product ID
+        if (self::$original_product_id > 0 && self::$original_product instanceof WC_Product &&
+            (!is_a($product, 'WC_Product') || $product->get_id() != self::$original_product_id)) {
+
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log("PRODUCT FIX: Restoring original product ID: " . self::$original_product_id .
+                    " (was: " . ($product ? $product->get_id() : 'none') . ")");
+            }
+
+            // Restore the original product
+            $post = get_post(self::$original_product_id);
+            setup_postdata($post);
+            $product = self::$original_product;
+        }
+    }
+
+    /**
+     * Fix Yoast SEO breadcrumbs to use the correct product
+     *
+     * @param array $links The breadcrumb links
+     * @return array Modified breadcrumb links
+     */
+    public function fix_yoast_breadcrumbs($links) {
+        if (self::$original_product_id && self::$original_product) {
+            // Find and replace the last item in the breadcrumb trail
+            if (!empty($links) && is_array($links)) {
+                $last_index = count($links) - 1;
+                if (isset($links[$last_index])) {
+                    $links[$last_index]['text'] = self::$original_product->get_name();
+                    $links[$last_index]['url'] = get_permalink(self::$original_product_id);
+
+                    if (APW_WOO_DEBUG_MODE) {
+                        apw_woo_log("BREADCRUMB FIX: Replaced product in breadcrumbs with: " . self::$original_product->get_name());
+                    }
+                }
+            }
+        }
+        return $links;
+    }
+
+    /**
+     * Fix Yoast SEO title to use the correct product
+     *
+     * @param string $title The page title
+     * @return string Modified page title
+     */
+    public function fix_yoast_title($title) {
+        if (self::$original_product_id && self::$original_product) {
+            // Check if the title contains incorrect product info
+            $new_title = preg_replace('/.*?Wireless Router/', self::$original_product->get_name(), $title);
+
+            if ($new_title !== $title && APW_WOO_DEBUG_MODE) {
+                apw_woo_log("TITLE FIX: Changed page title from \"{$title}\" to \"{$new_title}\"");
+            }
+
+            return $new_title;
+        }
+        return $title;
+    }
+
+    /**
+     * Fix document title as a fallback
+     *
+     * @param string $title The document title
+     * @return string Modified document title
+     */
+    public function fix_document_title($title) {
+        if (self::$original_product_id && self::$original_product && empty($title)) {
+            $title = self::$original_product->get_name() . ' - ' . get_bloginfo('name');
+
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log("DOCUMENT TITLE FIX: Set document title to \"{$title}\"");
+            }
+        }
+        return $title;
     }
 }
