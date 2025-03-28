@@ -4,13 +4,16 @@
  *
  * @package APW_Woo_Plugin
  */
+
 // Exit if accessed directly
 if (!defined('ABSPATH')) {
     exit;
 }
+
 if (APW_WOO_DEBUG_MODE) {
     apw_woo_log('Loading single product template');
 }
+
 // Hook visualization function (only for admins in debug mode)
 function apw_woo_hook_visualizer($hook_name) {
     if (!APW_WOO_DEBUG_MODE || !current_user_can('manage_options')) {
@@ -21,6 +24,7 @@ function apw_woo_hook_visualizer($hook_name) {
         apw_woo_visualize_hook($hook_name, $args);
     };
 }
+
 // Helper function to visualize hook data (only for admins)
 function apw_woo_visualize_hook($hook_name, $params = array()) {
     if (!APW_WOO_DEBUG_MODE || !current_user_can('manage_options')) {
@@ -52,6 +56,7 @@ function apw_woo_visualize_hook($hook_name, $params = array()) {
     }
     echo '</div>';
 }
+
 // Only add visualization for admins in debug mode
 if (APW_WOO_DEBUG_MODE && current_user_can('manage_options')) {
     // Register visualizers for key WooCommerce hooks
@@ -76,48 +81,20 @@ if (APW_WOO_DEBUG_MODE && current_user_can('manage_options')) {
         'woocommerce_after_single_product',
         // Custom hooks for our plugin
         'apw_woo_before_product_faqs',
-        'apw_woo_after_product_faqs'
+        'apw_woo_after_product_faqs',
+        'apw_woo_before_product_addons',
+        'apw_woo_after_product_addons',
+        'apw_woo_product_addons'
     );
+
     // Add visualizers to all hooks
     foreach ($hooks_to_visualize as $hook) {
         add_action($hook, apw_woo_hook_visualizer($hook), 999);
     }
 }
-// Handle Product Add-Ons placement - preserve the hook structure
-add_action('init', 'apw_woo_move_product_addons');
-function apw_woo_move_product_addons() {
-    // Only if Product Add-ons class exists
-    if (class_exists('WC_Product_Addons_Display')) {
-        // Remove from default location, preserving the hook itself
-        remove_action('woocommerce_before_add_to_cart_button', array('WC_Product_Addons_Display', 'display'), 10);
-        // Add to our desired location, maintaining correct hook integration
-        add_action('woocommerce_product_meta_end', 'apw_woo_display_product_addons', 15);
-        if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log('Product Add-ons relocated to product meta section');
-        }
-    }
-}
-// Function to display Product Add-Ons in our custom location
-function apw_woo_display_product_addons() {
-    global $product;
-    if (!is_a($product, 'WC_Product')) {
-        return;
-    }
-    // Check if Product Add-Ons are available for this product
-    if (function_exists('get_product_addons')) {
-        $product_addons = get_product_addons($product->get_id());
-        if (!empty($product_addons)) {
-            echo '<div class="apw-woo-product-addons">';
-            echo '<h3 class="apw-woo-product-addons-title">' . esc_html__('Product Options', 'apw-woo-plugin') . '</h3>';
-            // Use the original display method to ensure compatibility
-            if (class_exists('WC_Product_Addons_Display') && method_exists('WC_Product_Addons_Display', 'display')) {
-                WC_Product_Addons_Display::display();
-            }
-            echo '</div>'; // .apw-woo-product-addons
-        }
-    }
-}
+
 get_header();
+
 // Get current product
 global $product;
 if (!is_a($product, 'WC_Product')) {
@@ -147,21 +124,25 @@ if ($product) :
              * Hook: apw_woo_before_product_header
              */
             do_action('apw_woo_before_product_header', $product);
+
             if (APW_WOO_DEBUG_MODE) {
                 apw_woo_log('Rendering product page header');
             }
+
             if (shortcode_exists('block')) {
                 echo do_shortcode('[block id="fourth-level-page-header"]');
             } else {
                 // Fallback if shortcode doesn't exist
                 echo '<h1 class="apw-woo-page-title">' . esc_html($product->get_name()) . '</h1>';
             }
+
             /**
              * Hook: apw_woo_after_product_header
              */
             do_action('apw_woo_after_product_header', $product);
             ?>
         </div>
+
         <!-- Use Flatsome's container while keeping our plugin-specific classes -->
         <div class="container">
             <div class="row">
@@ -174,11 +155,13 @@ if ($product) :
                      */
                     do_action('woocommerce_before_single_product');
                     ?>
+
                     <div id="product-<?php the_ID(); ?>" <?php wc_product_class('', get_the_ID()); ?>>
                         <!-- Product Content Section -->
                         <div class="row apw-woo-row">
                             <div class="col-md-6 apw-woo-product-gallery-col">
                                 <?php do_action('apw_woo_before_product_gallery', $product); ?>
+
                                 <div class="apw-woo-product-gallery-wrapper">
                                     <?php
                                     /**
@@ -190,10 +173,13 @@ if ($product) :
                                     do_action('woocommerce_before_single_product_summary');
                                     ?>
                                 </div>
+
                                 <?php do_action('apw_woo_after_product_gallery', $product); ?>
                             </div>
+
                             <div class="col-md-6 apw-woo-product-summary-col">
                                 <?php do_action('apw_woo_before_product_summary', $product); ?>
+
                                 <div class="apw-woo-product-summary">
                                     <?php
                                     /**
@@ -207,13 +193,19 @@ if ($product) :
                                      * @hooked woocommerce_template_single_meta - 40
                                      * @hooked woocommerce_template_single_sharing - 50
                                      * @hooked WC_Structured_Data::generate_product_data() - 60
+                                     *
+                                     * Our class-apw-woo-product-addons.php has already:
+                                     * 1. Removed Product Add-ons from default location
+                                     * 2. Added them to this hook with priority 45 (between meta and sharing)
                                      */
                                     do_action('woocommerce_single_product_summary');
                                     ?>
                                 </div>
+
                                 <?php do_action('apw_woo_after_product_summary', $product); ?>
                             </div>
                         </div>
+
                         <?php
                         /**
                          * Hook: woocommerce_after_single_product_summary
@@ -225,12 +217,14 @@ if ($product) :
                         do_action('woocommerce_after_single_product_summary');
                         ?>
                     </div>
+
                     <?php
                     /**
                      * Hook: woocommerce_after_single_product
                      */
                     do_action('woocommerce_after_single_product');
                     ?>
+
                     <!-- Product Description -->
                     <?php
                     // Make sure we're using the original product for the description
@@ -239,16 +233,19 @@ if ($product) :
                         <div class="row apw-woo-row">
                             <div class="col apw-woo-product-description-section">
                                 <?php do_action('apw_woo_before_product_description', $original_product); ?>
+
                                 <div class="apw-woo-product-description">
                                     <h2 class="apw-woo-product-description-title">
                                         <?php esc_html_e('Product Description', 'apw-woo-plugin'); ?>
                                     </h2>
                                     <?php echo apply_filters('the_content', $original_product->get_description()); ?>
                                 </div>
+
                                 <?php do_action('apw_woo_after_product_description', $original_product); ?>
                             </div>
                         </div>
                     <?php endif; ?>
+
                     <!-- FAQ Section -->
                     <div class="row apw-woo-row">
                         <div class="col apw-woo-faq-section-container">
@@ -276,6 +273,7 @@ if ($product) :
                              * Hook: apw_woo_before_product_faqs
                              */
                             do_action('apw_woo_before_product_faqs', $product);
+
                             // Include the FAQ display partial
                             if (file_exists(APW_WOO_PLUGIN_DIR . 'templates/partials/faq-display.php')) {
                                 // Verify product is valid before passing to FAQ display
@@ -296,6 +294,7 @@ if ($product) :
                                     apw_woo_log('FAQ display partial not found');
                                 }
                             }
+
                             /**
                              * Hook: apw_woo_after_product_faqs
                              */
@@ -319,4 +318,5 @@ else:
     </div>
 <?php
 endif;
+
 get_footer();
