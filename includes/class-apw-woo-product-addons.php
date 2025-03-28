@@ -60,6 +60,14 @@ class APW_Woo_Product_Addons {
      * Register Product Add-ons hooks for visualization
      */
     public function register_visualization_hooks() {
+        // Check if visualization function exists before using it
+        if (!function_exists('apw_woo_hook_visualizer')) {
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log('Hook visualizer function not found - visualization skipped');
+            }
+            return;
+        }
+
         // Add these hooks to the visualization system
         $addon_hooks = array(
             'woocommerce_product_addons_start',
@@ -69,12 +77,6 @@ class APW_Woo_Product_Addons {
             'apw_woo_before_product_addons',
             'apw_woo_after_product_addons'
         );
-
-        // Loop through hooks and add the visualizer
-        global $hooks_to_visualize;
-        if (is_array($hooks_to_visualize)) {
-            $hooks_to_visualize = array_merge($hooks_to_visualize, $addon_hooks);
-        }
 
         // Register our own visualization directly
         foreach ($addon_hooks as $hook) {
