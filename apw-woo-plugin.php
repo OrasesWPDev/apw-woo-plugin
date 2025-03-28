@@ -1,22 +1,59 @@
 <?php
 /**
- * Plugin Name: APW WooCommerce Plugin
- * Plugin URI: https://github.com/OrasesWPDev/apw-woo-plugin
- * Description: Custom WooCommerce enhancements for displaying products across shop, category, and product pages.
- * Version: 1.0.0
- * Author: Orases
- * Author URI: https://orases.com
- * Text Domain: apw-woo-plugin
+ * APW WooCommerce Plugin
+ *
+ * @package           APW_Woo_Plugin
+ * @author            Orases
+ * @copyright         2023 Orases
+ * @license           GPL-2.0-or-later
+ *
+ * @wordpress-plugin
+ * Plugin Name:       APW WooCommerce Plugin
+ * Plugin URI:        https://github.com/OrasesWPDev/apw-woo-plugin
+ * Description:       Custom WooCommerce enhancements for displaying products across shop, category, and product pages.
+ * Version:           1.0.0
+ * Requires at least: 5.3
+ * Requires PHP:      7.2
+ * Author:            Orases
+ * Author URI:        https://orases.com
+ * Text Domain:       apw-woo-plugin
+ * Domain Path:       /languages
+ * License:           GPL v2 or later
+ * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
  * WC requires at least: 5.0
- * WC tested up to: 8.0
+ * WC tested up to:   8.0
+ * Update URI:        https://example.com/my-plugin/
  */
 
 // If this file is called directly, abort.
-if (!defined('ABSPATH')) {
+if ( ! defined( 'ABSPATH' ) ) {
     exit; // Exit if accessed directly
 }
 
-// Add HPOS compatibility
+//--------------------------------------------------------------
+// Define plugin constants
+//--------------------------------------------------------------
+define('APW_WOO_VERSION', '1.0.0');
+define('APW_WOO_PLUGIN_DIR', plugin_dir_path(__FILE__));
+define('APW_WOO_PLUGIN_URL', plugin_dir_url(__FILE__));
+define('APW_WOO_PLUGIN_FILE', __FILE__);
+define('APW_WOO_PLUGIN_BASENAME', plugin_basename(__FILE__));
+
+/**
+ * Debug mode - enabled for development
+ * Controls logging and visualization features throughout the plugin.
+ * Particularly useful for template and hook debugging with Flatsome theme.
+ *
+ * @see templates/woocommerce/single-product.php for hook visualization
+ */
+define('APW_WOO_DEBUG_MODE', true);
+
+/**
+ * WooCommerce HPOS compatibility declaration
+ *
+ * Ensures compatibility with WooCommerce High-Performance Order Storage
+ * @see https://woocommerce.com/document/high-performance-order-storage/
+ */
 add_action('before_woocommerce_init', function() {
     if (class_exists(\Automattic\WooCommerce\Utilities\FeaturesUtil::class)) {
         \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility(
@@ -28,24 +65,21 @@ add_action('before_woocommerce_init', function() {
 });
 
 //--------------------------------------------------------------
-// Define plugin constants
-//--------------------------------------------------------------
-define('APW_WOO_VERSION', '1.0.0');
-define('APW_WOO_PLUGIN_DIR', plugin_dir_path(__FILE__));
-define('APW_WOO_PLUGIN_URL', plugin_dir_url(__FILE__));
-define('APW_WOO_PLUGIN_FILE', __FILE__);
-define('APW_WOO_PLUGIN_BASENAME', plugin_basename(__FILE__));
-// Debug mode - set to true for debugging
-define('APW_WOO_DEBUG_MODE', true);
-
-//--------------------------------------------------------------
 // Dependency Check Helper Functions
 //--------------------------------------------------------------
 
 /**
  * Check if WooCommerce is active
+ *
+ * @since 1.0.0
+ * @return boolean True if WooCommerce is active
  */
 function apw_woo_is_woocommerce_active() {
+    // Fastest check - using function existence
+    if (function_exists('WC')) {
+        return true;
+    }
+
     return in_array(
         'woocommerce/woocommerce.php',
         apply_filters('active_plugins', get_option('active_plugins'))
@@ -53,28 +87,38 @@ function apw_woo_is_woocommerce_active() {
 }
 
 /**
- * Check if ACF Pro is active
+ * Check if Advanced Custom Fields Pro is active
+ *
+ * @since 1.0.0
+ * @return boolean True if ACF Pro is active
  */
 function apw_woo_is_acf_pro_active() {
-    // First, check if the ACF Pro plugin is active
-    if (in_array('advanced-custom-fields-pro/acf.php', apply_filters('active_plugins', get_option('active_plugins')))) {
+    // Fastest check - using function existence
+    if (function_exists('get_field')) {
         return true;
     }
 
-    // If not found in the standard location, check for other possible ACF Pro paths
+    // Get active plugins once to avoid repeated calls
+    $active_plugins = apply_filters('active_plugins', get_option('active_plugins'));
+
+    // First, check standard ACF Pro path
+    if (in_array('advanced-custom-fields-pro/acf.php', $active_plugins)) {
+        return true;
+    }
+
+    // Check alternative paths
     $possible_acf_paths = [
-        'advanced-custom-fields-pro/acf.php',
         'acf-pro/acf.php',
         'acf/acf.php'
     ];
 
     foreach ($possible_acf_paths as $path) {
-        if (in_array($path, apply_filters('active_plugins', get_option('active_plugins')))) {
+        if (in_array($path, $active_plugins)) {
             return true;
         }
     }
 
-    // Also check if ACF function exists as a final check
+    // Final fallback check
     return function_exists('acf_register_block_type');
 }
 
@@ -85,28 +129,49 @@ function apw_woo_is_acf_pro_active() {
 /**
  * Get the FAQ page ID for a specific context
  *
+ * Retrieves the appropriate FAQ page ID based on the context (shop, category, product).
+ * Allows for filtering and falls back to safe defaults if not set.
+ *
+ * @since 1.0.0
  * @param string $context The context for which to retrieve the FAQ page ID (shop, category, etc.)
- * @return int The FAQ page ID
+ * @return int The sanitized FAQ page ID
  */
 function apw_woo_get_faq_page_id($context = 'shop') {
+    // Sanitize input to prevent potential issues
+    $context = sanitize_key($context);
+
+    // Valid contexts - restricting to only supported types
+    $valid_contexts = array('shop', 'category', 'product');
+
+    // If context is not valid, default to 'shop'
+    if (!in_array($context, $valid_contexts)) {
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log("Invalid FAQ context requested: {$context}, defaulting to 'shop'");
+        }
+        $context = 'shop';
+    }
+
     // Default fallback values
     $default_ids = array(
-        'shop' => 0, // Default to 0 (no FAQs) instead of hardcoded 66
+        'shop' => 0,
         'category' => 0,
         'product' => 0
     );
 
-    // Get value from options if set
+    // Build option name with prefix for better organization
     $option_name = 'apw_woo_faq_' . $context . '_page_id';
+
+    // Get value from options with fallback to default
     $page_id = get_option($option_name, $default_ids[$context]);
 
-    // Allow filtering
+    // Allow filtering for extensibility
     $page_id = apply_filters('apw_woo_' . $context . '_faq_page_id', $page_id);
 
     if (APW_WOO_DEBUG_MODE) {
         apw_woo_log("FAQ Page ID for {$context}: {$page_id}");
     }
 
+    // Ensure the ID is a positive integer or zero
     return absint($page_id);
 }
 
@@ -114,29 +179,44 @@ function apw_woo_get_faq_page_id($context = 'shop') {
  * Test ACF FAQ field retrieval across all contexts
  *
  * This function helps verify that FAQs are working correctly with template changes
- * and buffering approach.
+ * and buffering approach. It handles object validation, FAQ retrieval, and
+ * structure validation in one comprehensive test.
  *
- * @param mixed $object The object to test (product, category, or page ID)
- * @param string $type The type of object ('product', 'category', or 'page')
- * @return array|false The retrieved FAQs or false on failure
+ * @since 1.0.0
+ * @param mixed  $object The object to test (product, category, or page ID)
+ * @param string $type   Optional. The type of object ('product', 'category', or 'page').
+ *                       If not provided, the function will attempt to determine the type.
+ * @return array|false The retrieved FAQs array or false on failure
  */
 function apw_woo_test_faq_retrieval($object, $type = '') {
-    if (empty($type) && is_numeric($object)) {
-        $type = 'page';
-    } elseif (empty($type) && is_a($object, 'WC_Product')) {
-        $type = 'product';
-    } elseif (empty($type) && is_a($object, 'WP_Term')) {
-        $type = 'category';
+    // Auto-detect object type if not specified
+    if (empty($type)) {
+        if (is_numeric($object)) {
+            $type = 'page';
+        } elseif (is_a($object, 'WC_Product')) {
+            $type = 'product';
+        } elseif (is_a($object, 'WP_Term')) {
+            $type = 'category';
+        } else {
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log("FAQ TEST ERROR: Cannot determine object type automatically");
+            }
+            return false;
+        }
     }
 
+    // Validate that ACF is available
     if (!function_exists('get_field')) {
-        apw_woo_log("FAQ TEST ERROR: ACF's get_field function does not exist");
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log("FAQ TEST ERROR: ACF's get_field function does not exist");
+        }
         return false;
     }
 
+    // Initialize result data structure
     $result = array(
         'type' => $type,
-        'has_acf' => function_exists('get_field'),
+        'has_acf' => true, // We already checked this above
         'object_valid' => false,
         'faqs_retrieved' => false,
         'faqs_count' => 0,
@@ -144,6 +224,7 @@ function apw_woo_test_faq_retrieval($object, $type = '') {
         'error' => ''
     );
 
+    // Process based on object type
     switch ($type) {
         case 'product':
             if (!is_a($object, 'WC_Product')) {
@@ -180,10 +261,13 @@ function apw_woo_test_faq_retrieval($object, $type = '') {
 
         default:
             $result['error'] = 'Unknown object type: ' . $type;
-            apw_woo_log("FAQ TEST ERROR: " . $result['error']);
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log("FAQ TEST ERROR: " . $result['error']);
+            }
             return false;
     }
 
+    // Process and validate FAQs if found
     if (!empty($faqs)) {
         $result['faqs_retrieved'] = true;
         $result['faqs_count'] = count($faqs);
@@ -202,13 +286,21 @@ function apw_woo_test_faq_retrieval($object, $type = '') {
                 'answer_length' => isset($faqs[0]['answer']) ? strlen($faqs[0]['answer']) : 0,
             );
         }
+    } else {
+        // No FAQs found
+        $faqs = false;
     }
 
-    // Log the test results
+    // Log detailed test results when in debug mode
     if (APW_WOO_DEBUG_MODE) {
+        // Handle possible error in object_name or object_id
+        $object_name = isset($result['object_name']) ? $result['object_name'] : 'Unknown';
+        $object_id = isset($result['object_id']) ? $result['object_id'] : 'Unknown';
+
         apw_woo_log("FAQ TEST for {$type}: " .
             ($result['faqs_retrieved'] ? "SUCCESS - Found {$result['faqs_count']} FAQs" : "FAILED - No FAQs found") .
-            " for {$result['object_name']} (ID: {$result['object_id']})");
+            " for {$object_name} (ID: {$object_id})");
+
         apw_woo_log("Output buffer level during FAQ test: {$result['buffer_level']}");
 
         if (!empty($result['structure_errors'])) {
@@ -222,8 +314,13 @@ function apw_woo_test_faq_retrieval($object, $type = '') {
 /**
  * Validate FAQ structure against expected format
  *
+ * Verifies that FAQs conform to the expected data structure with
+ * required question and answer fields. Returns detailed information
+ * about any validation failures.
+ *
+ * @since 1.0.0
  * @param array $faqs Array of FAQs to validate
- * @return array Result with 'valid' boolean and 'errors' array
+ * @return array Associative array with 'valid' boolean and 'errors' array
  */
 function apw_woo_validate_faq_structure($faqs) {
     $result = array(
@@ -231,29 +328,48 @@ function apw_woo_validate_faq_structure($faqs) {
         'errors' => array()
     );
 
+    // Check if the FAQs parameter is actually an array
     if (!is_array($faqs)) {
         $result['valid'] = false;
         $result['errors'][] = 'FAQs is not an array';
         return $result;
     }
 
+    // If array is empty, it's technically valid but might be a warning case
+    if (empty($faqs)) {
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('FAQ validation warning: Empty FAQs array provided');
+        }
+        return $result; // Still valid, just empty
+    }
+
+    // Validate each FAQ item
     foreach ($faqs as $index => $faq) {
-        // Check if each FAQ is an array
+        // Validate FAQ is an array
         if (!is_array($faq)) {
             $result['valid'] = false;
             $result['errors'][] = "FAQ #{$index} is not an array";
-            continue;
+            continue; // Skip further checks for this item
         }
 
-        // Check for required fields
+        // Validate required fields exist and are not empty
         if (!isset($faq['question']) || empty($faq['question'])) {
             $result['valid'] = false;
-            $result['errors'][] = "FAQ #{$index} is missing question field";
+            $result['errors'][] = "FAQ #{$index} is missing or has empty question field";
         }
 
         if (!isset($faq['answer']) || empty($faq['answer'])) {
             $result['valid'] = false;
-            $result['errors'][] = "FAQ #{$index} is missing answer field";
+            $result['errors'][] = "FAQ #{$index} is missing or has empty answer field";
+        }
+
+        // Check for unexpected keys that might indicate a structure problem
+        $expected_keys = array('question', 'answer');
+        $unexpected_keys = array_diff(array_keys($faq), $expected_keys);
+
+        if (!empty($unexpected_keys) && APW_WOO_DEBUG_MODE) {
+            apw_woo_log("FAQ #{$index} has unexpected fields: " . implode(', ', $unexpected_keys));
+            // This doesn't invalidate the FAQ, but might indicate an issue
         }
     }
 
@@ -263,6 +379,10 @@ function apw_woo_validate_faq_structure($faqs) {
 /**
  * Check if output buffering is active and return level
  *
+ * Output buffering details are important for template loading and
+ * debugging issues with template parts and includes.
+ *
+ * @since 1.0.0
  * @return int Current output buffering level
  */
 function apw_woo_get_ob_level() {
@@ -274,48 +394,31 @@ function apw_woo_get_ob_level() {
 //--------------------------------------------------------------
 
 /**
- * Create log directory and log file if they don't exist
+ * Log messages when debug mode is enabled
+ *
+ * This is a wrapper for the APW_Woo_Logger class to maintain backward compatibility
+ * with existing code that calls this function directly.
+ *
+ * @since 1.0.0
+ * @param mixed $message The message or data to log
+ * @param string $level Optional. Log level (info, warning, error). Default 'info'.
+ * @return void
  */
-function apw_woo_setup_logs() {
-    if (APW_WOO_DEBUG_MODE) {
-        $log_dir = APW_WOO_PLUGIN_DIR . 'logs';
-        if (!file_exists($log_dir)) {
-            wp_mkdir_p($log_dir);
-            // Create .htaccess file to protect logs directory
-            $htaccess_content = "# Deny access to all files in this directory
-<Files \"*\">
-    <IfModule mod_authz_core.c>
-        Require all denied
-    </IfModule>
-    <IfModule !mod_authz_core.c>
-        Order deny,allow
-        Deny from all
-    </IfModule>
-</Files>";
-            file_put_contents($log_dir . '/.htaccess', $htaccess_content);
-            // Create index.php to prevent directory listing
-            file_put_contents($log_dir . '/index.php', '<?php // Silence is golden.');
-        }
-    }
+function apw_woo_log($message, $level = 'info') {
+    APW_Woo_Logger::log($message, $level);
 }
 
 /**
- * Log messages when debug mode is enabled
+ * Create log directory and security files if they don't exist
+ *
+ * This is a wrapper for the APW_Woo_Logger class to maintain backward compatibility
+ * with existing code that calls this function directly.
+ *
+ * @since 1.0.0
+ * @return void
  */
-function apw_woo_log($message) {
-    if (APW_WOO_DEBUG_MODE) {
-        // Set timezone to EST (New York)
-        $timezone = new DateTimeZone('America/New_York');
-        $date = new DateTime('now', $timezone);
-        // Format the date for file name and timestamp
-        $log_file = APW_WOO_PLUGIN_DIR . 'logs/debug-' . $date->format('Y-m-d') . '.log';
-        if (is_array($message) || is_object($message)) {
-            $message = print_r($message, true);
-        }
-        $timestamp = $date->format('[Y-m-d H:i:s T]'); // T will show timezone abbreviation
-        $formatted_message = $timestamp . ' ' . $message . PHP_EOL;
-        error_log($formatted_message, 3, $log_file);
-    }
+function apw_woo_setup_logs() {
+    APW_Woo_Logger::setup_logs();
 }
 
 //--------------------------------------------------------------
@@ -324,29 +427,85 @@ function apw_woo_log($message) {
 
 /**
  * Auto-include all PHP files in the includes directory
+ *
+ * Recursively loads all PHP files from the includes directory and specified subdirectories.
+ * Files are loaded in a predictable order: main includes first, then subdirectories.
+ * Skip files that start with 'class-' to allow for proper class autoloading order.
+ *
+ * @since 1.0.0
+ * @return void
  */
 function apw_woo_autoload_files() {
     $includes_dir = APW_WOO_PLUGIN_DIR . 'includes';
+
+    // Ensure the includes directory exists
     if (!file_exists($includes_dir)) {
-        wp_mkdir_p($includes_dir);
-        apw_woo_log('Created includes directory.');
-    }
-    apw_woo_log('Starting to autoload files.');
-    // Get all php files from includes directory
-    $includes_files = glob($includes_dir . '/*.php');
-    // Load all files in the includes directory
-    foreach ($includes_files as $file) {
-        if (file_exists($file)) {
-            require_once $file;
-            apw_woo_log('Loaded file: ' . basename($file));
+        if (wp_mkdir_p($includes_dir)) {
+            apw_woo_log('Created includes directory.');
+        } else {
+            apw_woo_log('Failed to create includes directory.', 'error');
+            return;
         }
     }
-    // Autoload subdirectories if they exist
+
+    apw_woo_log('Starting to autoload files.');
+
+    // First, load core logger class to ensure logging functions are available
+    $logger_file = $includes_dir . '/class-apw-woo-logger.php';
+    if (file_exists($logger_file)) {
+        require_once $logger_file;
+        apw_woo_log('Loaded logger class: ' . basename($logger_file));
+    }
+
+    // Next, load function files (files that don't start with 'class-')
+    // This ensures functions are available for classes
+    $function_files = glob($includes_dir . '/*.php');
+
+    foreach ($function_files as $file) {
+        $basename = basename($file);
+
+        // Skip the logger class since we already loaded it
+        if ($basename === 'class-apw-woo-logger.php') {
+            continue;
+        }
+
+        // Skip other class files for now - will load them next
+        if (strpos($basename, 'class-') === 0) {
+            continue;
+        }
+
+        if (file_exists($file)) {
+            require_once $file;
+            apw_woo_log('Loaded function file: ' . $basename);
+        }
+    }
+
+    // Next, load class files
+    $class_files = glob($includes_dir . '/class-*.php');
+
+    foreach ($class_files as $file) {
+        $basename = basename($file);
+
+        // Skip the logger class since we already loaded it
+        if ($basename === 'class-apw-woo-logger.php') {
+            continue;
+        }
+
+        if (file_exists($file)) {
+            require_once $file;
+            apw_woo_log('Loaded class file: ' . $basename);
+        }
+    }
+
+    // Finally, load subdirectory files if they exist
     $subdirs = array('admin', 'frontend', 'templates');
+
     foreach ($subdirs as $subdir) {
         $subdir_path = $includes_dir . '/' . $subdir;
+
         if (file_exists($subdir_path)) {
             $subdir_files = glob($subdir_path . '/*.php');
+
             foreach ($subdir_files as $file) {
                 if (file_exists($file)) {
                     require_once $file;
@@ -355,121 +514,26 @@ function apw_woo_autoload_files() {
             }
         }
     }
+
     apw_woo_log('Finished autoloading files.');
 }
 
+//--------------------------------------------------------------
+// File and Asset Management Functions
+//--------------------------------------------------------------
+
 /**
  * Register and enqueue CSS/JS assets with cache busting
- * Only loads assets on WooCommerce pages to optimize performance
+ *
+ * This is a wrapper for the APW_Woo_Assets class to maintain backward compatibility
+ * with existing code that calls this function directly.
+ *
+ * @since 1.0.0
+ * @return void
  */
 function apw_woo_register_assets() {
-    // Only load on WooCommerce pages
-    if (!is_woocommerce() && !is_cart() && !is_checkout() && !is_account_page()) {
-        return;
-    }
-
-    // Get current page type for conditional loading
-    $current_page_type = 'generic';
-    if (is_shop()) {
-        $current_page_type = 'shop';
-    } elseif (is_product()) {
-        $current_page_type = 'product';
-    } elseif (is_product_category()) {
-        $current_page_type = 'category';
-    } elseif (is_cart()) {
-        $current_page_type = 'cart';
-    } elseif (is_checkout()) {
-        $current_page_type = 'checkout';
-    } elseif (is_account_page()) {
-        $current_page_type = 'account';
-    }
-
-    if (APW_WOO_DEBUG_MODE) {
-        apw_woo_log("Loading APW WooCommerce Plugin assets on {$current_page_type} page");
-    }
-
-    // Define asset paths - common assets
-    $css_file = APW_WOO_PLUGIN_DIR . 'assets/css/apw-woo-public.css';
-    $js_file = APW_WOO_PLUGIN_DIR . 'assets/js/apw-woo-public.js';
-
-    // Define page-specific asset paths for future use
-    $page_specific_css = APW_WOO_PLUGIN_DIR . "assets/css/apw-woo-{$current_page_type}.css";
-    $page_specific_js = APW_WOO_PLUGIN_DIR . "assets/js/apw-woo-{$current_page_type}.js";
-
-    // CSS with cache busting - common CSS
-    if (file_exists($css_file)) {
-        $css_ver = filemtime($css_file);
-        wp_register_style(
-            'apw-woo-styles',
-            APW_WOO_PLUGIN_URL . 'assets/css/apw-woo-public.css',
-            array(),
-            $css_ver
-        );
-        wp_enqueue_style('apw-woo-styles');
-        if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log('Enqueued common CSS with version: ' . $css_ver);
-        }
-    }
-
-    // Page-specific CSS if it exists
-    if (file_exists($page_specific_css)) {
-        $css_ver = filemtime($page_specific_css);
-        wp_register_style(
-            "apw-woo-{$current_page_type}-styles",
-            APW_WOO_PLUGIN_URL . "assets/css/apw-woo-{$current_page_type}.css",
-            array('apw-woo-styles'), // Depend on common styles
-            $css_ver
-        );
-        wp_enqueue_style("apw-woo-{$current_page_type}-styles");
-        if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log("Enqueued {$current_page_type}-specific CSS with version: " . $css_ver);
-        }
-    }
-
-    // JS with cache busting - common JS
-    if (file_exists($js_file)) {
-        $js_ver = filemtime($js_file);
-        wp_register_script(
-            'apw-woo-scripts',
-            APW_WOO_PLUGIN_URL . 'assets/js/apw-woo-public.js',
-            array('jquery'),
-            $js_ver,
-            true
-        );
-        wp_enqueue_script('apw-woo-scripts');
-        if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log('Enqueued common JS with version: ' . $js_ver);
-        }
-    }
-
-    // Page-specific JS if it exists
-    if (file_exists($page_specific_js)) {
-        $js_ver = filemtime($page_specific_js);
-        wp_register_script(
-            "apw-woo-{$current_page_type}-scripts",
-            APW_WOO_PLUGIN_URL . "assets/js/apw-woo-{$current_page_type}.js",
-            array('jquery', 'apw-woo-scripts'), // Depend on jQuery and common scripts
-            $js_ver,
-            true
-        );
-        wp_enqueue_script("apw-woo-{$current_page_type}-scripts");
-        if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log("Enqueued {$current_page_type}-specific JS with version: " . $js_ver);
-        }
-    }
-
-    // Add page-specific data for JS if needed
-    $page_data = array(
-        'ajax_url' => admin_url('admin-ajax.php'),
-        'page_type' => $current_page_type,
-        'nonce' => wp_create_nonce('apw_woo_nonce')
-    );
-
-    // Allow other parts of the plugin to modify JS data
-    $page_data = apply_filters('apw_woo_js_data', $page_data, $current_page_type);
-
-    // Localize script with data
-    wp_localize_script('apw-woo-scripts', 'apwWooData', $page_data);
+    // Forward to the class method
+    APW_Woo_Assets::register_assets();
 }
 
 //--------------------------------------------------------------
@@ -478,24 +542,45 @@ function apw_woo_register_assets() {
 
 /**
  * Define ACF field structure for FAQs
+ *
+ * Sets up the standard field names and structure used by the plugin
+ * for FAQ functionality and displays guidance in the admin area.
+ *
+ * @since 1.0.0
+ * @return void
  */
 function apw_woo_define_faq_field_structure() {
-    // Only execute on admin pages that might use this information
+    // Only execute on admin pages
     if (!is_admin()) {
         return;
     }
 
     // Documentation constants for ACF field structure
-    define('APW_WOO_FAQ_FIELD_GROUP', 'faqs');
-    define('APW_WOO_FAQ_QUESTION_FIELD', 'question');
-    define('APW_WOO_FAQ_ANSWER_FIELD', 'answer');
+    if (!defined('APW_WOO_FAQ_FIELD_GROUP')) {
+        define('APW_WOO_FAQ_FIELD_GROUP', 'faqs');
+    }
+
+    if (!defined('APW_WOO_FAQ_QUESTION_FIELD')) {
+        define('APW_WOO_FAQ_QUESTION_FIELD', 'question');
+    }
+
+    if (!defined('APW_WOO_FAQ_ANSWER_FIELD')) {
+        define('APW_WOO_FAQ_ANSWER_FIELD', 'answer');
+    }
 
     // Document expected FAQ structure for site administrators
+    // Only add this on ACF field group pages
     add_action('admin_notices', 'apw_woo_display_faq_field_notice');
 }
 
 /**
  * Display admin notice about FAQ field structure
+ *
+ * Shown only on ACF field group edit pages to help administrators
+ * set up the correct field structure for FAQs.
+ *
+ * @since 1.0.0
+ * @return void
  */
 function apw_woo_display_faq_field_notice() {
     // Only show this notice on ACF field group edit pages
@@ -519,12 +604,53 @@ function apw_woo_display_faq_field_notice() {
 
 /**
  * Initialize the plugin
+ *
+ * Central initialization function that coordinates the loading
+ * and initialization of all plugin components in the correct order.
+ *
+ * @since 1.0.0
+ * @return void
  */
 function apw_woo_init() {
     // Setup logs first
     apw_woo_setup_logs();
     apw_woo_log('Plugin initialization started.');
 
+    // Verify dependencies
+    if (!apw_woo_verify_dependencies()) {
+        return; // Dependency check failed, initialization aborted
+    }
+
+    // Define FAQ field structure
+    apw_woo_define_faq_field_structure();
+
+    // Autoload files
+    apw_woo_autoload_files();
+
+    // Initialize main plugin class
+    apw_woo_initialize_main_class();
+
+    // Initialize asset management system
+    if (class_exists('APW_Woo_Assets')) {
+        APW_Woo_Assets::init();
+        apw_woo_log('Asset management system initialized.');
+    } else {
+        // Fallback to legacy asset registration if class doesn't exist
+        add_action('wp_enqueue_scripts', 'apw_woo_register_assets');
+        apw_woo_log('Using legacy asset registration method.');
+    }
+
+    // Initialize Product Add-ons integration
+    apw_woo_initialize_product_addons();
+}
+
+/**
+ * Verify all plugin dependencies are met
+ *
+ * @since 1.0.0
+ * @return bool True if all dependencies are satisfied
+ */
+function apw_woo_verify_dependencies() {
     // Check if WooCommerce is active
     if (!apw_woo_is_woocommerce_active()) {
         add_action('admin_notices', function() {
@@ -534,8 +660,8 @@ function apw_woo_init() {
             </div>
             <?php
         });
-        apw_woo_log('WooCommerce not active - plugin initialization stopped.');
-        return;
+        apw_woo_log('WooCommerce not active - plugin initialization stopped.', 'error');
+        return false;
     }
 
     // Check if ACF Pro is active
@@ -547,39 +673,61 @@ function apw_woo_init() {
             </div>
             <?php
         });
-        apw_woo_log('ACF Pro not active - plugin initialization stopped.');
-        return;
+        apw_woo_log('ACF Pro not active - plugin initialization stopped.', 'error');
+        return false;
     }
 
-    // Define FAQ field structure
-    apw_woo_define_faq_field_structure();
+    return true;
+}
 
-    // Autoload files
-    apw_woo_autoload_files();
-
-    // Initialize main plugin class if it exists
+/**
+ * Initialize the main plugin class
+ *
+ * @since 1.0.0
+ * @return void
+ */
+function apw_woo_initialize_main_class() {
     if (class_exists('APW_Woo_Plugin')) {
         $plugin = APW_Woo_Plugin::get_instance();
         $plugin->init();
         apw_woo_log('Main plugin class initialized.');
     } else {
-        apw_woo_log('Main plugin class not found.');
+        apw_woo_log('Main plugin class not found.', 'error');
     }
+}
 
-    // Initialize Product Add-ons integration
-    require_once APW_WOO_PLUGIN_DIR . 'includes/apw-woo-product-addons-functions.php';
+/**
+ * Initialize Product Add-ons integration
+ *
+ * @since 1.0.0
+ * @return void
+ */
+function apw_woo_initialize_product_addons() {
+    // Load Product Add-ons functions file
+    $addons_file = APW_WOO_PLUGIN_DIR . 'includes/apw-woo-product-addons-functions.php';
 
-    // Check if Product Add-ons plugin is active
-    if (function_exists('apw_woo_is_product_addons_active') && apw_woo_is_product_addons_active()) {
-        require_once APW_WOO_PLUGIN_DIR . 'includes/class-apw-woo-product-addons.php';
-        $product_addons = APW_Woo_Product_Addons::get_instance();
-        apw_woo_log('Product Add-ons integration initialized.');
-    } else if (APW_WOO_DEBUG_MODE) {
-        apw_woo_log('Product Add-ons plugin not active - integration skipped.');
+    if (file_exists($addons_file)) {
+        require_once $addons_file;
+
+        // Check if Product Add-ons plugin is active
+        if (function_exists('apw_woo_is_product_addons_active') && apw_woo_is_product_addons_active()) {
+            $addon_class_file = APW_WOO_PLUGIN_DIR . 'includes/class-apw-woo-product-addons.php';
+
+            if (file_exists($addon_class_file)) {
+                require_once $addon_class_file;
+                $product_addons = APW_Woo_Product_Addons::get_instance();
+                apw_woo_log('Product Add-ons integration initialized.');
+            } else {
+                apw_woo_log('Product Add-ons class file not found.', 'warning');
+            }
+        } else {
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log('Product Add-ons plugin not active - integration skipped.');
+            }
+        }
+    } else {
+        apw_woo_log('Product Add-ons functions file not found.', 'warning');
     }
-
-    // Register assets
-    add_action('wp_enqueue_scripts', 'apw_woo_register_assets');
 }
 
 //--------------------------------------------------------------
@@ -588,28 +736,68 @@ function apw_woo_init() {
 
 /**
  * Plugin activation hook
+ *
+ * Runs when the plugin is activated.
+ * Sets up necessary structures and flushes rewrite rules.
+ *
+ * @since 1.0.0
+ * @return void
  */
 function apw_woo_activate() {
-    // Setup logs directory
+    // Make sure log directory exists
     apw_woo_setup_logs();
-    apw_woo_log('Plugin activated.');
-    // Flush rewrite rules
+
+    // Create necessary plugin directories
+    $dirs_to_create = array(
+        'logs',
+        'assets/css',
+        'assets/js',
+        'assets/images'
+    );
+
+    foreach ($dirs_to_create as $dir) {
+        $full_path = APW_WOO_PLUGIN_DIR . $dir;
+        if (!file_exists($full_path)) {
+            wp_mkdir_p($full_path);
+        }
+    }
+
+    // Log the activation
+    apw_woo_log('Plugin activated.', 'info');
+
+    // Flush rewrite rules to ensure custom endpoints work
     flush_rewrite_rules();
 }
+
+// Register the activation hook
 register_activation_hook(__FILE__, 'apw_woo_activate');
 
 /**
  * Plugin deactivation hook
+ *
+ * Runs when the plugin is deactivated.
+ * Performs cleanup operations and flushes rewrite rules.
+ *
+ * @since 1.0.0
+ * @return void
  */
 function apw_woo_deactivate() {
+    // Log the deactivation
     if (APW_WOO_DEBUG_MODE) {
-        apw_woo_log('Plugin deactivated.');
+        apw_woo_log('Plugin deactivated.', 'info');
     }
-    // Clean up if needed
-    // (Add any cleanup code here)
-    // Flush rewrite rules
+
+    // Perform any necessary cleanup
+    // Note: We don't remove logs or other data to prevent data loss
+
+    // Remove transients
+    delete_transient('apw_woo_template_cache');
+
+    // Flush rewrite rules to remove any custom endpoints
     flush_rewrite_rules();
 }
+
+// Register the deactivation hook
 register_deactivation_hook(__FILE__, 'apw_woo_deactivate');
 
 //--------------------------------------------------------------
@@ -617,16 +805,55 @@ register_deactivation_hook(__FILE__, 'apw_woo_deactivate');
 //--------------------------------------------------------------
 
 /**
- * Simple test function to verify WooCommerce template filters are working
+ * WooCommerce template filter test function
+ *
+ * This function is only used during development to verify
+ * that template filters are correctly being applied.
+ *
+ * @since 1.0.0
+ * @param string $template      Original template path
+ * @param string $template_name Template name
+ * @param string $template_path Template path
+ * @return string Unmodified template path
  */
 function apw_woo_test_template_override($template, $template_name, $template_path) {
-    // Log when this filter runs
-    apw_woo_log('TEST: woocommerce_locate_template filter triggered for ' . $template_name);
-    error_log('APW WOO TEST: woocommerce_locate_template filter triggered for ' . $template_name);
-    // Return the original template
+    if (APW_WOO_DEBUG_MODE) {
+        // Log to plugin's debug log
+        apw_woo_log('Template filter test: ' . $template_name, 'debug');
+
+        // Also log to WP debug log for cross-reference
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('APW WOO TEMPLATE TEST: ' . $template_name . ' (Path: ' . $template . ')');
+        }
+    }
+
+    // Return unmodified template - this is just for testing
     return $template;
 }
-add_filter('woocommerce_locate_template', 'apw_woo_test_template_override', 999, 3);
 
+// Only add test filter if in debug mode
+if (APW_WOO_DEBUG_MODE) {
+    add_filter('woocommerce_locate_template', 'apw_woo_test_template_override', 999, 3);
+}
+
+/**
+ * Optional filter for performance testing - enables timing hooks
+ *
+ * @param bool $value Whether to enable performance tracking
+ * @return bool Filtered value
+ */
+function apw_woo_enable_performance_tracking($value) {
+    return APW_WOO_DEBUG_MODE ? true : $value;
+}
+
+// Only in debug mode, enable performance tracking
+if (APW_WOO_DEBUG_MODE) {
+    add_filter('apw_woo_enable_performance_tracking', '__return_true');
+}
+
+//--------------------------------------------------------------
 // Initialize the plugin
+//--------------------------------------------------------------
+
+// Hook into WordPress 'plugins_loaded' to initialize our plugin
 add_action('plugins_loaded', 'apw_woo_init');
