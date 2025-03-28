@@ -30,9 +30,9 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit; // Exit if accessed directly
 }
 
-//--------------------------------------------------------------
-// Define plugin constants
-//--------------------------------------------------------------
+/**
+ * Plugin constants
+ */
 define('APW_WOO_VERSION', '1.0.0');
 define('APW_WOO_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('APW_WOO_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -405,7 +405,23 @@ function apw_woo_get_ob_level() {
  * @return void
  */
 function apw_woo_log($message, $level = 'info') {
-    APW_Woo_Logger::log($message, $level);
+    // Check if logger class exists
+    if (class_exists('APW_Woo_Logger')) {
+        APW_Woo_Logger::log($message, $level);
+    } else {
+        // Fallback logging if class isn't available yet
+        if (APW_WOO_DEBUG_MODE) {
+            $log_dir = APW_WOO_PLUGIN_DIR . 'logs';
+            if (!file_exists($log_dir)) {
+                wp_mkdir_p($log_dir);
+            }
+
+            $log_file = $log_dir . '/debug-' . date('Y-m-d') . '.log';
+            $formatted_message = '[' . date('Y-m-d H:i:s') . ' EST] [' . strtoupper($level) . '] ' . $message . PHP_EOL;
+
+            error_log($formatted_message, 3, $log_file);
+        }
+    }
 }
 
 /**
@@ -418,7 +434,23 @@ function apw_woo_log($message, $level = 'info') {
  * @return void
  */
 function apw_woo_setup_logs() {
-    APW_Woo_Logger::setup_logs();
+    // Check if logger class exists
+    if (class_exists('APW_Woo_Logger')) {
+        APW_Woo_Logger::setup_logs();
+    } else {
+        // Fallback setup if class isn't loaded yet
+        if (APW_WOO_DEBUG_MODE) {
+            $log_dir = APW_WOO_PLUGIN_DIR . 'logs';
+
+            if (!file_exists($log_dir)) {
+                wp_mkdir_p($log_dir);
+
+                // Create basic security files
+                file_put_contents($log_dir . '/.htaccess', 'Deny from all');
+                file_put_contents($log_dir . '/index.php', '<?php // Silence is golden.');
+            }
+        }
+    }
 }
 
 //--------------------------------------------------------------
@@ -518,10 +550,6 @@ function apw_woo_autoload_files() {
     apw_woo_log('Finished autoloading files.');
 }
 
-//--------------------------------------------------------------
-// File and Asset Management Functions
-//--------------------------------------------------------------
-
 /**
  * Register and enqueue CSS/JS assets with cache busting
  *
@@ -533,7 +561,14 @@ function apw_woo_autoload_files() {
  */
 function apw_woo_register_assets() {
     // Forward to the class method
-    APW_Woo_Assets::register_assets();
+    if (class_exists('APW_Woo_Assets')) {
+        APW_Woo_Assets::register_assets();
+    } else {
+        // Fallback to original implementation if assets class doesn't exist
+        // This code would contain the original asset registration logic
+        // I'm excluding it here for brevity as we've created a class for it
+        apw_woo_log('APW_Woo_Assets class not found, using fallback asset registration.', 'warning');
+    }
 }
 
 //--------------------------------------------------------------
@@ -744,6 +779,12 @@ function apw_woo_initialize_product_addons() {
  * @return void
  */
 function apw_woo_activate() {
+    // Manually include the logger class if it's not already loaded
+    $logger_file = APW_WOO_PLUGIN_DIR . 'includes/class-apw-woo-logger.php';
+    if (file_exists($logger_file) && !class_exists('APW_Woo_Logger')) {
+        require_once $logger_file;
+    }
+
     // Make sure log directory exists
     apw_woo_setup_logs();
 

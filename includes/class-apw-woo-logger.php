@@ -110,7 +110,7 @@ Options -Indexes
      *
      * @since 1.0.0
      * @param mixed $message The message or data to log
-     * @param string $level Optional. Log level (info, warning, error). Default 'info'.
+     * @param string $level Optional. Log level (info, warning, error, debug). Default 'info'.
      * @return void
      */
     public static function log($message, $level = 'info') {
@@ -165,5 +165,46 @@ Options -Indexes
                 rename($log_file, $archive_file);
             }
         }
+    }
+
+    /**
+     * Log a performance metric with timing information
+     *
+     * @since 1.0.0
+     * @param string $operation The operation being timed
+     * @param float $start_time The start time from microtime(true)
+     * @param array $context Optional. Additional context information
+     * @return void
+     */
+    public static function log_performance($operation, $start_time, $context = array()) {
+        // Skip if debug mode is disabled
+        if (!APW_WOO_DEBUG_MODE) {
+            return;
+        }
+
+        // Skip if performance tracking is disabled
+        if (!apply_filters('apw_woo_enable_performance_tracking', false)) {
+            return;
+        }
+
+        // Calculate execution time
+        $execution_time = microtime(true) - $start_time;
+        $execution_ms = round($execution_time * 1000, 2); // Convert to milliseconds
+
+        // Build performance message
+        $message = sprintf(
+            "Performance: %s completed in %sms",
+            $operation,
+            $execution_ms
+        );
+
+        // Add context if provided
+        if (!empty($context)) {
+            $context_str = json_encode($context);
+            $message .= " | Context: " . $context_str;
+        }
+
+        // Log with special performance level
+        self::log($message, 'DEBUG');
     }
 }
