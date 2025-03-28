@@ -566,6 +566,18 @@ function apw_woo_init() {
         apw_woo_log('Main plugin class not found.');
     }
 
+    // Initialize Product Add-ons integration
+    require_once APW_WOO_PLUGIN_DIR . 'includes/apw-woo-product-addons-functions.php';
+
+    // Check if Product Add-ons plugin is active
+    if (function_exists('apw_woo_is_product_addons_active') && apw_woo_is_product_addons_active()) {
+        require_once APW_WOO_PLUGIN_DIR . 'includes/class-apw-woo-product-addons.php';
+        $product_addons = APW_Woo_Product_Addons::get_instance();
+        apw_woo_log('Product Add-ons integration initialized.');
+    } else if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log('Product Add-ons plugin not active - integration skipped.');
+    }
+
     // Register assets
     add_action('wp_enqueue_scripts', 'apw_woo_register_assets');
 }
