@@ -25,36 +25,56 @@ function apw_woo_hook_visualizer($hook_name) {
     };
 }
 
-// Helper function to visualize hook data (only for admins)
+// Improved compact hook visualization
 function apw_woo_visualize_hook($hook_name, $params = array()) {
     if (!APW_WOO_DEBUG_MODE || !current_user_can('manage_options')) {
         return;
     }
-    echo '<div style="margin: 10px 0; padding: 10px; border: 2px dashed #ff6b6b; background-color: #fff; color: #333; font-family: monospace;">';
-    echo '<h4 style="margin: 0 0 5px 0; color: #ff6b6b;">HOOK: ' . esc_html($hook_name) . '</h4>';
-    if (!empty($params)) {
-        echo '<p>Available Parameters:</p>';
-        echo '<ul style="margin: 0; padding-left: 20px;">';
-        foreach ($params as $key => $value) {
-            echo '<li>';
-            if (is_object($value)) {
-                echo 'Object: ' . esc_html(get_class($value));
-                // Show basic info for WC_Product objects
-                if ($value instanceof WC_Product) {
-                    echo ' (ID: ' . esc_html($value->get_id()) . ', Name: ' . esc_html($value->get_name()) . ')';
-                }
-            } elseif (is_array($value)) {
-                echo 'Array: ' . count($value) . ' items';
-            } else {
-                echo gettype($value) . ': ' . esc_html(var_export($value, true));
-            }
-            echo '</li>';
-        }
-        echo '</ul>';
-    } else {
-        echo '<p>No parameters available for this hook.</p>';
-    }
-    echo '</div>';
+
+    static $hook_counter = 0;
+    $hook_counter++;
+    $hook_id = 'hook-' . $hook_counter;
+
+    // Create a more compact display with toggle functionality
+    ?>
+    <div class="apw-hook-viz" style="margin: 5px 0; padding: 5px; border: 1px dashed #ff6b6b; background-color: #fff; font-family: monospace; font-size: 12px; max-width: 100%; overflow-x: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-weight: bold; color: #ff6b6b;">HOOK: <?php echo esc_html($hook_name); ?></span>
+            <a href="#" onclick="document.getElementById('<?php echo esc_attr($hook_id); ?>').style.display = document.getElementById('<?php echo esc_attr($hook_id); ?>').style.display === 'none' ? 'block' : 'none'; return false;" style="color: #0073aa; text-decoration: none; font-size: 10px;">[Toggle Details]</a>
+        </div>
+
+        <div id="<?php echo esc_attr($hook_id); ?>" style="display: none; margin-top: 5px; padding-top: 5px; border-top: 1px dotted #ddd;">
+            <?php if (!empty($params)): ?>
+                <div style="font-size: 11px; margin-bottom: 3px;">Parameters:</div>
+                <div style="margin-left: 10px;">
+                    <?php foreach ($params as $key => $value): ?>
+                        <div style="margin-bottom: 2px; word-break: break-word;">
+                            <strong><?php echo esc_html($key); ?>:</strong>
+                            <?php
+                            if (is_object($value)) {
+                                echo 'Object: ' . esc_html(get_class($value));
+                                if ($value instanceof WC_Product) {
+                                    echo ' (ID: ' . esc_html($value->get_id()) . ', Name: ' . esc_html($value->get_name()) . ')';
+                                }
+                            } elseif (is_array($value)) {
+                                // Show condensed array info
+                                echo 'Array (' . count($value) . ' items)';
+                            } else {
+                                // Truncate long values
+                                $val_str = var_export($value, true);
+                                echo esc_html(substr($val_str, 0, 50));
+                                if (strlen($val_str) > 50) echo '...';
+                            }
+                            ?>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php else: ?>
+                <div style="font-style: italic; font-size: 11px;">No parameters</div>
+            <?php endif; ?>
+        </div>
+    </div>
+    <?php
 }
 
 // Only add visualization for admins in debug mode
@@ -194,9 +214,8 @@ if ($product) :
                                      * @hooked woocommerce_template_single_sharing - 50
                                      * @hooked WC_Structured_Data::generate_product_data() - 60
                                      *
-                                     * Our class-apw-woo-product-addons.php has already:
-                                     * 1. Removed Product Add-ons from default location
-                                     * 2. Added them to this hook with priority 45 (between meta and sharing)
+                                     * Our class-apw-woo-product-addons.php has added:
+                                     * @hooked APW_Woo_Product_Addons->display_product_addons - 45
                                      */
                                     do_action('woocommerce_single_product_summary');
                                     ?>
