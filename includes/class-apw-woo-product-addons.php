@@ -136,10 +136,9 @@ class APW_Woo_Product_Addons {
         // Custom action to mark the start of add-ons
         do_action('woocommerce_product_addons_start', $product);
 
-        // Display the add-ons
-        if (class_exists('WC_Product_Addons_Display') && method_exists('WC_Product_Addons_Display', 'display')) {
-            WC_Product_Addons_Display::display();
-        }
+        // IMPORTANT FIX: Use the action instead of trying to call the method directly
+        do_action('woocommerce_before_add_to_cart_button');
+
 
         // Custom action to mark the end of add-ons
         do_action('woocommerce_product_addons_end', $product);
