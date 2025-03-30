@@ -118,7 +118,6 @@ class APW_Woo_Product_Addons {
         }
 
         global $product;
-
         // Verify we have a valid product
         if (!is_a($product, 'WC_Product')) {
             if (APW_WOO_DEBUG_MODE) {
@@ -136,9 +135,22 @@ class APW_Woo_Product_Addons {
         // Custom action to mark the start of add-ons
         do_action('woocommerce_product_addons_start', $product);
 
+        // FIX: Set up a filter to ensure the product ID is used correctly by Product Add-ons
+        add_filter('product_addons_get_product_id', function($product_id, $passed_product) use ($product) {
+            // If we're passing a product object instead of an ID, return the ID
+            if (is_object($passed_product) && is_a($passed_product, 'WC_Product')) {
+                return $passed_product->get_id();
+            }
+            return $product_id;
+        }, 10, 2);
+
         // IMPORTANT FIX: Use the action instead of trying to call the method directly
         do_action('woocommerce_before_add_to_cart_button');
 
+        // Remove our filter after use
+        remove_filter('product_addons_get_product_id', function($product_id, $passed_product) {
+            return $product_id;
+        }, 10);
 
         // Custom action to mark the end of add-ons
         do_action('woocommerce_product_addons_end', $product);

@@ -234,7 +234,6 @@ class APW_Woo_Template_Resolver {
      */
     private function setup_product_for_template($product_post, $request_url) {
         global $post;
-
         if (APW_WOO_DEBUG_MODE) {
             apw_woo_log("TEMPLATE OVERRIDE: Found product '" . $product_post->post_title . "' (ID: " . $product_post->ID . ") at URL: " . $request_url);
         }
@@ -248,6 +247,22 @@ class APW_Woo_Template_Resolver {
         if (APW_WOO_DEBUG_MODE) {
             apw_woo_log("PRODUCT DEBUG: Stored original product: " . $product_post->post_title . " (ID: " . $product_post->ID . ")");
         }
+
+        // Add early filters for title to ensure they use the correct product
+        add_filter('pre_get_document_title', function($title) use ($product_post) {
+            $site_name = get_bloginfo('name');
+            $product_title = $product_post->post_title;
+            $new_title = $product_title . ' - ' . $site_name;
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log("EARLY TITLE FIX: Set document title to \"" . $new_title . "\"");
+            }
+            return $new_title;
+        }, 0);  // Priority 0 to run before other filters
+
+        // Force the WP query object to use our product
+        global $wp_query;
+        $wp_query->queried_object = $product_post;
+        $wp_query->queried_object_id = $product_post->ID;
 
         // Setup the global environment for this product
         APW_Woo_Page_Detector::setup_product_page_globals($product_post);
