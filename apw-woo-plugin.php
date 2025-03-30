@@ -469,6 +469,8 @@ function apw_woo_setup_logs() {
  */
 function apw_woo_autoload_files() {
     $includes_dir = APW_WOO_PLUGIN_DIR . 'includes';
+    // Track loaded files to prevent duplicates
+    static $loaded_files = array();
 
     // Ensure the includes directory exists
     if (!file_exists($includes_dir)) {
@@ -484,64 +486,74 @@ function apw_woo_autoload_files() {
 
     // First, load core logger class to ensure logging functions are available
     $logger_file = $includes_dir . '/class-apw-woo-logger.php';
-    if (file_exists($logger_file)) {
+    if (file_exists($logger_file) && !isset($loaded_files[$logger_file])) {
         require_once $logger_file;
+        $loaded_files[$logger_file] = true;
         apw_woo_log('Loaded logger class: ' . basename($logger_file));
     }
 
     // Next, load function files (files that don't start with 'class-')
-    // This ensures functions are available for classes
     $function_files = glob($includes_dir . '/*.php');
-
     foreach ($function_files as $file) {
         $basename = basename($file);
-
         // Skip the logger class since we already loaded it
         if ($basename === 'class-apw-woo-logger.php') {
             continue;
         }
-
         // Skip other class files for now - will load them next
         if (strpos($basename, 'class-') === 0) {
             continue;
         }
-
-        if (file_exists($file)) {
+        if (file_exists($file) && !isset($loaded_files[$file])) {
             require_once $file;
+            $loaded_files[$file] = true;
             apw_woo_log('Loaded function file: ' . $basename);
         }
     }
 
     // Next, load class files
     $class_files = glob($includes_dir . '/class-*.php');
-
     foreach ($class_files as $file) {
         $basename = basename($file);
-
         // Skip the logger class since we already loaded it
         if ($basename === 'class-apw-woo-logger.php') {
             continue;
         }
-
-        if (file_exists($file)) {
+        if (file_exists($file) && !isset($loaded_files[$file])) {
             require_once $file;
+            $loaded_files[$file] = true;
             apw_woo_log('Loaded class file: ' . $basename);
         }
     }
 
     // Finally, load subdirectory files if they exist
     $subdirs = array('admin', 'frontend', 'templates', 'template');
-
     foreach ($subdirs as $subdir) {
         $subdir_path = $includes_dir . '/' . $subdir;
-
         if (file_exists($subdir_path)) {
             $subdir_files = glob($subdir_path . '/*.php');
-
             foreach ($subdir_files as $file) {
-                if (file_exists($file)) {
-                    require_once $file;
-                    apw_woo_log('Loaded file: ' . $subdir . '/' . basename($file));
+                // Check if file has already been included
+                $real_path = realpath($file);
+                if (file_exists($file) && !isset($loaded_files[$real_path])) {
+                    // Extract the class name from the file for additional check
+                    $content = file_get_contents($file);
+                    if (preg_match('/class\s+([a-zA-Z0-9_]+)/', $content, $matches)) {
+                        $class_name = $matches[1];
+                        // Only include if the class doesn't already exist
+                        if (!class_exists($class_name)) {
+                            require_once $file;
+                            $loaded_files[$real_path] = true;
+                            apw_woo_log('Loaded file: ' . $subdir . '/' . basename($file));
+                        } else {
+                            apw_woo_log('Skipped loading duplicate class ' . $class_name . ' from ' . $subdir . '/' . basename($file));
+                        }
+                    } else {
+                        // If we can't determine the class name, include safely with require_once
+                        require_once $file;
+                        $loaded_files[$real_path] = true;
+                        apw_woo_log('Loaded file: ' . $subdir . '/' . basename($file));
+                    }
                 }
             }
         }

@@ -157,20 +157,26 @@ class APW_Woo_Template_Resolver {
     private function maybe_get_product_template($wp) {
         // Special handling for /products/%product_cat%/ permalink structure
         $url_parts = explode('/', trim($wp->request, '/'));
-
         if (count($url_parts) < 3 || $url_parts[0] !== 'products') {
             return false;
         }
 
         // Get the product slug (last part of URL)
         $product_slug = end($url_parts);
-
         if (APW_WOO_DEBUG_MODE) {
             apw_woo_log("TEMPLATE OVERRIDE: Checking for product with slug: " . $product_slug);
         }
 
         // Try to find a product with this slug
         $product_post = $this->find_product_for_template($product_slug);
+
+        // FIX: Clear any potentially incorrect/cached global product reference
+        unset($GLOBALS['product']);
+        global $wp_query;
+        if (isset($wp_query->queried_object)) {
+            $wp_query->queried_object = null;
+            $wp_query->queried_object_id = 0;
+        }
 
         if (!$product_post) {
             if (APW_WOO_DEBUG_MODE) {
@@ -184,7 +190,6 @@ class APW_Woo_Template_Resolver {
 
         // Load the single product template
         $custom_template = $this->template_path . self::PRODUCT_TEMPLATE;
-
         if (file_exists($custom_template)) {
             if (APW_WOO_DEBUG_MODE) {
                 apw_woo_log("TEMPLATE OVERRIDE: Loading single product template: " . $custom_template);
