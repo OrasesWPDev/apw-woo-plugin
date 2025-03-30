@@ -530,7 +530,7 @@ function apw_woo_autoload_files() {
     }
 
     // Finally, load subdirectory files if they exist
-    $subdirs = array('admin', 'frontend', 'templates');
+    $subdirs = array('admin', 'frontend', 'templates', 'template');
 
     foreach ($subdirs as $subdir) {
         $subdir_path = $includes_dir . '/' . $subdir;
