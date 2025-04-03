@@ -1,0 +1,26 @@
+/* Basic structure for the purchase section */
+.apw-woo-purchase-section {
+    margin: 20px 0;
+}
+
+/* Quantity row layout */
+.apw-woo-quantity-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+/* Position the elements */
+.apw-woo-quantity-label {
+    margin-right: 10px;
+}
+
+.quantity.buttons_added {
+    margin-right: 10px;
+    margin-bottom: 0;
+}
+
+/* Hide product addon totals */
+.single-product .product-addon-totals {
+    display: none !important;
+}
