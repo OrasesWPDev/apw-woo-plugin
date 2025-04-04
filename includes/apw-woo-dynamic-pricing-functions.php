@@ -28,6 +28,21 @@ function apw_woo_is_dynamic_pricing_active()
  */
 function apw_woo_get_product_pricing_rules($product)
 {
+    // Add diagnostic call at the beginning
+    if (APW_WOO_DEBUG_MODE) {
+        // Get product ID for diagnostic
+        $diag_id = 0;
+        if (is_numeric($product)) {
+            $diag_id = $product;
+        } elseif (is_object($product) && is_a($product, 'WC_Product')) {
+            $diag_id = $product->get_id();
+        }
+
+        if ($diag_id > 0) {
+            apw_woo_debug_dynamic_pricing_rules($diag_id);
+        }
+    }
+
     // Make sure we have a product ID
     $product_id = 0;
     if (is_numeric($product)) {
@@ -54,88 +69,156 @@ function apw_woo_get_product_pricing_rules($product)
     // Initialize rules array
     $pricing_rules = array();
 
-    // Temporarily store original product to restore later if needed
-    $original_product = isset($GLOBALS['product']) ? $GLOBALS['product'] : null;
+    // Get product object if not already provided
+    if (!is_object($product)) {
+        $product = wc_get_product($product_id);
+    }
 
-    // Ensure the current product is set in the global scope for plugins that need it
-    if (!isset($GLOBALS['product']) || !is_a($GLOBALS['product'], 'WC_Product') || $GLOBALS['product']->get_id() != $product_id) {
-        $GLOBALS['product'] = is_object($product) && is_a($product, 'WC_Product') ?
-            $product : wc_get_product($product_id);
-
+    if (!$product) {
         if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log('Temporarily setting global product to ID: ' . $product_id);
+            apw_woo_log("Couldn't get product object for ID: {$product_id}");
+        }
+        return array();
+    }
+
+    // APPROACH 1: Get product-specific pricing rules from post meta
+    $product_pricing_rules = get_post_meta($product_id, '_pricing_rules', true);
+
+    if (!empty($product_pricing_rules) && is_array($product_pricing_rules)) {
+        // We found product-specific rules!
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log("Found " . count($product_pricing_rules) . " product-specific pricing rules in post meta for product #{$product_id}");
+        }
+
+        // Format rules to match our expected structure
+        foreach ($product_pricing_rules as $rule_set) {
+            if (isset($rule_set['rules']) && is_array($rule_set['rules'])) {
+                $pricing_rules[] = $rule_set;
+            }
         }
     }
 
-    try {
-        // Get rules from the Dynamic Pricing plugin - try multiple approaches
-        if (class_exists('WC_Dynamic_Pricing_Advanced_Product')) {
+    // APPROACH 2: Try to get global rules that might apply to this product
+
+    // 2.1: Check Advanced Product pricing module
+    if (class_exists('WC_Dynamic_Pricing_Advanced_Product')) {
+        try {
             $pricing_obj = WC_Dynamic_Pricing_Advanced_Product::instance();
 
-            // First approach: Use the plugin's dedicated method if available
+            // Try dedicated method first
             if (method_exists($pricing_obj, 'get_pricing_rules_for_product')) {
-                $pricing_rules = $pricing_obj->get_pricing_rules_for_product($product_id);
-
-                if (APW_WOO_DEBUG_MODE) {
-                    apw_woo_log('Retrieved pricing rules using get_pricing_rules_for_product method');
+                $found_rules = $pricing_obj->get_pricing_rules_for_product($product_id);
+                if (!empty($found_rules)) {
+                    if (APW_WOO_DEBUG_MODE) {
+                        apw_woo_log("Found " . count($found_rules) . " global advanced product rules");
+                    }
+                    $pricing_rules = array_merge($pricing_rules, $found_rules);
                 }
-            } // Second approach: Try to access rules property directly
+            } // Try rules property as fallback
             elseif (property_exists($pricing_obj, 'rules')) {
                 $all_rules = $pricing_obj->rules;
 
-                // Filter rules to find those applicable to this product
-                foreach ($all_rules as $rule_set) {
-                    // Check if this rule applies to our product
-                    if (isset($rule_set['targets']) && in_array($product_id, $rule_set['targets'])) {
-                        $pricing_rules[] = $rule_set;
-                    }
-                }
-
-                if (APW_WOO_DEBUG_MODE) {
-                    apw_woo_log('Retrieved pricing rules by accessing rules property directly');
-                }
-            } // Third approach: Try to use alternative methods the plugin might have
-            elseif (method_exists($pricing_obj, 'get_pricing_rules')) {
-                $all_rules = $pricing_obj->get_pricing_rules();
-
-                // Filter rules to those that apply to our product
                 foreach ($all_rules as $rule_id => $rule_set) {
-                    // Check different rule formats
+                    // Check if rule applies to our product
                     if (isset($rule_set['targets']) && in_array($product_id, $rule_set['targets'])) {
                         $pricing_rules[] = $rule_set;
-                    } elseif (isset($rule_set['products']) && in_array($product_id, $rule_set['products'])) {
-                        $pricing_rules[] = $rule_set;
+                        if (APW_WOO_DEBUG_MODE) {
+                            apw_woo_log("Found global advanced product rule: " . $rule_id);
+                        }
                     }
-                }
-
-                if (APW_WOO_DEBUG_MODE) {
-                    apw_woo_log('Retrieved pricing rules using get_pricing_rules method');
                 }
             }
-        }
-    } catch (Exception $e) {
-        if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log('Error retrieving dynamic pricing rules: ' . $e->getMessage(), 'error');
+        } catch (Exception $e) {
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log('Error accessing Advanced Product pricing: ' . $e->getMessage(), 'error');
+            }
         }
     }
 
-    // Restore original product if we changed it
-    if ($original_product !== null && isset($GLOBALS['product']) && $GLOBALS['product']->get_id() != $original_product->get_id()) {
-        $GLOBALS['product'] = $original_product;
+    // 2.2: Check for category-based pricing rules
+    if (class_exists('WC_Dynamic_Pricing_Advanced_Category')) {
+        try {
+            $cat_pricing = WC_Dynamic_Pricing_Advanced_Category::instance();
 
-        if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log('Restored original global product');
+            // Get product categories
+            $category_ids = array();
+            $terms = get_the_terms($product_id, 'product_cat');
+            if (!empty($terms) && !is_wp_error($terms)) {
+                foreach ($terms as $term) {
+                    $category_ids[] = $term->term_id;
+                }
+            }
+
+            // Look for rules that target these categories
+            if (!empty($category_ids) && property_exists($cat_pricing, 'rules')) {
+                $all_cat_rules = $cat_pricing->rules;
+
+                foreach ($all_cat_rules as $rule_id => $rule_set) {
+                    if (isset($rule_set['targets']) && is_array($rule_set['targets'])) {
+                        // Check for category match
+                        $matches = array_intersect($category_ids, $rule_set['targets']);
+                        if (!empty($matches)) {
+                            $pricing_rules[] = $rule_set;
+                            if (APW_WOO_DEBUG_MODE) {
+                                apw_woo_log("Found category pricing rule: " . $rule_id);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log('Error accessing Category pricing: ' . $e->getMessage(), 'error');
+            }
+        }
+    }
+
+    // 2.3: Check for simple/bulk pricing module
+    if (class_exists('WC_Dynamic_Pricing_Simple_Product')) {
+        try {
+            $simple_pricing = WC_Dynamic_Pricing_Simple_Product::instance();
+
+            if (property_exists($simple_pricing, 'rules')) {
+                $simple_rules = $simple_pricing->rules;
+
+                foreach ($simple_rules as $rule_id => $rule_set) {
+                    if (isset($rule_set['targets']) && in_array($product_id, $rule_set['targets'])) {
+                        $pricing_rules[] = $rule_set;
+                        if (APW_WOO_DEBUG_MODE) {
+                            apw_woo_log("Found simple product pricing rule: " . $rule_id);
+                        }
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log('Error accessing Simple pricing: ' . $e->getMessage(), 'error');
+            }
+        }
+    }
+
+    // 2.4: Last resort - check global dynamic pricing manager
+    global $wc_dynamic_pricing;
+    if (isset($wc_dynamic_pricing) && is_object($wc_dynamic_pricing)) {
+        if (method_exists($wc_dynamic_pricing, 'get_pricing_rules_for_product')) {
+            try {
+                $global_rules = $wc_dynamic_pricing->get_pricing_rules_for_product($product_id);
+                if (!empty($global_rules)) {
+                    if (APW_WOO_DEBUG_MODE) {
+                        apw_woo_log("Found " . count($global_rules) . " rules from global pricing manager");
+                    }
+                    $pricing_rules = array_merge($pricing_rules, $global_rules);
+                }
+            } catch (Exception $e) {
+                if (APW_WOO_DEBUG_MODE) {
+                    apw_woo_log('Error accessing global pricing manager: ' . $e->getMessage(), 'error');
+                }
+            }
         }
     }
 
     if (APW_WOO_DEBUG_MODE) {
-        apw_woo_log(sprintf('Found %d dynamic pricing rules for product #%d', count($pricing_rules), $product_id));
-
-        // Log details of the first rule if any found
-        if (!empty($pricing_rules)) {
-            $first_rule = reset($pricing_rules);
-            apw_woo_log('Sample rule: ' . json_encode(array_slice($first_rule, 0, 3)) . '...');
-        }
+        apw_woo_log(sprintf('Found total of %d dynamic pricing rules for product #%d', count($pricing_rules), $product_id));
     }
 
     return $pricing_rules;
@@ -426,13 +509,17 @@ function apw_woo_enqueue_dynamic_pricing_scripts()
     );
 
     // Localize script with data needed for AJAX
+    // Locate this section in the apw_woo_enqueue_dynamic_pricing_scripts() function
     wp_localize_script(
         'apw-woo-dynamic-pricing',
         'apwWooDynamicPricing',
         array(
             'ajax_url' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('apw_woo_dynamic_pricing'),
-            'price_selector' => '.apw-woo-price-display',
+            // Replace this line:
+            // 'price_selector' => '.apw-woo-price-display',
+            // With these expanded selectors:
+            'price_selector' => '.apw-woo-price-display, .woocommerce-Price-amount, .price .amount',
             'is_cart' => is_cart(),
             'is_checkout' => is_checkout(),
             'is_product' => (is_product() || $is_custom_product_page)
@@ -560,4 +647,79 @@ function apw_woo_debug_dynamic_pricing_admin()
     echo '</ul>';
     echo '<p><em>This notice is only visible to administrators.</em></p>';
     echo '</div>';
+}
+
+/**
+ * Debug dynamic pricing rules for a product
+ *
+ * @param int $product_id The product ID to check
+ * @return void
+ */
+function apw_woo_debug_dynamic_pricing_rules($product_id)
+{
+    if (!APW_WOO_DEBUG_MODE) return;
+
+    apw_woo_log("DYNAMIC PRICING DEBUG: Analyzing rules for product #{$product_id}");
+
+    // Check if Dynamic Pricing is active
+    if (!apw_woo_is_dynamic_pricing_active()) {
+        apw_woo_log("DYNAMIC PRICING DEBUG: Dynamic Pricing plugin not active");
+        return;
+    }
+
+    // Check if the product exists
+    $product = wc_get_product($product_id);
+    if (!$product) {
+        apw_woo_log("DYNAMIC PRICING DEBUG: Product #{$product_id} not found");
+        return;
+    }
+
+    // Check for main pricing class
+    if (!class_exists('WC_Dynamic_Pricing_Advanced_Product')) {
+        apw_woo_log("DYNAMIC PRICING DEBUG: WC_Dynamic_Pricing_Advanced_Product class not found");
+
+        // Check for alternative classes
+        if (class_exists('WC_Dynamic_Pricing')) {
+            apw_woo_log("DYNAMIC PRICING DEBUG: Main WC_Dynamic_Pricing class exists");
+            $main_pricing = WC_Dynamic_Pricing::instance();
+            apw_woo_log("DYNAMIC PRICING DEBUG: Available properties: " . implode(', ', array_keys(get_object_vars($main_pricing))));
+        }
+        return;
+    }
+
+    // Get instance
+    $pricing_obj = WC_Dynamic_Pricing_Advanced_Product::instance();
+
+    // Log available methods for debugging
+    apw_woo_log("DYNAMIC PRICING DEBUG: Available methods: " . implode(', ', get_class_methods($pricing_obj)));
+
+    // Check rules property
+    if (property_exists($pricing_obj, 'rules')) {
+        $all_rules = $pricing_obj->rules;
+        apw_woo_log("DYNAMIC PRICING DEBUG: Found " . count($all_rules) . " rule sets in total");
+
+        // Check rules structure
+        if (!empty($all_rules)) {
+            $rule_keys = array_keys($all_rules);
+            $first_rule_key = reset($rule_keys);
+            $first_rule = $all_rules[$first_rule_key];
+
+            apw_woo_log("DYNAMIC PRICING DEBUG: First rule ID: {$first_rule_key}");
+            apw_woo_log("DYNAMIC PRICING DEBUG: Rule structure keys: " . implode(', ', array_keys($first_rule)));
+
+            // Check if there's a targets array
+            if (isset($first_rule['targets'])) {
+                apw_woo_log("DYNAMIC PRICING DEBUG: Rule targets: " . implode(', ', $first_rule['targets']));
+            }
+        }
+    } else {
+        apw_woo_log("DYNAMIC PRICING DEBUG: No 'rules' property found on pricing object");
+    }
+
+    // Check alternative rule storage locations
+    apw_woo_log("DYNAMIC PRICING DEBUG: Checking global objects for rules");
+    global $wc_dynamic_pricing;
+    if (isset($wc_dynamic_pricing) && is_object($wc_dynamic_pricing)) {
+        apw_woo_log("DYNAMIC PRICING DEBUG: Found global wc_dynamic_pricing object");
+    }
 }
