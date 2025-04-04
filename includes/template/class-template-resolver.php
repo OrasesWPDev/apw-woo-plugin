@@ -18,7 +18,8 @@ if (!defined('ABSPATH')) {
  *
  * Resolves which template to use for different WooCommerce page types.
  */
-class APW_Woo_Template_Resolver {
+class APW_Woo_Template_Resolver
+{
     /**
      * Template path constants
      */
@@ -50,7 +51,8 @@ class APW_Woo_Template_Resolver {
      *
      * @param APW_Woo_Template_Loader $template_loader The template loader instance
      */
-    public function __construct($template_loader) {
+    public function __construct($template_loader)
+    {
         $this->template_path = APW_WOO_PLUGIN_DIR . self::TEMPLATE_DIRECTORY;
         $this->template_loader = $template_loader;
     }
@@ -61,19 +63,89 @@ class APW_Woo_Template_Resolver {
      * @param string $default_template The default template path from WordPress
      * @return string The resolved template path
      */
-    public function resolve_template($default_template) {
-        global $wp;
+    public function resolve_template($default_template)
+    {
+        // Quick exit for resource files (images, fonts, etc)
+        $request_uri = $_SERVER['REQUEST_URI'] ?? '';
+        if (preg_match('/\.(css|js|woff2?|ttf|svg|png|jpe?g|gif|ico)(\?.*)?$/i', $request_uri)) {
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log("SKIPPING TEMPLATE OVERRIDE: Resource file detected: {$request_uri}");
+            }
+            return $default_template;
+        }
 
-        // Log debugging information
-        $this->log_template_override_debug_info();
+        global $wp, $wp_query;
 
-        // Check for product pages with custom URL structure first
+        // Enhanced debugging information
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log("TEMPLATE DEBUG: Current URL: {$request_uri}");
+            apw_woo_log("TEMPLATE DEBUG: WP Request: " . $wp->request);
+        }
+
+        // Step 1: Check for product with custom URL structure
         $product_template = $this->maybe_get_product_template($wp);
         if ($product_template) {
             return $product_template;
         }
 
-        // Check for standard WooCommerce pages
+        // Step 2: Enhanced category detection for /products/{category}/ URL
+        $url_parts = explode('/', trim($wp->request, '/'));
+        if (count($url_parts) >= 2 && $url_parts[0] === 'products') {
+            $category_slug = $url_parts[1];
+
+            // Skip if this looks like a product URL with deeper nesting
+            if (count($url_parts) == 2 || (count($url_parts) > 2 && !$this->find_product_for_template(end($url_parts)))) {
+                // Attempt to find the category
+                $category = get_term_by('slug', $category_slug, 'product_cat');
+
+                if ($category && !is_wp_error($category)) {
+                    if (APW_WOO_DEBUG_MODE) {
+                        apw_woo_log("TEMPLATE OVERRIDE: Detected category: {$category->name} at URL containing /products/{$category_slug}/");
+                    }
+
+                    // Setup proper query vars for category
+                    $wp_query->set('product_cat', $category_slug);
+                    $wp_query->set('term', $category_slug);
+                    $wp_query->set('term_id', $category->term_id);
+                    $wp_query->is_tax = true;
+                    $wp_query->is_archive = true;
+                    $wp_query->queried_object = $category;
+                    $wp_query->queried_object_id = $category->term_id;
+
+                    // Load category template
+                    $category_template = $this->template_path . self::CATEGORY_TEMPLATE;
+                    if (file_exists($category_template)) {
+                        if (APW_WOO_DEBUG_MODE) {
+                            apw_woo_log("TEMPLATE OVERRIDE: Loading category template: {$category_template}");
+                        }
+                        return $category_template;
+                    }
+                }
+            }
+        }
+
+        // Step 3: Improved shop page detection
+        if (count($url_parts) === 1 && $url_parts[0] === 'products') {
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log("TEMPLATE OVERRIDE: Detected main shop page at /products/");
+            }
+
+            // Mark as shop page
+            $wp_query->is_post_type_archive = true;
+            $wp_query->is_archive = true;
+            $wp_query->is_shop = true;
+
+            // Load shop template
+            $shop_template = $this->template_path . self::SHOP_TEMPLATE;
+            if (file_exists($shop_template)) {
+                if (APW_WOO_DEBUG_MODE) {
+                    apw_woo_log("TEMPLATE OVERRIDE: Loading shop template: {$shop_template}");
+                }
+                return $shop_template;
+            }
+        }
+
+        // Step 4: Check standard WooCommerce pages
         $page_templates = [
             'category' => [
                 'condition' => 'is_product_category',
@@ -105,8 +177,6 @@ class APW_Woo_Template_Resolver {
         // Check each page type
         foreach ($page_templates as $type => $settings) {
             $condition = $settings['condition'];
-
-            // Check if condition is met
             $condition_met = is_callable($condition) ? call_user_func($condition) : call_user_func($condition);
 
             if ($condition_met) {
@@ -121,6 +191,24 @@ class APW_Woo_Template_Resolver {
             }
         }
 
+        // Step 5: Handle special case for /products/* URLs that weren't caught above
+        if (!empty($url_parts) && $url_parts[0] === 'products') {
+            // At this point, we've already checked for product and category pages
+            // This is a fallback to ensure we at least show the shop page
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log("TEMPLATE OVERRIDE: Fallback for URL with /products/ prefix: {$wp->request}");
+            }
+
+            // Try to load shop template as fallback
+            $shop_template = $this->template_path . self::SHOP_TEMPLATE;
+            if (file_exists($shop_template)) {
+                if (APW_WOO_DEBUG_MODE) {
+                    apw_woo_log("TEMPLATE OVERRIDE: Loading shop template as fallback: {$shop_template}");
+                }
+                return $shop_template;
+            }
+        }
+
         // If we've made it here, no custom template was found
         if (APW_WOO_DEBUG_MODE) {
             apw_woo_log('No custom template found, using default: ' . $default_template);
@@ -132,7 +220,8 @@ class APW_Woo_Template_Resolver {
     /**
      * Log debug information for template overrides
      */
-    private function log_template_override_debug_info() {
+    private function log_template_override_debug_info()
+    {
         if (!APW_WOO_DEBUG_MODE) {
             return;
         }
@@ -154,10 +243,17 @@ class APW_Woo_Template_Resolver {
      * @param object $wp WordPress environment object
      * @return string|false Template path or false if not a product
      */
-    private function maybe_get_product_template($wp) {
+    private function maybe_get_product_template($wp)
+    {
         // Special handling for /products/%product_cat%/ permalink structure
         $url_parts = explode('/', trim($wp->request, '/'));
-        if (count($url_parts) < 3 || $url_parts[0] !== 'products') {
+
+        // Log more detailed URL information in debug mode
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log("PRODUCT DETECTION: Analyzing URL parts: " . implode(', ', $url_parts));
+        }
+
+        if (count($url_parts) < 2 || $url_parts[0] !== 'products') {
             return false;
         }
 
@@ -185,6 +281,9 @@ class APW_Woo_Template_Resolver {
             return false;
         }
 
+        // Set a global flag that we can check elsewhere
+        $GLOBALS['apw_is_custom_product_url'] = true;
+
         // Setup product globals - we've found a product that matches the URL
         $this->setup_product_for_template($product_post, $wp->request);
 
@@ -209,7 +308,8 @@ class APW_Woo_Template_Resolver {
      * @param string $product_slug The product slug
      * @return WP_Post|false Product post or false if not found
      */
-    private function find_product_for_template($product_slug) {
+    private function find_product_for_template($product_slug)
+    {
         static $product_cache = [];
 
         // Check static cache first
@@ -232,7 +332,8 @@ class APW_Woo_Template_Resolver {
      * @param WP_Post $product_post The product post object
      * @param string $request_url The current request URL (for logging)
      */
-    private function setup_product_for_template($product_post, $request_url) {
+    private function setup_product_for_template($product_post, $request_url)
+    {
         global $post;
         if (APW_WOO_DEBUG_MODE) {
             apw_woo_log("TEMPLATE OVERRIDE: Found product '" . $product_post->post_title . "' (ID: " . $product_post->ID . ") at URL: " . $request_url);
@@ -249,7 +350,7 @@ class APW_Woo_Template_Resolver {
         }
 
         // Add early filters for title to ensure they use the correct product
-        add_filter('pre_get_document_title', function($title) use ($product_post) {
+        add_filter('pre_get_document_title', function ($title) use ($product_post) {
             $site_name = get_bloginfo('name');
             $product_title = $product_post->post_title;
             $new_title = $product_title . ' - ' . $site_name;
@@ -283,7 +384,8 @@ class APW_Woo_Template_Resolver {
      * @param string $page_description Description of the page type for logging
      * @return string|false Template path or false if not found
      */
-    private function get_template_for_page_type($template_path, $page_description) {
+    private function get_template_for_page_type($template_path, $page_description)
+    {
         if (APW_WOO_DEBUG_MODE) {
             apw_woo_log("TEMPLATE OVERRIDE: Detected {$page_description} page");
         }

@@ -662,6 +662,42 @@ function apw_woo_display_faq_field_notice()
 }
 
 /**
+ * Fix is_product() function to work with custom product URL structure
+ *
+ * Hooks into WordPress is_singular filter to properly detect products
+ * with our custom /products/%product_cat%/ URL structure
+ *
+ * @return void
+ * @since 1.0.0
+ */
+function apw_woo_fix_is_product()
+{
+    // Only run on frontend
+    if (is_admin()) {
+        return;
+    }
+
+    // Add filter to WordPress is_singular to properly detect our custom product URLs
+    add_filter('is_singular', function ($is_singular, $post_types) {
+        // Only modify the check when it's for product post type
+        if (!is_array($post_types) && $post_types === 'product') {
+            global $wp;
+
+            // Use our custom product detection method
+            if (class_exists('APW_Woo_Page_Detector') && method_exists('APW_Woo_Page_Detector', 'is_product_page')) {
+                if (APW_Woo_Page_Detector::is_product_page($wp)) {
+                    if (APW_WOO_DEBUG_MODE) {
+                        apw_woo_log('is_product fix: Modified is_singular(\'product\') to return true for custom URL');
+                    }
+                    return true;
+                }
+            }
+        }
+        return $is_singular;
+    }, 10, 2);
+}
+
+/**
  * Initialize the plugin
  *
  * Central initialization function that coordinates the loading
@@ -680,6 +716,9 @@ function apw_woo_init()
     if (!apw_woo_verify_dependencies()) {
         return; // Dependency check failed, initialization aborted
     }
+
+    // Add this line - Hook the is_product fix early
+    add_action('wp', 'apw_woo_fix_is_product', 5);
 
     // Define FAQ field structure
     apw_woo_define_faq_field_structure();
