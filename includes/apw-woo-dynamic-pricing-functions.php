@@ -51,12 +51,28 @@ function apw_woo_get_product_pricing_rules($product)
         return array();
     }
 
-    // Get the pricing rules (if Dynamic Pricing plugin provides such a function)
+    // Initialize rules array
     $pricing_rules = array();
 
-    // Using Dynamic Pricing API if available
-    if (class_exists('WC_Dynamic_Pricing_Product_Rules')) {
-        $pricing_rules = WC_Dynamic_Pricing_Product_Rules::get_product_rules($product_id);
+    // Get rules from the Dynamic Pricing plugin
+    // We need to access the stored rules from the plugin's settings
+    if (class_exists('WC_Dynamic_Pricing_Advanced_Product')) {
+        $pricing_obj = WC_Dynamic_Pricing_Advanced_Product::instance();
+
+        // Access the pricing rules - actual method might vary by plugin version
+        if (method_exists($pricing_obj, 'get_pricing_rules_for_product')) {
+            $pricing_rules = $pricing_obj->get_pricing_rules_for_product($product_id);
+        } elseif (property_exists($pricing_obj, 'rules')) {
+            // Try to access rules property directly if the method doesn't exist
+            $all_rules = $pricing_obj->rules;
+
+            // Filter to find rules applicable to this product
+            foreach ($all_rules as $rule_set) {
+                if (isset($rule_set['targets']) && in_array($product_id, $rule_set['targets'])) {
+                    $pricing_rules[] = $rule_set;
+                }
+            }
+        }
     }
 
     if (APW_WOO_DEBUG_MODE) {
@@ -79,53 +95,168 @@ function apw_woo_product_has_pricing_rules($product)
 }
 
 /**
- * Get formatted price HTML that includes dynamic pricing information
+ * Get the unit price for a product based on quantity, respecting dynamic pricing rules
  *
- * @param WC_Product $product The product object
- * @param array $args Optional display arguments
- * @return string HTML content with pricing information
+ * @param int|WC_Product $product Product ID or product object
+ * @param int $quantity The quantity
+ * @return float The calculated unit price
  */
-function apw_woo_get_dynamic_price_html($product, $args = array())
+function apw_woo_get_price_by_quantity($product, $quantity = 1)
 {
-    if (!$product || !is_a($product, 'WC_Product')) {
-        return '';
+    // Convert to product object if needed
+    if (is_numeric($product)) {
+        $product = wc_get_product($product);
     }
 
-    // Default price display
-    $price_html = wc_price($product->get_price());
+    if (!$product || !is_a($product, 'WC_Product')) {
+        return 0;
+    }
 
-    // Check if dynamic pricing is active and if this product has dynamic pricing rules
-    if (apw_woo_is_dynamic_pricing_active() && apw_woo_product_has_pricing_rules($product)) {
-        // Get the pricing rules
-        $pricing_rules = apw_woo_get_product_pricing_rules($product);
+    // Get the regular price as a fallback
+    $regular_price = $product->get_regular_price();
+    $sale_price = $product->get_sale_price();
+    $base_price = ($sale_price && $sale_price < $regular_price) ? $sale_price : $regular_price;
 
-        // If we have rules, enhance the price display
-        if (!empty($pricing_rules)) {
-            // This will need to be customized based on the actual structure of pricing rules
-            // from your Dynamic Pricing plugin
-            $price_html = apply_filters('apw_woo_dynamic_price_html', $price_html, $product, $pricing_rules);
+    // If Dynamic Pricing plugin isn't active, return the base price
+    if (!apw_woo_is_dynamic_pricing_active()) {
+        return $base_price;
+    }
+
+    // Get the pricing rules for this product
+    $pricing_rules = apw_woo_get_product_pricing_rules($product);
+
+    if (empty($pricing_rules)) {
+        return $base_price;
+    }
+
+    // Find applicable pricing rule based on quantity
+    $discounted_price = $base_price;
+
+    foreach ($pricing_rules as $rule) {
+        // Rule structure might vary based on the plugin's implementation
+        // This is a simplified example - adjust according to actual rule structure
+
+        // Check if we have pricing rules by quantity
+        if (isset($rule['rules']) && is_array($rule['rules'])) {
+            foreach ($rule['rules'] as $price_rule) {
+                if (isset($price_rule['from']) && $quantity >= $price_rule['from']) {
+                    // If there's a 'to' limit, check if quantity is less than or equal to it
+                    if (!isset($price_rule['to']) || $quantity <= $price_rule['to']) {
+                        // Apply the pricing rule
+                        if (isset($price_rule['amount'])) {
+                            // Fixed price
+                            $discounted_price = $price_rule['amount'];
+                        } elseif (isset($price_rule['percentage'])) {
+                            // Percentage discount
+                            $discounted_price = $base_price * (1 - ($price_rule['percentage'] / 100));
+                        }
+                    }
+                }
+            }
         }
     }
 
-    return $price_html;
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log(sprintf('Calculated price for product #%d with quantity %d: Base=%f, Discounted=%f',
+            $product->get_id(), $quantity, $base_price, $discounted_price));
+    }
+
+    return $discounted_price;
 }
 
 /**
- * Filter to display dynamic pricing information in the price HTML
+ * AJAX handler to get updated dynamic price
  */
-function apw_woo_dynamic_price_filter($price_html, $product, $pricing_rules)
+function apw_woo_ajax_get_dynamic_price()
 {
-    // Build enhanced price display with quantity pricing information
-    // This is a placeholder and should be customized for your specific needs
-    $enhanced_html = $price_html;
+    check_ajax_referer('apw_woo_dynamic_pricing', 'nonce');
 
-    // Add quantity price breakdown if needed
-    // Example: $enhanced_html .= '<div class="quantity-pricing">Qty 5+: $99</div>';
+    $product_id = isset($_POST['product_id']) ? absint($_POST['product_id']) : 0;
+    $quantity = isset($_POST['quantity']) ? absint($_POST['quantity']) : 1;
 
-    return $enhanced_html;
+    if (!$product_id) {
+        wp_send_json_error();
+        return;
+    }
+
+    $product = wc_get_product($product_id);
+    if (!$product) {
+        wp_send_json_error();
+        return;
+    }
+
+    // Get unit price based on quantity
+    $unit_price = apw_woo_get_price_by_quantity($product, $quantity);
+
+    wp_send_json_success(array(
+        'unit_price' => $unit_price,
+        'formatted_price' => wc_price($unit_price)
+    ));
 }
 
-add_filter('apw_woo_dynamic_price_html', 'apw_woo_dynamic_price_filter', 10, 3);
+/**
+ * Replace the default price display with our dynamic version
+ */
+function apw_woo_replace_price_display()
+{
+    global $product;
+    if (!$product) return;
+
+    // Get the current quantity from the form (default to 1)
+    $quantity = 1;
+
+    // Get unit price based on quantity
+    $unit_price = apw_woo_get_price_by_quantity($product, $quantity);
+
+    // Display the price with data attribute for JS to update
+    echo '<div class="apw-woo-price-display" data-product-id="' . esc_attr($product->get_id()) . '">'
+        . wc_price($unit_price)
+        . '</div>';
+    echo '</div><!-- End quantity row -->';
+}
+
+/**
+ * Register and enqueue dynamic pricing JavaScript
+ */
+function apw_woo_enqueue_dynamic_pricing_scripts()
+{
+    // Only enqueue on product pages
+    if (!is_product()) {
+        return;
+    }
+
+    $js_dir = APW_WOO_PLUGIN_URL . 'assets/js/';
+    $js_file = 'apw-woo-dynamic-pricing.js';
+    $js_path = APW_WOO_PLUGIN_DIR . 'assets/js/' . $js_file;
+
+    // Check if the file exists
+    if (!file_exists($js_path)) {
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('Dynamic pricing JS file not found: ' . $js_path);
+        }
+        return;
+    }
+
+    // Enqueue the JavaScript file
+    wp_enqueue_script(
+        'apw-woo-dynamic-pricing',
+        $js_dir . $js_file,
+        array('jquery'),
+        filemtime($js_path),
+        true
+    );
+
+    // Localize script with data needed for AJAX
+    wp_localize_script(
+        'apw-woo-dynamic-pricing',
+        'apwWooDynamicPricing',
+        array(
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('apw_woo_dynamic_pricing'),
+            'price_selector' => '.apw-woo-price-display'
+        )
+    );
+}
 
 /**
  * Initialize dynamic pricing hooks and integration
@@ -145,11 +276,29 @@ function apw_woo_init_dynamic_pricing()
         return;
     }
 
-    // Include the class file
-    require_once APW_WOO_PLUGIN_DIR . 'includes/class-apw-woo-dynamic-pricing.php';
+    // Include the integration class if needed
+    $class_file = APW_WOO_PLUGIN_DIR . 'includes/class-apw-woo-dynamic-pricing.php';
+    if (file_exists($class_file)) {
+        require_once $class_file;
 
-    // Initialize the class
-    $dynamic_pricing = APW_Woo_Dynamic_Pricing::get_instance();
+        // Initialize the class if it exists
+        if (class_exists('APW_Woo_Dynamic_Pricing')) {
+            $dynamic_pricing = APW_Woo_Dynamic_Pricing::get_instance();
+        }
+    }
+
+    // Add script enqueuing
+    add_action('wp_enqueue_scripts', 'apw_woo_enqueue_dynamic_pricing_scripts');
+
+    // Register AJAX handlers
+    add_action('wp_ajax_apw_woo_get_dynamic_price', 'apw_woo_ajax_get_dynamic_price');
+    add_action('wp_ajax_nopriv_apw_woo_get_dynamic_price', 'apw_woo_ajax_get_dynamic_price');
+
+    // Replace the default price display with our dynamic version
+    add_action('woocommerce_after_add_to_cart_quantity', 'apw_woo_replace_price_display', 9);
+
+    // Remove the original price display function
+    remove_action('woocommerce_after_add_to_cart_quantity', 'apw_woo_add_price_display');
 
     if (APW_WOO_DEBUG_MODE) {
         apw_woo_log('Dynamic Pricing integration initialized');

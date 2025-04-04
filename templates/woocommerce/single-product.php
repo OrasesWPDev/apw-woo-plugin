@@ -141,6 +141,7 @@ add_action('woocommerce_before_add_to_cart_quantity', 'apw_woo_add_quantity_sect
 /**
  * Add price display and close quantity row
  */
+/*
 function apw_woo_add_price_display()
 {
     global $product;
@@ -152,6 +153,7 @@ function apw_woo_add_price_display()
 }
 
 add_action('woocommerce_after_add_to_cart_quantity', 'apw_woo_add_price_display');
+*/
 
 /**
  * Close purchase section after add to cart button
@@ -166,6 +168,7 @@ add_action('woocommerce_after_add_to_cart_button', 'apw_woo_close_purchase_secti
 /**
  * Remove original price display
  */
+/*
 function apw_woo_remove_price_display()
 {
     // Priority 10 is the default for this hook
@@ -174,7 +177,7 @@ function apw_woo_remove_price_display()
 
 // Run at priority 5 to ensure it happens before the template_single_price function is called
 add_action('woocommerce_single_product_summary', 'apw_woo_remove_price_display', 5);
-
+*/
 
 get_header();
 // Get current product

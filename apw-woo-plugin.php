@@ -26,7 +26,7 @@
  */
 
 // If this file is called directly, abort.
-if ( ! defined( 'ABSPATH' ) ) {
+if (!defined('ABSPATH')) {
     exit; // Exit if accessed directly
 }
 
@@ -54,7 +54,7 @@ define('APW_WOO_DEBUG_MODE', true);
  * Ensures compatibility with WooCommerce High-Performance Order Storage
  * @see https://woocommerce.com/document/high-performance-order-storage/
  */
-add_action('before_woocommerce_init', function() {
+add_action('before_woocommerce_init', function () {
     if (class_exists(\Automattic\WooCommerce\Utilities\FeaturesUtil::class)) {
         \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility(
             'custom_order_tables',
@@ -71,10 +71,11 @@ add_action('before_woocommerce_init', function() {
 /**
  * Check if WooCommerce is active
  *
- * @since 1.0.0
  * @return boolean True if WooCommerce is active
+ * @since 1.0.0
  */
-function apw_woo_is_woocommerce_active() {
+function apw_woo_is_woocommerce_active()
+{
     // Fastest check - using function existence
     if (function_exists('WC')) {
         return true;
@@ -89,10 +90,11 @@ function apw_woo_is_woocommerce_active() {
 /**
  * Check if Advanced Custom Fields Pro is active
  *
- * @since 1.0.0
  * @return boolean True if ACF Pro is active
+ * @since 1.0.0
  */
-function apw_woo_is_acf_pro_active() {
+function apw_woo_is_acf_pro_active()
+{
     // Fastest check - using function existence
     if (function_exists('get_field')) {
         return true;
@@ -132,11 +134,12 @@ function apw_woo_is_acf_pro_active() {
  * Retrieves the appropriate FAQ page ID based on the context (shop, category, product).
  * Allows for filtering and falls back to safe defaults if not set.
  *
- * @since 1.0.0
  * @param string $context The context for which to retrieve the FAQ page ID (shop, category, etc.)
  * @return int The sanitized FAQ page ID
+ * @since 1.0.0
  */
-function apw_woo_get_faq_page_id($context = 'shop') {
+function apw_woo_get_faq_page_id($context = 'shop')
+{
     // Sanitize input to prevent potential issues
     $context = sanitize_key($context);
 
@@ -182,13 +185,14 @@ function apw_woo_get_faq_page_id($context = 'shop') {
  * and buffering approach. It handles object validation, FAQ retrieval, and
  * structure validation in one comprehensive test.
  *
- * @since 1.0.0
- * @param mixed  $object The object to test (product, category, or page ID)
- * @param string $type   Optional. The type of object ('product', 'category', or 'page').
+ * @param mixed $object The object to test (product, category, or page ID)
+ * @param string $type Optional. The type of object ('product', 'category', or 'page').
  *                       If not provided, the function will attempt to determine the type.
  * @return array|false The retrieved FAQs array or false on failure
+ * @since 1.0.0
  */
-function apw_woo_test_faq_retrieval($object, $type = '') {
+function apw_woo_test_faq_retrieval($object, $type = '')
+{
     // Auto-detect object type if not specified
     if (empty($type)) {
         if (is_numeric($object)) {
@@ -318,11 +322,12 @@ function apw_woo_test_faq_retrieval($object, $type = '') {
  * required question and answer fields. Returns detailed information
  * about any validation failures.
  *
- * @since 1.0.0
  * @param array $faqs Array of FAQs to validate
  * @return array Associative array with 'valid' boolean and 'errors' array
+ * @since 1.0.0
  */
-function apw_woo_validate_faq_structure($faqs) {
+function apw_woo_validate_faq_structure($faqs)
+{
     $result = array(
         'valid' => true,
         'errors' => array()
@@ -382,10 +387,11 @@ function apw_woo_validate_faq_structure($faqs) {
  * Output buffering details are important for template loading and
  * debugging issues with template parts and includes.
  *
- * @since 1.0.0
  * @return int Current output buffering level
+ * @since 1.0.0
  */
-function apw_woo_get_ob_level() {
+function apw_woo_get_ob_level()
+{
     return ob_get_level();
 }
 
@@ -399,12 +405,13 @@ function apw_woo_get_ob_level() {
  * This is a wrapper for the APW_Woo_Logger class to maintain backward compatibility
  * with existing code that calls this function directly.
  *
- * @since 1.0.0
  * @param mixed $message The message or data to log
  * @param string $level Optional. Log level (info, warning, error). Default 'info'.
  * @return void
+ * @since 1.0.0
  */
-function apw_woo_log($message, $level = 'info') {
+function apw_woo_log($message, $level = 'info')
+{
     // Check if logger class exists
     if (class_exists('APW_Woo_Logger')) {
         APW_Woo_Logger::log($message, $level);
@@ -430,10 +437,11 @@ function apw_woo_log($message, $level = 'info') {
  * This is a wrapper for the APW_Woo_Logger class to maintain backward compatibility
  * with existing code that calls this function directly.
  *
- * @since 1.0.0
  * @return void
+ * @since 1.0.0
  */
-function apw_woo_setup_logs() {
+function apw_woo_setup_logs()
+{
     // Check if logger class exists
     if (class_exists('APW_Woo_Logger')) {
         APW_Woo_Logger::setup_logs();
@@ -464,10 +472,11 @@ function apw_woo_setup_logs() {
  * Files are loaded in a predictable order: main includes first, then subdirectories.
  * Skip files that start with 'class-' to allow for proper class autoloading order.
  *
- * @since 1.0.0
  * @return void
+ * @since 1.0.0
  */
-function apw_woo_autoload_files() {
+function apw_woo_autoload_files()
+{
     $includes_dir = APW_WOO_PLUGIN_DIR . 'includes';
     // Track loaded files to prevent duplicates
     static $loaded_files = array();
@@ -568,10 +577,11 @@ function apw_woo_autoload_files() {
  * This is a wrapper for the APW_Woo_Assets class to maintain backward compatibility
  * with existing code that calls this function directly.
  *
- * @since 1.0.0
  * @return void
+ * @since 1.0.0
  */
-function apw_woo_register_assets() {
+function apw_woo_register_assets()
+{
     // Forward to the class method
     if (class_exists('APW_Woo_Assets')) {
         APW_Woo_Assets::register_assets();
@@ -593,10 +603,11 @@ function apw_woo_register_assets() {
  * Sets up the standard field names and structure used by the plugin
  * for FAQ functionality and displays guidance in the admin area.
  *
- * @since 1.0.0
  * @return void
+ * @since 1.0.0
  */
-function apw_woo_define_faq_field_structure() {
+function apw_woo_define_faq_field_structure()
+{
     // Only execute on admin pages
     if (!is_admin()) {
         return;
@@ -626,10 +637,11 @@ function apw_woo_define_faq_field_structure() {
  * Shown only on ACF field group edit pages to help administrators
  * set up the correct field structure for FAQs.
  *
- * @since 1.0.0
  * @return void
+ * @since 1.0.0
  */
-function apw_woo_display_faq_field_notice() {
+function apw_woo_display_faq_field_notice()
+{
     // Only show this notice on ACF field group edit pages
     $screen = get_current_screen();
     if (!$screen || $screen->base !== 'acf-field-group') {
@@ -655,10 +667,11 @@ function apw_woo_display_faq_field_notice() {
  * Central initialization function that coordinates the loading
  * and initialization of all plugin components in the correct order.
  *
- * @since 1.0.0
  * @return void
+ * @since 1.0.0
  */
-function apw_woo_init() {
+function apw_woo_init()
+{
     // Setup logs first
     apw_woo_setup_logs();
     apw_woo_log('Plugin initialization started.');
@@ -689,18 +702,22 @@ function apw_woo_init() {
 
     // Initialize Product Add-ons integration
     apw_woo_initialize_product_addons();
+    // Initialize Dynamic Pricing integration
+    apw_woo_init_dynamic_pricing();
 }
+
 
 /**
  * Verify all plugin dependencies are met
  *
- * @since 1.0.0
  * @return bool True if all dependencies are satisfied
+ * @since 1.0.0
  */
-function apw_woo_verify_dependencies() {
+function apw_woo_verify_dependencies()
+{
     // Check if WooCommerce is active
     if (!apw_woo_is_woocommerce_active()) {
-        add_action('admin_notices', function() {
+        add_action('admin_notices', function () {
             ?>
             <div class="notice notice-error">
                 <p><?php _e('APW WooCommerce Plugin requires WooCommerce to be installed and activated.', 'apw-woo-plugin'); ?></p>
@@ -713,7 +730,7 @@ function apw_woo_verify_dependencies() {
 
     // Check if ACF Pro is active
     if (!apw_woo_is_acf_pro_active()) {
-        add_action('admin_notices', function() {
+        add_action('admin_notices', function () {
             ?>
             <div class="notice notice-error">
                 <p><?php _e('APW WooCommerce Plugin requires Advanced Custom Fields PRO to be installed and activated.', 'apw-woo-plugin'); ?></p>
@@ -730,10 +747,11 @@ function apw_woo_verify_dependencies() {
 /**
  * Initialize the main plugin class
  *
- * @since 1.0.0
  * @return void
+ * @since 1.0.0
  */
-function apw_woo_initialize_main_class() {
+function apw_woo_initialize_main_class()
+{
     if (class_exists('APW_Woo_Plugin')) {
         $plugin = APW_Woo_Plugin::get_instance();
         $plugin->init();
@@ -746,10 +764,11 @@ function apw_woo_initialize_main_class() {
 /**
  * Initialize Product Add-ons integration
  *
- * @since 1.0.0
  * @return void
+ * @since 1.0.0
  */
-function apw_woo_initialize_product_addons() {
+function apw_woo_initialize_product_addons()
+{
     // Load Product Add-ons functions file
     $addons_file = APW_WOO_PLUGIN_DIR . 'includes/apw-woo-product-addons-functions.php';
 
@@ -787,10 +806,11 @@ function apw_woo_initialize_product_addons() {
  * Runs when the plugin is activated.
  * Sets up necessary structures and flushes rewrite rules.
  *
- * @since 1.0.0
  * @return void
+ * @since 1.0.0
  */
-function apw_woo_activate() {
+function apw_woo_activate()
+{
     // Manually include the logger class if it's not already loaded
     $logger_file = APW_WOO_PLUGIN_DIR . 'includes/class-apw-woo-logger.php';
     if (file_exists($logger_file) && !class_exists('APW_Woo_Logger')) {
@@ -831,10 +851,11 @@ register_activation_hook(__FILE__, 'apw_woo_activate');
  * Runs when the plugin is deactivated.
  * Performs cleanup operations and flushes rewrite rules.
  *
- * @since 1.0.0
  * @return void
+ * @since 1.0.0
  */
-function apw_woo_deactivate() {
+function apw_woo_deactivate()
+{
     // Log the deactivation
     if (APW_WOO_DEBUG_MODE) {
         apw_woo_log('Plugin deactivated.', 'info');
@@ -863,13 +884,14 @@ register_deactivation_hook(__FILE__, 'apw_woo_deactivate');
  * This function is only used during development to verify
  * that template filters are correctly being applied.
  *
- * @since 1.0.0
- * @param string $template      Original template path
+ * @param string $template Original template path
  * @param string $template_name Template name
  * @param string $template_path Template path
  * @return string Unmodified template path
+ * @since 1.0.0
  */
-function apw_woo_test_template_override($template, $template_name, $template_path) {
+function apw_woo_test_template_override($template, $template_name, $template_path)
+{
     if (APW_WOO_DEBUG_MODE) {
         // Log to plugin's debug log
         apw_woo_log('Template filter test: ' . $template_name, 'debug');
@@ -895,7 +917,8 @@ if (APW_WOO_DEBUG_MODE) {
  * @param bool $value Whether to enable performance tracking
  * @return bool Filtered value
  */
-function apw_woo_enable_performance_tracking($value) {
+function apw_woo_enable_performance_tracking($value)
+{
     return APW_WOO_DEBUG_MODE ? true : $value;
 }
 
