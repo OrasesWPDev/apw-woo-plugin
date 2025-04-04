@@ -525,3 +525,39 @@ function apw_woo_init_dynamic_pricing()
         apw_woo_log('Dynamic Pricing integration initialized');
     }
 }
+
+/**
+ * Display debug information about dynamic pricing in admin
+ *
+ * This function shows debug information in the WordPress admin
+ * to help diagnose Dynamic Pricing integration issues
+ */
+function apw_woo_debug_dynamic_pricing_admin()
+{
+    // Only show to administrators
+    if (!current_user_can('manage_options')) {
+        return;
+    }
+
+    // Check if Dynamic Pricing is active
+    $is_active = apw_woo_is_dynamic_pricing_active();
+
+    echo '<div class="notice notice-info is-dismissible">';
+    echo '<p><strong>APW Dynamic Pricing Debug Info:</strong></p>';
+    echo '<ul>';
+    echo '<li>Dynamic Pricing Plugin Active: ' . ($is_active ? 'Yes' : 'No') . '</li>';
+
+    if ($is_active) {
+        // Check for the main class
+        $class_exists = class_exists('WC_Dynamic_Pricing');
+        echo '<li>WC_Dynamic_Pricing class exists: ' . ($class_exists ? 'Yes' : 'No') . '</li>';
+
+        // Check for product pricing class
+        $product_pricing_exists = class_exists('WC_Dynamic_Pricing_Advanced_Product');
+        echo '<li>WC_Dynamic_Pricing_Advanced_Product class exists: ' . ($product_pricing_exists ? 'Yes' : 'No') . '</li>';
+    }
+
+    echo '</ul>';
+    echo '<p><em>This notice is only visible to administrators.</em></p>';
+    echo '</div>';
+}
