@@ -18,7 +18,8 @@ if (!defined('ABSPATH')) {
  *
  * Detects various WooCommerce page types and custom URL structures
  */
-class APW_Woo_Page_Detector {
+class APW_Woo_Page_Detector
+{
     /**
      * Store detected product cache
      *
@@ -32,7 +33,8 @@ class APW_Woo_Page_Detector {
      * @param object $wp The WordPress environment object
      * @return bool True if the current page is a product page
      */
-    public static function is_product_page($wp = null) {
+    public static function is_product_page($wp = null)
+    {
         global $post;
 
         if (null === $wp) {
@@ -40,7 +42,7 @@ class APW_Woo_Page_Detector {
         }
 
         // Create a debug logger closure to reduce code repetition and conditionally log
-        $log_debug = function($message) {
+        $log_debug = function ($message) {
             if (APW_WOO_DEBUG_MODE) {
                 apw_woo_log("PRODUCT DETECTION: $message");
             }
@@ -130,7 +132,8 @@ class APW_Woo_Page_Detector {
      * @param string $slug The product slug
      * @return WP_Post|false Product post object or false if not found
      */
-    public static function get_product_by_slug($slug) {
+    public static function get_product_by_slug($slug)
+    {
         // First check our internal static cache
         if (isset(self::$detected_products[$slug])) {
             return self::$detected_products[$slug];
@@ -148,8 +151,8 @@ class APW_Woo_Page_Detector {
 
         // Not in cache, get from database
         $args = array(
-            'name'        => $slug,
-            'post_type'   => 'product',
+            'name' => $slug,
+            'post_type' => 'product',
             'post_status' => 'publish',
             'numberposts' => 1
         );
@@ -177,14 +180,15 @@ class APW_Woo_Page_Detector {
      *
      * @param WP_Post $product_post The product post object
      */
-    public static function setup_product_page_globals($product_post) {
+    public static function setup_product_page_globals($product_post)
+    {
         global $post, $wp_query;
 
         // Make sure WP knows we're on this product
         $post = $product_post;
         setup_postdata($post);
 
-        // Override the main query
+        // Override the main query with more complete WooCommerce flags
         $wp_query->is_single = true;
         $wp_query->is_singular = true;
         $wp_query->is_product = true;
@@ -195,8 +199,14 @@ class APW_Woo_Page_Detector {
         $wp_query->queried_object = $post;
         $wp_query->queried_object_id = $post->ID;
 
+        // Also set in wp global for compatibility with some functions
+        $GLOBALS['wp']->query_vars['product'] = $post->post_name;
+
         // Create the WooCommerce product object in global scope
         $GLOBALS['product'] = wc_get_product($post);
+
+        // Set special flag that can be checked by other code
+        $GLOBALS['apw_woo_is_custom_product_page'] = true;
 
         // Let other code know what happened
         do_action('apw_woo_after_product_page_setup', $post, $GLOBALS['product']);
@@ -207,7 +217,8 @@ class APW_Woo_Page_Detector {
      *
      * @return bool True if on the main shop page
      */
-    public static function is_main_shop_page() {
+    public static function is_main_shop_page()
+    {
         return is_shop() && !is_search();
     }
 
@@ -216,7 +227,8 @@ class APW_Woo_Page_Detector {
      *
      * @return string The page type identifier
      */
-    public static function get_page_type() {
+    public static function get_page_type()
+    {
         if (is_shop()) {
             return 'shop';
         } elseif (is_product()) {

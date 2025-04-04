@@ -18,7 +18,8 @@ if (!defined('ABSPATH')) {
  *
  * Resolves which template to use for different WooCommerce page types.
  */
-class APW_Woo_Template_Resolver {
+class APW_Woo_Template_Resolver
+{
     /**
      * Template path constants
      */
@@ -50,7 +51,8 @@ class APW_Woo_Template_Resolver {
      *
      * @param APW_Woo_Template_Loader $template_loader The template loader instance
      */
-    public function __construct($template_loader) {
+    public function __construct($template_loader)
+    {
         $this->template_path = APW_WOO_PLUGIN_DIR . self::TEMPLATE_DIRECTORY;
         $this->template_loader = $template_loader;
     }
@@ -61,7 +63,8 @@ class APW_Woo_Template_Resolver {
      * @param string $default_template The default template path from WordPress
      * @return string The resolved template path
      */
-    public function resolve_template($default_template) {
+    public function resolve_template($default_template)
+    {
         global $wp;
 
         // Log debugging information
@@ -132,7 +135,8 @@ class APW_Woo_Template_Resolver {
     /**
      * Log debug information for template overrides
      */
-    private function log_template_override_debug_info() {
+    private function log_template_override_debug_info()
+    {
         if (!APW_WOO_DEBUG_MODE) {
             return;
         }
@@ -154,10 +158,17 @@ class APW_Woo_Template_Resolver {
      * @param object $wp WordPress environment object
      * @return string|false Template path or false if not a product
      */
-    private function maybe_get_product_template($wp) {
+    private function maybe_get_product_template($wp)
+    {
         // Special handling for /products/%product_cat%/ permalink structure
         $url_parts = explode('/', trim($wp->request, '/'));
-        if (count($url_parts) < 3 || $url_parts[0] !== 'products') {
+
+        // Log more detailed URL information in debug mode
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log("PRODUCT DETECTION: Analyzing URL parts: " . implode(', ', $url_parts));
+        }
+
+        if (count($url_parts) < 2 || $url_parts[0] !== 'products') {
             return false;
         }
 
@@ -185,6 +196,9 @@ class APW_Woo_Template_Resolver {
             return false;
         }
 
+        // Set a global flag that we can check elsewhere
+        $GLOBALS['apw_is_custom_product_url'] = true;
+
         // Setup product globals - we've found a product that matches the URL
         $this->setup_product_for_template($product_post, $wp->request);
 
@@ -209,7 +223,8 @@ class APW_Woo_Template_Resolver {
      * @param string $product_slug The product slug
      * @return WP_Post|false Product post or false if not found
      */
-    private function find_product_for_template($product_slug) {
+    private function find_product_for_template($product_slug)
+    {
         static $product_cache = [];
 
         // Check static cache first
@@ -232,7 +247,8 @@ class APW_Woo_Template_Resolver {
      * @param WP_Post $product_post The product post object
      * @param string $request_url The current request URL (for logging)
      */
-    private function setup_product_for_template($product_post, $request_url) {
+    private function setup_product_for_template($product_post, $request_url)
+    {
         global $post;
         if (APW_WOO_DEBUG_MODE) {
             apw_woo_log("TEMPLATE OVERRIDE: Found product '" . $product_post->post_title . "' (ID: " . $product_post->ID . ") at URL: " . $request_url);
@@ -249,7 +265,7 @@ class APW_Woo_Template_Resolver {
         }
 
         // Add early filters for title to ensure they use the correct product
-        add_filter('pre_get_document_title', function($title) use ($product_post) {
+        add_filter('pre_get_document_title', function ($title) use ($product_post) {
             $site_name = get_bloginfo('name');
             $product_title = $product_post->post_title;
             $new_title = $product_title . ' - ' . $site_name;
@@ -283,7 +299,8 @@ class APW_Woo_Template_Resolver {
      * @param string $page_description Description of the page type for logging
      * @return string|false Template path or false if not found
      */
-    private function get_template_for_page_type($template_path, $page_description) {
+    private function get_template_for_page_type($template_path, $page_description)
+    {
         if (APW_WOO_DEBUG_MODE) {
             apw_woo_log("TEMPLATE OVERRIDE: Detected {$page_description} page");
         }
