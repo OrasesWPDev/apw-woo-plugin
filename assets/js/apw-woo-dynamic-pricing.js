@@ -3,6 +3,7 @@
  *
  * Handles AJAX updating of product prices based on quantity
  */
+console.log('APW WooCommerce Dynamic Pricing JS file loaded');
 (function ($) {
     'use strict';
 

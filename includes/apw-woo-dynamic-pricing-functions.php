@@ -199,14 +199,45 @@ function apw_woo_ajax_get_dynamic_price()
  */
 function apw_woo_replace_price_display()
 {
-    global $product;
-    if (!$product) return;
+    global $product, $post;
+
+    // If product is not available, try to get it from the post
+    if (!$product && $post && $post->post_type === 'product') {
+        $product = wc_get_product($post->ID);
+    }
+
+    // If still no product, try to get it from queried object
+    if (!$product) {
+        $queried_object = get_queried_object();
+        if ($queried_object && isset($queried_object->ID) && get_post_type($queried_object->ID) === 'product') {
+            $product = wc_get_product($queried_object->ID);
+        }
+    }
+
+    // For cart and checkout pages, we don't need to display individual product prices here
+    if (is_cart() || is_checkout()) {
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('On cart/checkout page - skipping individual product price display');
+        }
+        return;
+    }
+
+    if (!$product) {
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('Could not find product for price display');
+        }
+        return;
+    }
 
     // Get the current quantity from the form (default to 1)
     $quantity = 1;
 
     // Get unit price based on quantity
     $unit_price = apw_woo_get_price_by_quantity($product, $quantity);
+
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log("Displaying price for product {$product->get_id()} with unit price {$unit_price}");
+    }
 
     // Display the price with data attribute for JS to update
     echo '<div class="apw-woo-price-display" data-product-id="' . esc_attr($product->get_id()) . '">'
@@ -220,8 +251,23 @@ function apw_woo_replace_price_display()
  */
 function apw_woo_enqueue_dynamic_pricing_scripts()
 {
-    // Only enqueue on product pages
-    if (!is_product()) {
+    // We need a custom check instead of just is_product()
+    $is_custom_product_page = false;
+
+    // Get current request path
+    global $wp;
+    $current_url = $wp->request;
+
+    // Check if URL matches our product pattern
+    if (preg_match('#^products/([^/]+)/([^/]+)$#', $current_url)) {
+        $is_custom_product_page = true;
+    }
+
+    // Only enqueue on product pages (standard or custom), cart or checkout pages
+    if (!is_product() && !$is_custom_product_page && !is_cart() && !is_checkout()) {
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('Not a product, cart, or checkout page - skipping dynamic pricing scripts');
+        }
         return;
     }
 
@@ -229,12 +275,25 @@ function apw_woo_enqueue_dynamic_pricing_scripts()
     $js_file = 'apw-woo-dynamic-pricing.js';
     $js_path = APW_WOO_PLUGIN_DIR . 'assets/js/' . $js_file;
 
+    if (APW_WOO_DEBUG_MODE) {
+        $page_type = is_product() ? 'product page' :
+            ($is_custom_product_page ? 'custom product page' :
+                (is_cart() ? 'cart page' :
+                    (is_checkout() ? 'checkout page' : 'unknown page')));
+        apw_woo_log('Loading dynamic pricing script on ' . $page_type);
+        apw_woo_log('Checking for JS file at: ' . $js_path);
+    }
+
     // Check if the file exists
     if (!file_exists($js_path)) {
         if (APW_WOO_DEBUG_MODE) {
             apw_woo_log('Dynamic pricing JS file not found: ' . $js_path);
         }
         return;
+    }
+
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log('Enqueuing dynamic pricing script: ' . $js_dir . $js_file);
     }
 
     // Enqueue the JavaScript file
@@ -253,9 +312,16 @@ function apw_woo_enqueue_dynamic_pricing_scripts()
         array(
             'ajax_url' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('apw_woo_dynamic_pricing'),
-            'price_selector' => '.apw-woo-price-display'
+            'price_selector' => '.apw-woo-price-display',
+            'is_cart' => is_cart(),
+            'is_checkout' => is_checkout(),
+            'is_product' => (is_product() || $is_custom_product_page)
         )
     );
+
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log('Dynamic pricing script successfully enqueued');
+    }
 }
 
 /**
@@ -268,6 +334,12 @@ function apw_woo_enqueue_dynamic_pricing_scripts()
  */
 function apw_woo_init_dynamic_pricing()
 {
+    // Prevent multiple initializations
+    static $initialized = false;
+    if ($initialized) {
+        return;
+    }
+
     // Check if Dynamic Pricing is active
     if (!apw_woo_is_dynamic_pricing_active()) {
         if (APW_WOO_DEBUG_MODE) {
@@ -299,6 +371,9 @@ function apw_woo_init_dynamic_pricing()
 
     // Remove the original price display function
     remove_action('woocommerce_after_add_to_cart_quantity', 'apw_woo_add_price_display');
+
+    // Mark as initialized to prevent recursive calls
+    $initialized = true;
 
     if (APW_WOO_DEBUG_MODE) {
         apw_woo_log('Dynamic Pricing integration initialized');
