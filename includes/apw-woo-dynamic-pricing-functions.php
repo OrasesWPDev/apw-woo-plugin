@@ -88,6 +88,8 @@ function apw_woo_get_product_pricing_rules($product)
         // We found product-specific rules!
         if (APW_WOO_DEBUG_MODE) {
             apw_woo_log("Found " . count($product_pricing_rules) . " product-specific pricing rules in post meta for product #{$product_id}");
+            // DEBUGGING - dump the exact structure of the rules
+            apw_woo_log("RULES STRUCTURE: " . print_r($product_pricing_rules, true));
         }
 
         // Format rules to match our expected structure
@@ -289,32 +291,64 @@ function apw_woo_get_price_by_quantity($product, $quantity = 1)
     // Find applicable pricing rule based on quantity
     $discounted_price = $base_price;
     $rule_applied = false;
+    $applied_rule_details = '';
+
+// Dump the full rules array for debugging
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log("FULL RULES ARRAY: " . print_r($pricing_rules, true));
+    }
 
     foreach ($pricing_rules as $rule) {
         // Check if we have pricing rules by quantity
         if (isset($rule['rules']) && is_array($rule['rules'])) {
             foreach ($rule['rules'] as $price_rule) {
-                if (isset($price_rule['from']) && $quantity >= $price_rule['from']) {
-                    // If there's a 'to' limit, check if quantity is less than or equal to it
-                    if (!isset($price_rule['to']) || $quantity <= $price_rule['to']) {
-                        // Apply the pricing rule
-                        if (isset($price_rule['amount'])) {
-                            // Fixed price
+                if (APW_WOO_DEBUG_MODE) {
+                    apw_woo_log("Checking rule: " . print_r($price_rule, true));
+                    apw_woo_log("Current quantity: {$quantity}, Comparing against from: " . (isset($price_rule['from']) ? $price_rule['from'] : 'N/A'));
+                }
+
+                // Check if quantity matches the rule's 'from' threshold
+                if (isset($price_rule['from']) && $quantity >= (int)$price_rule['from']) {
+                    // Check if there's a 'to' limit and if quantity is within it
+                    if (!isset($price_rule['to']) || empty($price_rule['to']) || $quantity <= (int)$price_rule['to']) {
+                        if (APW_WOO_DEBUG_MODE) {
+                            apw_woo_log("MATCH FOUND - Quantity {$quantity} matches rule threshold {$price_rule['from']}");
+                        }
+
+                        // Check rule type and apply appropriate pricing
+                        $rule_type = isset($price_rule['type']) ? $price_rule['type'] : '';
+
+                        if ($rule_type === 'fixed_price' && isset($price_rule['amount'])) {
+                            // Fixed price rule (matches our logs)
                             $discounted_price = (float)$price_rule['amount'];
                             $rule_applied = true;
+                            $applied_rule_details = "fixed price rule: {$price_rule['amount']} for quantity {$quantity}";
 
                             if (APW_WOO_DEBUG_MODE) {
-                                apw_woo_log("Applied fixed price rule: {$price_rule['amount']} for quantity {$quantity}");
+                                apw_woo_log("APPLYING FIXED PRICE RULE: {$price_rule['amount']} for quantity {$quantity}");
                             }
-                        } elseif (isset($price_rule['percentage'])) {
+                            break 2; // Exit both loops
+                        } elseif ($rule_type === 'percentage' && isset($price_rule['amount'])) {
                             // Percentage discount
-                            $discount_percentage = (float)$price_rule['percentage'];
+                            $discount_percentage = (float)$price_rule['amount'];
                             $discounted_price = $base_price * (1 - ($discount_percentage / 100));
                             $rule_applied = true;
+                            $applied_rule_details = "percentage discount: {$discount_percentage}% for quantity {$quantity}";
 
                             if (APW_WOO_DEBUG_MODE) {
-                                apw_woo_log("Applied percentage discount: {$discount_percentage}% for quantity {$quantity}");
+                                apw_woo_log("APPLYING PERCENTAGE DISCOUNT: {$discount_percentage}% for quantity {$quantity}");
                             }
+                            break 2; // Exit both loops
+                        } elseif (isset($price_rule['amount'])) {
+                            // Fallback: if type is not recognized but amount exists, use it
+                            $discounted_price = (float)$price_rule['amount'];
+                            $rule_applied = true;
+                            $applied_rule_details = "rule with amount: {$price_rule['amount']} for quantity {$quantity}";
+
+                            if (APW_WOO_DEBUG_MODE) {
+                                apw_woo_log("APPLYING GENERIC RULE: {$price_rule['amount']} for quantity {$quantity}");
+                            }
+                            break 2; // Exit both loops
                         }
                     }
                 }
