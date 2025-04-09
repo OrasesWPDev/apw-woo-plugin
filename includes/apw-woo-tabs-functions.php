@@ -62,28 +62,67 @@ function apw_woo_filter_product_tabs($tabs)
         }
     }
 
-    // 4. Handle Flatsome's Custom Tab (ux_custom_tab)
-    $custom_tab_title = get_post_meta($product->get_id(), 'custom_tab_title', true);
-    $custom_tab_content = get_post_meta($product->get_id(), 'custom_tab_content', true);
+    // 4. Handle Flatsome's Custom Tab (ux_custom_tab) using wc_productdata_options
+    $product_id = $product ? $product->get_id() : 0;
+    $flatsome_options = $product_id ? get_post_meta($product_id, 'wc_productdata_options', true) : null;
 
+    // Initialize variables
+    $custom_tab_title = '';
+    $custom_tab_content = '';
+
+    // *** CORRECTED ACCESS: Use $flatsome_options[0] ***
+    // Safely access nested data (check only one level deep)
+    if (is_array($flatsome_options) && isset($flatsome_options[0]) && is_array($flatsome_options[0])) {
+        $nested_options = $flatsome_options[0]; // <-- Access the first element
+        $custom_tab_title = isset($nested_options['_custom_tab_title']) ? $nested_options['_custom_tab_title'] : '';
+        $custom_tab_content = isset($nested_options['_custom_tab']) ? $nested_options['_custom_tab'] : '';
+    }
+    // *** END CORRECTION ***
+
+
+    // *** Logging remains the same (keep it uncommented for now) ***
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log("Flatsome Tab Check: Product ID: " . $product_id);
+        apw_woo_log("Flatsome Tab Check: Raw 'wc_productdata_options': " . print_r($flatsome_options, true)); // Keep this uncommented
+        apw_woo_log("Flatsome Tab Check: Extracted Nested '_custom_tab_title': " . $custom_tab_title);
+        apw_woo_log("Flatsome Tab Check: Extracted Nested '_custom_tab' (has content?): " . (!empty($custom_tab_content) ? 'Yes' : 'No'));
+        apw_woo_log("Flatsome Tab Check: Does 'ux_custom_tab' key exist in ORIGINAL \$tabs array? " . (isset($tabs['ux_custom_tab']) ? 'Yes' : 'No'));
+    }
+    // *** END Logging ***
+
+    // Conditional logic remains similar, but uses the correctly extracted variables
     if (isset($tabs['ux_custom_tab'])) {
         if (!empty($custom_tab_content)) {
             // Content exists, ensure tab remains and has reasonable priority
-            if (!empty($custom_tab_title) && $tabs['ux_custom_tab']['title'] !== $custom_tab_title) {
+
+            // Update the tab title directly from our extracted meta if it differs or is empty
+            if (!empty($custom_tab_title) && (!isset($tabs['ux_custom_tab']['title']) || $tabs['ux_custom_tab']['title'] !== $custom_tab_title)) {
+                $tabs['ux_custom_tab']['title'] = esc_html($custom_tab_title); // Set the correct title
                 if (APW_WOO_DEBUG_MODE) {
-                    apw_woo_log('Flatsome custom tab found. Title: "' . $tabs['ux_custom_tab']['title'] . '". Content exists.');
+                    apw_woo_log('Flatsome Tab Check: Content exists, key found. UPDATED tab title to: "' . $custom_tab_title . '"');
+                }
+            } elseif (empty($tabs['ux_custom_tab']['title']) && !empty($custom_tab_title)) {
+                // Handle case where Flatsome might not have set a title
+                $tabs['ux_custom_tab']['title'] = esc_html($custom_tab_title);
+                if (APW_WOO_DEBUG_MODE) {
+                    apw_woo_log('Flatsome Tab Check: Content exists, key found. SETTING missing tab title to: "' . $custom_tab_title . '"');
                 }
             }
+
             $tabs['ux_custom_tab']['priority'] = isset($tabs['ux_custom_tab']['priority']) ? $tabs['ux_custom_tab']['priority'] : 20; // Give it a priority after 'Details'
+
         } else {
             // No content, remove the tab
-            unset($tabs['ux_custom_tab']);
             if (APW_WOO_DEBUG_MODE) {
-                apw_woo_log('Flatsome custom tab ("ux_custom_tab") removed because content is empty.');
+                apw_woo_log('Flatsome Tab Check: REMOVING "ux_custom_tab" because extracted _custom_tab content is empty.');
             }
+            unset($tabs['ux_custom_tab']);
         }
-    } elseif (!empty($custom_tab_content) && APW_WOO_DEBUG_MODE) {
-        apw_woo_log('Warning: Custom tab content exists, but "ux_custom_tab" key not found in tabs array.');
+    } elseif (!empty($custom_tab_content)) {
+        // If content exists but Flatsome didn't add the tab... (logging remains)
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('Flatsome Tab Check: Warning! Custom tab content EXISTS, but "ux_custom_tab" key was NOT found in the original tabs array.');
+        }
     }
 
 
@@ -97,13 +136,27 @@ function apw_woo_filter_product_tabs($tabs)
     }
 
     // Sort tabs by priority
-    uasort($tabs, 'wc_product_tabs_sort');
+    if (function_exists('wc_product_tabs_sort')) {
+        uasort($tabs, 'wc_product_tabs_sort');
+    } else {
+        // Fallback: Basic sort if the WC function isn't available (should normally exist)
+        uasort($tabs, function ($a, $b) {
+            $priorityA = isset($a['priority']) ? (int)$a['priority'] : 50;
+            $priorityB = isset($b['priority']) ? (int)$b['priority'] : 50;
+            return $priorityA <=> $priorityB; // Spaceship operator for comparison
+        });
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('Warning: wc_product_tabs_sort() function not found. Using basic priority sort.', 'warning');
+        }
+    }
 
     return $tabs;
 }
 
 // Apply the filter
 add_filter('woocommerce_product_tabs', 'apw_woo_filter_product_tabs', 98);
+// Remove default related products output from the standard tab/content hook location
+remove_action('woocommerce_after_single_product_summary', 'woocommerce_output_related_products', 20);
 
 /**
  * Callback function to display the content for the Short Description tab.
