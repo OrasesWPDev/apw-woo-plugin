@@ -274,6 +274,16 @@ if ($product) :
                                 <?php do_action('apw_woo_after_product_summary', $product); ?>
                             </div>
                         </div>
+                        <?php
+                        /**
+                         * Hook: woocommerce_after_single_product_summary.
+                         *
+                         * @hooked woocommerce_output_product_data_tabs - 10
+                         * @hooked woocommerce_upsell_display - 15
+                         * @hooked woocommerce_related_products - 20
+                         */
+                        do_action('woocommerce_after_single_product_summary');
+                        ?>
                         <!-- FAQ Section -->
                         <div class="row apw-woo-row">
                             <div class="col apw-woo-faq-section-container">
