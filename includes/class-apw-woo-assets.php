@@ -7,7 +7,7 @@
  */
 
 // Exit if accessed directly.
-if ( ! defined( 'ABSPATH' ) ) {
+if (!defined('ABSPATH')) {
     exit;
 }
 
@@ -19,15 +19,17 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @since 1.0.0
  */
-class APW_Woo_Assets {
+class APW_Woo_Assets
+{
 
     /**
      * Initialize the asset system
      *
-     * @since 1.0.0
      * @return void
+     * @since 1.0.0
      */
-    public static function init() {
+    public static function init()
+    {
         add_action('wp_enqueue_scripts', array(__CLASS__, 'register_assets'));
     }
 
@@ -37,10 +39,11 @@ class APW_Woo_Assets {
      * Dynamically loads all CSS and JS files found in the assets directories,
      * with automatic cache busting based on file modification times.
      *
-     * @since 1.0.0
      * @return void
+     * @since 1.0.0
      */
-    public static function register_assets() {
+    public static function register_assets()
+    {
         // Only load on WooCommerce-related pages for better performance
         if (!is_woocommerce() && !is_cart() && !is_checkout() && !is_account_page()) {
             return;
@@ -85,10 +88,11 @@ class APW_Woo_Assets {
      *
      * Helper function to determine the current WooCommerce page context.
      *
-     * @since 1.0.0
      * @return string The current page type identifier
+     * @since 1.0.0
      */
-    public static function get_current_page_type() {
+    public static function get_current_page_type()
+    {
         if (is_shop()) {
             return 'shop';
         } elseif (is_product()) {
@@ -109,13 +113,14 @@ class APW_Woo_Assets {
     /**
      * Auto-discover and enqueue all stylesheet files with cache busting
      *
-     * @since 1.0.0
      * @param string $assets_dir The local directory path to assets
      * @param string $assets_url The URL path to assets
      * @param string $current_page_type The current page type
      * @return void
+     * @since 1.0.0
      */
-    public static function auto_enqueue_styles($assets_dir, $assets_url, $current_page_type) {
+    public static function auto_enqueue_styles($assets_dir, $assets_url, $current_page_type)
+    {
         $css_dir = $assets_dir . 'css/';
         $css_url = $assets_url . 'css/';
 
@@ -194,12 +199,37 @@ class APW_Woo_Assets {
             }
         }
 
-        // Third pass - Load all other CSS files
+        // Third pass - Load FAQ styles and then all other CSS files
+        $faq_style_loaded = false;
+        $faq_style_path = $css_dir . 'faq-styles.css';
+        if (file_exists($faq_style_path)) {
+            $css_ver = filemtime($faq_style_path);
+            $handle = 'apw-woo-faq-styles';
+
+            wp_register_style(
+                $handle,
+                $css_url . 'faq-styles.css',
+                $deps, // Depends on common styles if loaded
+                $css_ver
+            );
+            wp_enqueue_style($handle);
+            $faq_style_loaded = true;
+
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log("Enqueued FAQ CSS (faq-styles.css) with version: " . $css_ver);
+            }
+        } elseif (APW_WOO_DEBUG_MODE) {
+            apw_woo_log("FAQ CSS file not found: faq-styles.css", 'warning');
+        }
+
+        // Load any remaining CSS files (excluding common, page-specific, and faq)
         foreach ($css_files as $file) {
             $filename = basename($file);
 
-            // Skip already loaded files
-            if ($filename === 'apw-woo-public.css' || $filename === "apw-woo-{$current_page_type}.css") {
+            // Skip already loaded files (common, page-specific, faq)
+            if ($filename === 'apw-woo-public.css' ||
+                $filename === "apw-woo-{$current_page_type}.css" ||
+                $filename === 'faq-styles.css') {
                 continue;
             }
 
@@ -218,7 +248,7 @@ class APW_Woo_Assets {
             wp_register_style(
                 $handle,
                 $css_url . $filename,
-                $deps,
+                $deps, // Depends on common styles if loaded
                 $css_ver
             );
             wp_enqueue_style($handle);
@@ -232,13 +262,14 @@ class APW_Woo_Assets {
     /**
      * Auto-discover and enqueue all JavaScript files with cache busting
      *
-     * @since 1.0.0
      * @param string $assets_dir The local directory path to assets
      * @param string $assets_url The URL path to assets
      * @param string $current_page_type The current page type
      * @return void
+     * @since 1.0.0
      */
-    public static function auto_enqueue_scripts($assets_dir, $assets_url, $current_page_type) {
+    public static function auto_enqueue_scripts($assets_dir, $assets_url, $current_page_type)
+    {
         $js_dir = $assets_dir . 'js/';
         $js_url = $assets_url . 'js/';
 
