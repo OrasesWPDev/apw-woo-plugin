@@ -1,0 +1,195 @@
+/* APW WooCommerce Plugin - FAQ Styles */
+
+/* Define Root Variables */
+:root {
+    /* Colors */
+    --apw-faq-title-color: #0F6789;
+    --apw-faq-separator-color: #e0e0e0; /* Light grey separator line */
+    --apw-faq-text-color: #0D252C; /* Used for Question & Answer Content */
+    --apw-faq-answer-label-color: #92DDC6;
+
+    /* Font Sizes (Base 16px) */
+    --apw-faq-title-size: 3.75rem; /* 60px / 16px */
+    --apw-faq-answer-label-size: 1.5625rem; /* 25px / 16px */
+    --apw-faq-text-size: 1.3125rem; /* 21px / 16px */
+
+    /* Font Weights */
+    --apw-font-medium: 500;
+    --apw-font-bold: 700;
+    --apw-font-extrabold: 800;
+
+    /* Font Family */
+    --apw-font-family: 'Montserrat', sans-serif;
+}
+
+/* Overall FAQ Section Spacing */
+.apw-woo-faq-section {
+    margin-top: 30px; /* Adjust as needed */
+    margin-bottom: 30px; /* Adjust as needed */
+}
+
+/* FAQ Title Styling */
+.apw-woo-faq-title {
+    font-family: var(--apw-font-family);
+    font-size: var(--apw-faq-title-size);
+    font-weight: var(--apw-font-extrabold); /* Weight 800 */
+    color: var(--apw-faq-title-color);
+    margin-bottom: 25px;
+    text-align: center; /* Centered as requested */
+}
+
+/* Individual FAQ Item Spacing & Separator */
+.apw-woo-faq-item {
+    margin-bottom: 25px;
+    padding-bottom: 25px;
+    border-bottom: 1px solid var(--apw-faq-separator-color); /* Border applied to all items */
+}
+
+/* Main Flex Container for Icon + Text Block */
+.apw-woo-faq-content-flex {
+    display: flex;
+    align-items: flex-start; /* Align icon and text block to the top */
+}
+
+/* Q Icon Container and Image Sizing */
+.apw-woo-faq-q-icon {
+    flex-shrink: 0; /* Prevent icon from shrinking */
+    margin-right: 20px; /* Increased space between icon and text block */
+    /* align-self: flex-start; /* Optional: Align icon to top if centering text looks odd */
+}
+
+/* Q Icon Image Styling */
+.apw-woo-faq-q-image {
+    display: block;
+    width: 113px; /* Specific width requested */
+    height: 111px; /* Specific height requested */
+    max-width: 100%;
+    object-fit: contain;
+}
+
+/* Text Block Container (holds Q+A Label+A Content) */
+.apw-woo-faq-text-block {
+    flex-grow: 1; /* Allow text block to take remaining space */
+    padding-top: 40px; /* Push text content down slightly - adjust value as needed */
+}
+
+/* Question Text Styling */
+.apw-woo-faq-question-text {
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold); /* Weight 700 */
+    font-style: italic;
+    font-size: var(--apw-faq-text-size);
+    color: var(--apw-faq-text-color);
+    line-height: 1.4;
+    margin-bottom: 10px; /* Add space below question */
+}
+
+/* ANSWER Label Styling */
+.apw-woo-faq-answer-label {
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-extrabold); /* Weight 800 */
+    font-size: var(--apw-faq-answer-label-size);
+    color: var(--apw-faq-answer-label-color);
+    text-transform: uppercase;
+    margin-bottom: 10px; /* Increased space below label */
+}
+
+/* Answer Content Styling */
+.apw-woo-faq-answer-content {
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-medium); /* Weight 500 */
+    font-size: var(--apw-faq-text-size);
+    color: var(--apw-faq-text-color);
+    line-height: 1.6;
+}
+
+/* Ensure paragraphs inside answer have proper margin */
+.apw-woo-faq-answer-content p {
+    margin-bottom: 1em;
+}
+
+.apw-woo-faq-answer-content p:last-child {
+    margin-bottom: 0;
+}
+
+
+/* --- Responsive Adjustments --- */
+
+/* Tablet Styles (550px to 849px) */
+@media (max-width: 849px) {
+    :root {
+        /* Adjust root font sizes for tablet if desired */
+        --apw-faq-title-size: 3rem; /* ~48px */
+        --apw-faq-answer-label-size: 1.375rem; /* ~22px */
+        --apw-faq-text-size: 1.1875rem; /* ~19px */
+    }
+
+    .apw-woo-faq-q-image {
+        width: 85px; /* Scale down icon */
+        height: 83px;
+    }
+
+    /* Optional: Adjust indentation */
+    /* .apw-woo-faq-text-block {
+        padding-top: 8px; /* Example adjustment */
+    /* padding-left: 100px; /* 85px + 15px */
+    /* } */
+}
+
+/* Mobile Styles (549px and below) */
+@media (max-width: 549px) {
+    :root {
+        /* Adjust root font sizes for mobile */
+        --apw-faq-title-size: 2.5rem; /* ~40px */
+        --apw-faq-answer-label-size: 1.25rem; /* ~20px */
+        --apw-faq-text-size: 1.125rem; /* ~18px */
+    }
+
+    .apw-woo-faq-section {
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+
+    .apw-woo-faq-title {
+        margin-bottom: 20px;
+    }
+
+    .apw-woo-faq-item {
+        margin-bottom: 20px;
+        padding-bottom: 20px;
+    }
+
+    .apw-woo-faq-content-flex {
+        /* Stack icon above text on mobile */
+        flex-direction: column;
+        align-items: center; /* Center items horizontally */
+        text-align: center; /* Center text within the block */
+    }
+
+    .apw-woo-faq-q-icon {
+        margin-right: 0; /* Remove right margin */
+        margin-bottom: 15px; /* Add space below icon */
+    }
+
+    .apw-woo-faq-q-image {
+        width: 60px; /* Further scale down icon */
+        height: 59px;
+    }
+
+    .apw-woo-faq-text-block {
+        width: 100%; /* Ensure text block takes full width */
+        padding-top: 0; /* Remove top padding when stacked */
+    }
+
+    .apw-woo-faq-question-text {
+        margin-bottom: 8px;
+    }
+
+    .apw-woo-faq-answer-label {
+        margin-bottom: 8px;
+    }
+
+    .apw-woo-faq-answer-content {
+        line-height: 1.5;
+    }
+}
