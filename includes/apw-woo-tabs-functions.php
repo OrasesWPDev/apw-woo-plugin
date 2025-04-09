@@ -32,14 +32,15 @@ function apw_woo_filter_product_tabs($tabs)
     // *** END ADDED LINE ***
 
     // --- Input Validation ---
-    // Ensure $tabs is an array before proceeding. If not, log and return an empty array.
+    // If $tabs is NULL or not an array, create a default tabs array instead of returning empty
     if (!is_array($tabs)) {
         if (APW_WOO_DEBUG_MODE) {
             $debug_input = is_null($tabs) ? 'NULL' : gettype($tabs);
-            apw_woo_log('Filtering product tabs: Received invalid input type (' . $debug_input . ') instead of array. Returning empty array.', 'warning');
+            apw_woo_log('Filtering product tabs: Received invalid input type (' . $debug_input . '). Creating default tabs array.', 'warning');
         }
-        // Return empty array immediately to prevent further processing on invalid input
-        return array();
+        
+        // Create a default tabs array instead of returning empty
+        $tabs = array();
     }
     // --- End Input Validation ---
 
@@ -64,19 +65,24 @@ function apw_woo_filter_product_tabs($tabs)
 
 
     // 1. Add Short Description Tab (using post_excerpt)
-    // Check if the product is valid and has a short description before adding the tab.
-    if ($is_valid_product && $product->get_short_description()) {
+    // Always add the short description tab if the product is valid, regardless of content
+    if ($is_valid_product) {
+        // Force add the short description tab with high priority to ensure it's displayed
         $tabs['short_description'] = array(
             'title' => __('Details', 'apw-woo-plugin'), // Changed title to 'Details'
             'priority' => 10, // Display it first
             'callback' => 'apw_woo_short_description_tab_content' // Use our custom callback
         );
         if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log('Added Short Description tab (Details).');
+            if ($product->get_short_description()) {
+                apw_woo_log('Added Short Description tab (Details) with content.');
+            } else {
+                apw_woo_log('Added Short Description tab (Details) without content.');
+            }
         }
-    } elseif (APW_WOO_DEBUG_MODE && $is_valid_product) {
-        // Log only if we had a product but it lacked the description
-        apw_woo_log('Skipped adding Short Description tab (no content for product ID: ' . $product_id . ').');
+    } elseif (APW_WOO_DEBUG_MODE) {
+        // Log if we don't have a valid product
+        apw_woo_log('Skipped adding Short Description tab (invalid product).');
     }
 
 
