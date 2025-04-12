@@ -3,7 +3,6 @@
    Base styles primarily for Shop (Top Level), Category (Middle Level),
    and Single Product (Last Level) templates. Specific overrides may apply.
    ---------------------------------------- */
-
 /* ----------------------------------------
    1. GLOBAL CSS VARIABLES (CUSTOM PROPERTIES)
       Used across Shop, Category, and Product templates unless overridden.
@@ -45,48 +44,60 @@
 }
 
 /* ----------------------------------------
-   2. SHOP/CATEGORY LEVEL - GRID LAYOUT (Revised Spacing Fix)
+   2. SHOP/CATEGORY LEVEL - GRID LAYOUT (Bottom Radius Added)
    ---------------------------------------- */
 
-/* Grid container */
+/* Grid container (Unchanged from previous version) */
 .apw-woo-categories-grid,
 .apw-woo-products-grid {
     display: flex;
     flex-wrap: wrap;
     box-sizing: border-box;
     row-gap: calc(3 * var(--apw-woo-spacing-large));
-    column-gap: var(--apw-woo-spacing-large);
+    column-gap: calc(var(--apw-woo-spacing-large) + 10px);
 }
 
 /* Category/Product item (card) */
 .apw-woo-category-item,
 .apw-woo-product-item {
-    flex-basis: calc(50% - (var(--apw-woo-spacing-large) / 2));
+    flex-basis: calc(50% - ((var(--apw-woo-spacing-large) + 10px) / 2));
     flex-grow: 0;
     flex-shrink: 0;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    background-color: #fff;
-    border-radius: 1px; /* Minimal radius for shadow */
-    overflow: hidden; /* Keep overflow for shadow shaping */
+    background-color: #fff; /* Background needed for content */
+
+    /* --- Corrected Border Radius --- */
+    /* Apply 16px radius to all corners of the item container */
+    /* The header inside will still respect its own 16px 16px 0 0 radius */
+    border-radius: 16px; /* CHANGED: Applied 16px radius to all corners */
+
+    /* --- Corrected Overflow --- */
+    /* Changed back to hidden to clip internal content to the item's radius */
+    overflow: hidden; /* CHANGED: Back to hidden */
+
+    position: relative; /* Still useful for positioning context if needed */
+    /* Drop shadow remains unchanged, will follow the new border-radius */
     box-shadow: var(--apw-woo-card-shadow-x) var(--apw-woo-card-shadow-y) var(--apw-woo-card-shadow-blur) var(--apw-woo-card-shadow-color);
 }
 
-/* --- Refined Override for Flatsome's .col padding INSIDE our cards --- */
-/* Target .col that is a direct child of a .row within our specific items */
+/* --- Flatsome Override (Unchanged) --- */
 .apw-woo-category-item > .row > .col,
 .apw-woo-product-item > .row > .col {
-    /* REMOVE the general 'padding: 0 !important;' */
-    /* Specifically target bottom padding/margin */
     padding-bottom: 0 !important;
     margin-bottom: 0 !important;
-    /* Let flexbox handle width, but ensure max-width */
-    width: auto; /* Allow natural width within flex context */
+    padding-top: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin-top: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    width: 100%;
     max-width: 100%;
 }
 
-/* Ensure inner rows don't add unwanted margins */
+/* --- Inner Row Styles (Unchanged) --- */
 .apw-woo-category-item .row,
 .apw-woo-product-item .row {
     width: 100%;
@@ -96,10 +107,10 @@
 
 
 /* ----------------------------------------
-   3. SHOP/CATEGORY LEVEL - CARD HEADER STYLING (Final Adjustments)
+   3. SHOP/CATEGORY LEVEL - CARD HEADER STYLING (Title/Button Spacing)
    ---------------------------------------- */
 
-/* Card Header container */
+/* Card Header container (Unchanged) */
 .apw-woo-category-header,
 .apw-woo-product-header {
     background-color: var(--apw-woo-card-header-bg);
@@ -111,7 +122,6 @@
     flex-wrap: nowrap;
     height: 106px;
     box-sizing: border-box;
-    /* Added specific border-radius for top corners */
     border-radius: 16px 16px 0 0;
 }
 
@@ -129,6 +139,8 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    /* --- Added Left Margin --- */
+    margin-left: var(--apw-woo-spacing-small); /* Example: 10px margin */
 }
 
 /* View All / View Product Button */
@@ -154,9 +166,11 @@
     white-space: nowrap;
     flex-shrink: 0;
     box-sizing: border-box;
+    /* --- Added Right Margin --- */
+    margin-right: var(--apw-woo-spacing-small); /* Example: 10px margin */
 }
 
-/* Hover styles */
+/* Hover styles (Unchanged) */
 .apw-woo-view-all-button:hover,
 .apw-woo-view-product-button:hover {
     opacity: 0.85;
@@ -193,7 +207,6 @@
 /* ----------------------------------------
    5. SHOP/CATEGORY LEVEL - CARD DESCRIPTION STYLING (Margin Added)
    ---------------------------------------- */
-/* (Ensure this is correctly placed after other card styles) */
 .apw-woo-category-description {
     font-family: var(--apw-font-family);
     font-weight: var(--apw-font-medium);
