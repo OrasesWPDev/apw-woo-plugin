@@ -1,26 +1,213 @@
-/* Basic structure for the purchase section */
-.apw-woo-purchase-section {
-    margin: 20px 0;
+/* ----------------------------------------
+   APW WOOCOMMERCE PLUGIN - GLOBAL WOOCOMMERCE STYLES
+   Base styles primarily for Shop (Top Level), Category (Middle Level),
+   and Single Product (Last Level) templates. Specific overrides may apply.
+   ---------------------------------------- */
+
+/* ----------------------------------------
+   1. GLOBAL CSS VARIABLES (CUSTOM PROPERTIES)
+      Used across Shop, Category, and Product templates unless overridden.
+   ---------------------------------------- */
+:root {
+    /* --- Colors --- */
+    --apw-woo-card-header-bg: #003E57;
+    --apw-woo-card-header-text: #ffffff;
+    --apw-woo-text-color: #0D252C;
+    /* --- UPDATED Button Gradient Colors --- */
+    --apw-woo-button-gradient-start: #244B5A; /* Changed from #0D252C */
+    --apw-woo-button-gradient-end: #178093; /* Changed from #00AADE */
+    /* --- End Update --- */
+    --apw-woo-card-shadow-color: rgba(36, 75, 90, 0.06); /* #244B5A10 */
+
+    /* --- Typography --- */
+    /* Reusing from faq-styles.css */
+    --apw-font-family: 'Montserrat', sans-serif;
+    --apw-font-bold: 700;
+    --apw-font-medium: 500;
+    --apw-woo-card-title-size: 2.375rem; /* 38px / 16px */
+    --apw-woo-card-button-desc-size: 1.3125rem; /* 21px / 16px */
+
+    /* --- Dimensions & Layout --- */
+    /* Image dimensions handled by aspect-ratio in rules */
+    --apw-woo-card-shadow-x: 5px;
+    --apw-woo-card-shadow-y: 25px;
+    --apw-woo-card-shadow-blur: 0px;
+
+    /* --- Gradients --- */
+    --apw-woo-button-gradient-angle: 204deg; /* Angle remains 204deg */
+    /* This variable now uses the updated start/end colors automatically */
+    --apw-woo-button-background: linear-gradient(var(--apw-woo-button-gradient-angle), var(--apw-woo-button-gradient-start), var(--apw-woo-button-gradient-end));
+
+    /* --- Spacing --- */
+    --apw-woo-spacing-small: 10px;
+    --apw-woo-spacing-medium: 15px;
+    --apw-woo-spacing-large: 30px;
 }
 
-/* Quantity row layout */
-.apw-woo-quantity-row {
+/* ----------------------------------------
+   2. SHOP/CATEGORY LEVEL - GRID LAYOUT (Revised Spacing Fix)
+   ---------------------------------------- */
+
+/* Grid container */
+.apw-woo-categories-grid,
+.apw-woo-products-grid {
     display: flex;
+    flex-wrap: wrap;
+    box-sizing: border-box;
+    row-gap: calc(3 * var(--apw-woo-spacing-large));
+    column-gap: var(--apw-woo-spacing-large);
+}
+
+/* Category/Product item (card) */
+.apw-woo-category-item,
+.apw-woo-product-item {
+    flex-basis: calc(50% - (var(--apw-woo-spacing-large) / 2));
+    flex-grow: 0;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    background-color: #fff;
+    border-radius: 1px; /* Minimal radius for shadow */
+    overflow: hidden; /* Keep overflow for shadow shaping */
+    box-shadow: var(--apw-woo-card-shadow-x) var(--apw-woo-card-shadow-y) var(--apw-woo-card-shadow-blur) var(--apw-woo-card-shadow-color);
+}
+
+/* --- Refined Override for Flatsome's .col padding INSIDE our cards --- */
+/* Target .col that is a direct child of a .row within our specific items */
+.apw-woo-category-item > .row > .col,
+.apw-woo-product-item > .row > .col {
+    /* REMOVE the general 'padding: 0 !important;' */
+    /* Specifically target bottom padding/margin */
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+    /* Let flexbox handle width, but ensure max-width */
+    width: auto; /* Allow natural width within flex context */
+    max-width: 100%;
+}
+
+/* Ensure inner rows don't add unwanted margins */
+.apw-woo-category-item .row,
+.apw-woo-product-item .row {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+
+/* ----------------------------------------
+   3. SHOP/CATEGORY LEVEL - CARD HEADER STYLING (Final Adjustments)
+   ---------------------------------------- */
+
+/* Card Header container */
+.apw-woo-category-header,
+.apw-woo-product-header {
+    background-color: var(--apw-woo-card-header-bg);
+    color: var(--apw-woo-card-header-text);
+    padding: var(--apw-woo-spacing-medium) var(--apw-woo-spacing-large);
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
+    flex-wrap: nowrap;
+    height: 106px;
+    box-sizing: border-box;
+    /* Added specific border-radius for top corners */
+    border-radius: 16px 16px 0 0;
 }
 
-/* Position the elements */
-.apw-woo-quantity-label {
-    margin-right: 10px;
+/* Card Title (H4) */
+.apw-woo-category-title,
+.apw-woo-product-title {
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold);
+    font-size: var(--apw-woo-card-title-size);
+    color: var(--apw-woo-card-header-text);
+    margin: 0;
+    line-height: 1.2;
+    flex-grow: 1;
+    flex-shrink: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.quantity.buttons_added {
-    margin-right: 10px;
+/* View All / View Product Button */
+.apw-woo-view-all-button,
+.apw-woo-view-product-button {
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold);
+    font-size: var(--apw-woo-card-button-desc-size);
+    color: var(--apw-woo-card-header-text);
+    background: var(--apw-woo-button-background);
+    border: none;
+    padding: var(--apw-woo-spacing-small) var(--apw-woo-spacing-medium);
+    border-radius: 58px;
+    width: 134px;
+    height: auto;
+    cursor: pointer;
+    text-decoration: none;
+    transition: opacity 0.3s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    white-space: nowrap;
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+
+/* Hover styles */
+.apw-woo-view-all-button:hover,
+.apw-woo-view-product-button:hover {
+    opacity: 0.85;
+    color: var(--apw-woo-card-header-text);
+}
+
+/* ----------------------------------------
+   4. SHOP/CATEGORY LEVEL - CARD IMAGE STYLING
+   ---------------------------------------- */
+
+.apw-woo-category-image-wrapper,
+.apw-woo-product-image-wrapper {
+    width: 100%;
+    aspect-ratio: 709 / 373;
+    overflow: hidden;
+    background-color: #f0f0f0;
+}
+
+.apw-woo-category-image-link,
+.apw-woo-product-image-link {
+    display: block;
+    height: 100%;
+}
+
+.apw-woo-category-image,
+.apw-woo-product-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+/* ----------------------------------------
+   5. SHOP/CATEGORY LEVEL - CARD DESCRIPTION STYLING (Margin Added)
+   ---------------------------------------- */
+/* (Ensure this is correctly placed after other card styles) */
+.apw-woo-category-description {
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-medium);
+    font-size: var(--apw-woo-card-button-desc-size);
+    color: var(--apw-woo-text-color);
+    line-height: 1.6;
+    padding: var(--apw-woo-spacing-medium) var(--apw-woo-spacing-large) var(--apw-woo-spacing-large) var(--apw-woo-spacing-large);
+    margin-left: 10px; /* Added left margin */
+}
+
+.apw-woo-category-description p {
+    margin-bottom: 1em;
+}
+
+.apw-woo-category-description p:last-child {
     margin-bottom: 0;
-}
-
-/* Hide product addon totals */
-.single-product .product-addon-totals {
-    display: none !important;
 }

@@ -113,9 +113,9 @@ get_header();
 
                             // Get product categories
                             $product_categories = apply_filters('apw_woo_shop_categories', get_terms([
-                                'taxonomy'   => 'product_cat',
+                                'taxonomy' => 'product_cat',
                                 'hide_empty' => true,
-                                'parent'     => 0, // Get only top-level categories
+                                'parent' => 0, // Get only top-level categories
                             ]));
 
                             if (!empty($product_categories) && !is_wp_error($product_categories)) {
@@ -159,8 +159,9 @@ get_header();
                                                 <div class="col apw-woo-category-header-col">
                                                     <!-- Category Header: Title and View All Button -->
                                                     <div class="apw-woo-category-header">
-                                                        <h1 class="apw-woo-category-title"><?php echo esc_html($category->name); ?></h1>
-                                                        <a href="<?php echo esc_url($category_link); ?>" class="apw-woo-view-all-button">
+                                                        <h4 class="apw-woo-category-title"><?php echo esc_html($category->name); ?></h4>
+                                                        <a href="<?php echo esc_url($category_link); ?>"
+                                                           class="apw-woo-view-all-button">
                                                             <?php echo esc_html(apply_filters('apw_woo_view_all_text', __('View All', 'apw-woo-plugin'))); ?>
                                                         </a>
                                                     </div>
@@ -171,10 +172,11 @@ get_header();
                                                 <div class="col apw-woo-category-image-col">
                                                     <!-- Category Image Container -->
                                                     <div class="apw-woo-category-image-wrapper">
-                                                        <a href="<?php echo esc_url($category_link); ?>" class="apw-woo-category-image-link">
+                                                        <a href="<?php echo esc_url($category_link); ?>"
+                                                           class="apw-woo-category-image-link">
                                                             <img src="<?php echo esc_url($image); ?>"
                                                                  alt="<?php echo esc_attr($category->name); ?>"
-                                                                 class="apw-woo-category-image" />
+                                                                 class="apw-woo-category-image"/>
                                                         </a>
                                                     </div>
                                                 </div>

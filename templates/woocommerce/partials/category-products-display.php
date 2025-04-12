@@ -135,8 +135,9 @@ get_header();
                                                 <div class="col apw-woo-product-header-col">
                                                     <!-- Product Header: Title and View Product Button -->
                                                     <div class="apw-woo-product-header">
-                                                        <h1 class="apw-woo-product-title"><?php echo esc_html($product_title); ?></h1>
-                                                        <a href="<?php echo esc_url($product_link); ?>" class="apw-woo-view-product-button">
+                                                        <h4 class="apw-woo-product-title"><?php echo esc_html($product_title); ?></h4>
+                                                        <a href="<?php echo esc_url($product_link); ?>"
+                                                           class="apw-woo-view-product-button">
                                                             <?php echo esc_html(apply_filters('apw_woo_view_product_text', __('View Product', 'apw-woo-plugin'), $product)); ?>
                                                         </a>
                                                     </div>
@@ -147,10 +148,11 @@ get_header();
                                                 <div class="col apw-woo-product-image-col">
                                                     <!-- Product Image Container -->
                                                     <div class="apw-woo-product-image-wrapper">
-                                                        <a href="<?php echo esc_url($product_link); ?>" class="apw-woo-product-image-link">
+                                                        <a href="<?php echo esc_url($product_link); ?>"
+                                                           class="apw-woo-product-image-link">
                                                             <img src="<?php echo esc_url($product_image); ?>"
                                                                  alt="<?php echo esc_attr($product_title); ?>"
-                                                                 class="apw-woo-product-image" />
+                                                                 class="apw-woo-product-image"/>
                                                         </a>
                                                     </div>
                                                 </div>
