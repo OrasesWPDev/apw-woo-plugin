@@ -4,7 +4,7 @@
    and Single Product (Last Level) templates. Specific overrides may apply.
    ---------------------------------------- */
 /* ----------------------------------------
-   1. GLOBAL CSS VARIABLES (CUSTOM PROPERTIES)
+   GLOBAL CSS VARIABLES (CUSTOM PROPERTIES)
       Used across Shop, Category, and Product templates unless overridden.
    ---------------------------------------- */
 :root {
@@ -44,7 +44,12 @@
 }
 
 /* ----------------------------------------
-   2. SHOP/CATEGORY LEVEL - GRID LAYOUT (Bottom Radius Added)
+   SHOP-CATEGORIES PAGE
+   ---------------------------------------- */
+
+
+/* ----------------------------------------
+   1. SHOP/CATEGORY LEVEL - GRID LAYOUT (Bottom Radius Added)
    ---------------------------------------- */
 
 /* Grid container (Unchanged from previous version) */
@@ -107,7 +112,7 @@
 
 
 /* ----------------------------------------
-   3. SHOP/CATEGORY LEVEL - CARD HEADER STYLING (Title/Button Spacing)
+   2. SHOP/CATEGORY LEVEL - CARD HEADER STYLING (Title/Button Spacing)
    ---------------------------------------- */
 
 /* Card Header container (Unchanged) */
@@ -178,7 +183,7 @@
 }
 
 /* ----------------------------------------
-   4. SHOP/CATEGORY LEVEL - CARD IMAGE STYLING
+   3. SHOP/CATEGORY LEVEL - CARD IMAGE STYLING
    ---------------------------------------- */
 
 .apw-woo-category-image-wrapper,
@@ -205,7 +210,7 @@
 }
 
 /* ----------------------------------------
-   5. SHOP/CATEGORY LEVEL - CARD DESCRIPTION STYLING (Margin Added)
+   4. SHOP/CATEGORY LEVEL - CARD DESCRIPTION STYLING (Margin Added)
    ---------------------------------------- */
 .apw-woo-category-description {
     font-family: var(--apw-font-family);

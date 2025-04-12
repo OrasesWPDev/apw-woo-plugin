@@ -113,7 +113,7 @@ get_header();
                                         // Get product data
                                         $product_id = $product->get_id();
                                         $product_title = $product->get_name();
-                                        $product_link = get_permalink($product_id);
+                                        $product_link = get_permalink($product_id); // Link for the whole card
                                         $product_image_id = $product->get_image_id();
                                         $product_image = wp_get_attachment_url($product_image_id);
 
@@ -128,46 +128,45 @@ get_header();
                                          */
                                         do_action('apw_woo_before_product_item', $product, $current_category);
                                         ?>
-
                                         <!-- Individual Product Item -->
                                         <div class="apw-woo-product-item">
-                                            <div class="row apw-woo-product-row">
-                                                <div class="col apw-woo-product-header-col">
-                                                    <!-- Product Header: Title and View Product Button -->
-                                                    <div class="apw-woo-product-header">
-                                                        <h4 class="apw-woo-product-title"><?php echo esc_html($product_title); ?></h4>
-                                                        <a href="<?php echo esc_url($product_link); ?>"
-                                                           class="apw-woo-view-product-button">
-                                                            <?php echo esc_html(apply_filters('apw_woo_view_product_text', __('View Product', 'apw-woo-plugin'), $product)); ?>
-                                                        </a>
+                                            <a href="<?php echo esc_url($product_link); ?>"
+                                               class="apw-woo-product-card-link"> <?php // Wrapper link for the whole card ?>
+
+                                                <div class="row apw-woo-product-row"> <?php // Header row is inside the link ?>
+                                                    <div class="col apw-woo-product-header-col">
+                                                        <!-- Product Header: Title ONLY -->
+                                                        <div class="apw-woo-product-header">
+                                                            <h4 class="apw-woo-product-title"><?php echo esc_html($product_title); ?></h4>
+                                                            <?php // "View Product" Button Removed ?>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
 
-                                            <div class="row apw-woo-product-image-row">
-                                                <div class="col apw-woo-product-image-col">
-                                                    <!-- Product Image Container -->
-                                                    <div class="apw-woo-product-image-wrapper">
-                                                        <a href="<?php echo esc_url($product_link); ?>"
-                                                           class="apw-woo-product-image-link">
+                                                <div class="row apw-woo-product-image-row"> <?php // Image row is inside the link ?>
+                                                    <div class="col apw-woo-product-image-col">
+                                                        <!-- Product Image Container -->
+                                                        <div class="apw-woo-product-image-wrapper">
+                                                            <?php // Inner link around image removed ?>
                                                             <img src="<?php echo esc_url($product_image); ?>"
                                                                  alt="<?php echo esc_attr($product_title); ?>"
                                                                  class="apw-woo-product-image"/>
-                                                        </a>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
 
-                                            <?php
-                                            /**
-                                             * Hook: apw_woo_after_product_content
-                                             * @param WC_Product $product Current product object
-                                             * @param WP_Term $current_category Current category object
-                                             */
-                                            do_action('apw_woo_after_product_content', $product, $current_category);
-                                            ?>
-                                        </div>
+                                                <?php
+                                                /**
+                                                 * Hook: apw_woo_after_product_content
+                                                 * Allows adding content inside the clickable card if needed
+                                                 * @param WC_Product $product Current product object
+                                                 * @param WP_Term $current_category Current category object
+                                                 */
+                                                do_action('apw_woo_after_product_content', $product, $current_category);
+                                                ?>
 
+                                            </a> <?php // Closing the wrapper link ?>
+                                        </div> <!-- .apw-woo-product-item -->
                                         <?php
                                         /**
                                          * Hook: apw_woo_after_product_item
@@ -175,9 +174,10 @@ get_header();
                                          * @param WP_Term $current_category Current category object
                                          */
                                         do_action('apw_woo_after_product_item', $product, $current_category);
-                                    }
+                                    } // End foreach
                                     ?>
-                                </div>
+                                </div> <!-- .apw-woo-products-grid -->
+
 
                                 <?php
                             } else {
