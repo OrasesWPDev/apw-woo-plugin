@@ -112,75 +112,75 @@
 
 
 /* ----------------------------------------
-   2. SHOP/CATEGORY LEVEL - CARD HEADER STYLING (Title/Button Spacing)
+   2. SHARED GRID LAYOUT & CARD BASE (Shop & Category)
+      (Reflects removal of internal .row/.col classes)
    ---------------------------------------- */
 
-/* Card Header container (Unchanged) */
-.apw-woo-category-header,
-.apw-woo-product-header {
-    background-color: var(--apw-woo-card-header-bg);
-    color: var(--apw-woo-card-header-text);
-    padding: var(--apw-woo-spacing-medium) var(--apw-woo-spacing-large);
+/* Grid container (Unchanged) */
+.apw-woo-categories-grid,
+.apw-woo-products-grid {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: nowrap;
-    height: 106px;
+    flex-wrap: wrap;
     box-sizing: border-box;
-    border-radius: 16px 16px 0 0;
+    /* Vertical space between rows of cards */
+    row-gap: calc(3 * var(--apw-woo-spacing-large));
+    /* Horizontal space between columns */
+    column-gap: calc(var(--apw-woo-spacing-large) + 10px);
 }
 
-/* Card Title (H4) */
-.apw-woo-category-title,
-.apw-woo-product-title {
-    font-family: var(--apw-font-family);
-    font-weight: var(--apw-font-bold);
-    font-size: var(--apw-woo-card-title-size);
-    color: var(--apw-woo-card-header-text);
-    margin: 0;
-    line-height: 1.2;
-    flex-grow: 1;
-    flex-shrink: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    /* --- Added Left Margin --- */
-    margin-left: var(--apw-woo-spacing-small); /* Example: 10px margin */
-}
-
-/* View All / View Product Button */
-.apw-woo-view-all-button,
-.apw-woo-view-product-button {
-    font-family: var(--apw-font-family);
-    font-weight: var(--apw-font-bold);
-    font-size: var(--apw-woo-card-button-desc-size);
-    color: var(--apw-woo-card-header-text);
-    background: var(--apw-woo-button-background);
-    border: none;
-    padding: var(--apw-woo-spacing-small) var(--apw-woo-spacing-medium);
-    border-radius: 58px;
-    width: 134px;
-    height: auto;
-    cursor: pointer;
-    text-decoration: none;
-    transition: opacity 0.3s ease;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    white-space: nowrap;
+/* Category item (Shop) & Product item (Category) Card Styling (Unchanged) */
+.apw-woo-category-item,
+.apw-woo-product-item {
+    /* Width calculated for 2 columns with the specified gap */
+    flex-basis: calc(50% - ((var(--apw-woo-spacing-large) + 10px) / 2));
+    flex-grow: 0;
     flex-shrink: 0;
     box-sizing: border-box;
-    /* --- Added Right Margin --- */
-    margin-right: var(--apw-woo-spacing-small); /* Example: 10px margin */
+    display: flex;
+    flex-direction: column;
+    background-color: #fff;
+    border-radius: 16px; /* Overall card radius */
+    overflow: hidden; /* Clip content */
+    position: relative;
+    box-shadow: var(--apw-woo-card-shadow-x) var(--apw-woo-card-shadow-y) var(--apw-woo-card-shadow-blur) var(--apw-woo-card-shadow-color);
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
-/* Hover styles (Unchanged) */
-.apw-woo-view-all-button:hover,
-.apw-woo-view-product-button:hover {
-    opacity: 0.85;
-    color: var(--apw-woo-card-header-text);
+/* Hover effect for product items (Unchanged) */
+.apw-woo-product-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(36, 75, 90, 0.1);
 }
+
+
+/* --- Styles for NEW Custom Internal Card Structure --- */
+/* Replaces need for Flatsome overrides */
+
+/* Custom row within card */
+.apw-card-row {
+    width: 100%;
+    /* Add display: flex; if row content needs flex alignment */
+    /* display: flex; */
+}
+
+/* Custom column within card */
+.apw-card-column {
+    width: 100%;
+    box-sizing: border-box;
+    /* Add any default padding/margin needed for internal columns */
+    /* padding: 0; */
+    /* margin: 0; */
+}
+
+/* Specifically ensure image column has no line-height issues */
+.apw-card-column.apw-woo-category-image-col,
+.apw-card-column.apw-woo-product-image-col {
+    line-height: 0;
+}
+
+/* --- End Custom Internal Card Structure Styles --- */
+
+/* --- Flatsome overrides targeting .col inside items are REMOVED --- */
 
 /* ----------------------------------------
    3. SHOP/CATEGORY LEVEL - CARD IMAGE STYLING

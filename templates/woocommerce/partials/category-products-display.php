@@ -70,19 +70,80 @@ get_header();
                      * Hook: apw_woo_before_category_content
                      * @param WP_Term $current_category Current category object
                      */
+                    // Ensure $current_category is available before the hook
+                    if (!isset($current_category) || !is_a($current_category, 'WP_Term')) {
+                        $current_category = get_queried_object();
+                        // Add a check if even get_queried_object failed for robustness
+                        if (!isset($current_category) || !is_a($current_category, 'WP_Term')) {
+                            // Handle error: maybe return or display a message
+                            return;
+                        }
+                    }
                     do_action('apw_woo_before_category_content', $current_category);
 
-                    // Get the current category
-                    $current_category = get_queried_object();
+                    // Get the current category (redundant if checked above, but safe)
+                    if (!isset($current_category) || !is_a($current_category, 'WP_Term')) {
+                        $current_category = get_queried_object();
+                        if (!isset($current_category) || !is_a($current_category, 'WP_Term')) {
+                            return; // Exit if still no valid category
+                        }
+                    }
 
                     if (APW_WOO_DEBUG_MODE) {
-                        apw_woo_log('Displaying products for category: ' . $current_category->name);
+                        // Check if name property exists before accessing
+                        $category_name = isset($current_category->name) ? $current_category->name : 'N/A';
+                        apw_woo_log('Displaying products for category: ' . $category_name);
                     }
-                    ?>
 
+                    /* --- START: Inserted Category Introduction Section --- */
+                    ?>
+                    <!-- Category Introduction Section -->
+                    <div class="row apw-woo-row"> <?php // Outer row for the section ?>
+                        <div class="col apw-woo-intro-section"> <?php // Column for the section ?>
+                            <?php
+                            /**
+                             * Hook: apw_woo_before_category_intro
+                             * @param WP_Term $current_category Current category object
+                             */
+                            do_action('apw_woo_before_category_intro', $current_category);
+                            ?>
+
+                            <div class="apw-woo-product-intro">
+                                <?php
+                                // Default title is the category name
+                                $intro_title = isset($current_category->name) ? esc_html($current_category->name) : __('Category', 'apw-woo-plugin');
+                                ?>
+                                <h1 class="apw-woo-section-title"><?php echo esc_html(apply_filters('apw_woo_category_intro_title', $intro_title, $current_category)); ?></h1>
+
+                                <?php
+                                // Use category description if available, otherwise a placeholder
+                                $intro_description = $current_category && !empty($current_category->description)
+                                    ? $current_category->description
+                                    : '<p>' . sprintf(__('This is a placeholder for the %s category description.', 'apw-woo-plugin'), esc_html($intro_title)) . '</p>';
+                                ?>
+                                <div class="apw-woo-section-description">
+                                    <?php echo wp_kses_post(apply_filters('apw_woo_category_intro_description', $intro_description, $current_category)); ?>
+                                </div>
+                            </div>
+
+                            <?php
+                            /**
+                             * Hook: apw_woo_after_category_intro
+                             * @param WP_Term $current_category Current category object
+                             */
+                            do_action('apw_woo_after_category_intro', $current_category);
+                            ?>
+                        </div> <?php // End .col.apw-woo-intro-section ?>
+                    </div> <?php // End .row.apw-woo-row for intro ?>
+                    <!-- End Category Introduction Section -->
+                    <?php
+                    /* --- END: Inserted Category Introduction Section --- */
+
+
+                    ?>
                     <!-- Product Grid Section -->
-                    <div class="row apw-woo-row">
-                        <div class="col apw-woo-products-section">
+                    <div class="row apw-woo-row"> <?php // Outer row for the product grid section ?>
+                        <div class="col apw-woo-products-section"> <?php // Column for the product grid section ?>
                             <?php
                             /**
                              * Hook: apw_woo_before_products_grid
@@ -91,15 +152,21 @@ get_header();
                             do_action('apw_woo_before_products_grid', $current_category);
 
                             if (APW_WOO_DEBUG_MODE) {
-                                apw_woo_log('Fetching products for category: ' . $current_category->slug);
+                                $category_slug = isset($current_category->slug) ? $current_category->slug : 'N/A';
+                                apw_woo_log('Fetching products for category: ' . $category_slug);
                             }
 
                             // Get products in this category
-                            $products = apply_filters('apw_woo_category_products', wc_get_products([
+                            $product_args = [
                                 'status' => 'publish',
                                 'limit' => -1,
-                                'category' => [$current_category->slug],
-                            ]), $current_category);
+                            ];
+                            // Only add category filter if slug exists
+                            if (isset($current_category->slug)) {
+                                $product_args['category'] = [$current_category->slug];
+                            }
+
+                            $products = apply_filters('apw_woo_category_products', wc_get_products($product_args), $current_category);
 
                             if (!empty($products)) {
                                 if (APW_WOO_DEBUG_MODE) {
@@ -133,8 +200,8 @@ get_header();
                                             <a href="<?php echo esc_url($product_link); ?>"
                                                class="apw-woo-product-card-link"> <?php // Wrapper link for the whole card ?>
 
-                                                <div class="row apw-woo-product-row"> <?php // Header row is inside the link ?>
-                                                    <div class="col apw-woo-product-header-col">
+                                                <div class="apw-card-row apw-woo-product-row"> <?php // Correct: Using apw-card-row ?>
+                                                    <div class="apw-card-column apw-woo-product-header-col"> <?php // Correct: Using apw-card-column ?>
                                                         <!-- Product Header: Title ONLY -->
                                                         <div class="apw-woo-product-header">
                                                             <h4 class="apw-woo-product-title"><?php echo esc_html($product_title); ?></h4>
@@ -143,8 +210,8 @@ get_header();
                                                     </div>
                                                 </div>
 
-                                                <div class="row apw-woo-product-image-row"> <?php // Image row is inside the link ?>
-                                                    <div class="col apw-woo-product-image-col">
+                                                <div class="apw-card-row apw-woo-product-image-row"> <?php // FIXED: Replaced 'row' with 'apw-card-row' ?>
+                                                    <div class="apw-card-column apw-woo-product-image-col"> <?php // FIXED: Replaced 'col' with 'apw-card-column' ?>
                                                         <!-- Product Image Container -->
                                                         <div class="apw-woo-product-image-wrapper">
                                                             <?php // Inner link around image removed ?>

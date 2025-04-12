@@ -155,8 +155,9 @@ get_header();
 
                                         <!-- Individual Category Item -->
                                         <div class="apw-woo-category-item">
-                                            <div class="row apw-woo-category-row">
-                                                <div class="col apw-woo-category-header-col">
+                                            <div class="apw-card-row apw-woo-category-row"> <!-- Replaced 'row' -->
+                                                <div class="apw-card-column apw-woo-category-header-col">
+                                                    <!-- Replaced 'col' -->
                                                     <!-- Category Header: Title and View All Button -->
                                                     <div class="apw-woo-category-header">
                                                         <h4 class="apw-woo-category-title"><?php echo esc_html($category->name); ?></h4>
