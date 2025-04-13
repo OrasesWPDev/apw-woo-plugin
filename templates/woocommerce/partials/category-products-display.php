@@ -2,8 +2,8 @@
 /**
  * Template for displaying products within a specific category.
  *
- * Includes a theme-managed header block, a category introduction (H2 title + description),
- * the product grid, and an FAQ section.
+ * Includes a theme-managed header block (whose title is modified via PHP preg_replace),
+ * a category introduction (H2 title + description), the product grid, and an FAQ section.
  *
  * @package APW_Woo_Plugin
  */
@@ -34,7 +34,7 @@ get_header();
         <!-- APW-WOO-TEMPLATE: category-products-display.php is loaded -->
 
         <!-- Header Block -->
-        <!-- Outputs the reusable block and attempts to override its title on category pages. -->
+        <!-- Outputs the reusable block and attempts to override its title(s) on category pages using preg_replace. -->
         <div class="apw-woo-section-wrapper apw-woo-header-block">
             <?php
             /**
@@ -44,13 +44,14 @@ get_header();
             do_action('apw_woo_before_category_header', $pre_header_category);
 
             if (APW_WOO_DEBUG_MODE) {
-                apw_woo_log('Rendering category page header section using Block ID: third-level-woo-page-header');
+                apw_woo_log('Rendering category page header section using Block ID: third-level-woo-page-header and modifying title with preg_replace');
             }
 
             // Define the target block ID (the duplicated block for Woo pages).
             $target_block_id = 'third-level-woo-page-header';
 
             // Check if we are on a product category page and the block shortcode exists.
+            // Using the original preg_replace method but modifying *all* occurrences.
             if (is_product_category() && shortcode_exists('block')) {
 
                 // --- Capture and Modify Block Output ---
@@ -60,11 +61,10 @@ get_header();
 
                 // Start output buffering to capture the shortcode output.
                 ob_start();
-                echo do_shortcode('[block id="' . $target_block_id . '"]');
+                echo do_shortcode('[block id="' . esc_attr($target_block_id) . '"]');
                 $block_html = ob_get_clean();
 
                 // Get the category object again *safely* inside this scope.
-                // Use get_queried_object() here as $current_category might not be set yet depending on hook order.
                 $header_category_object = get_queried_object();
 
                 // Ensure it's the correct object type before proceeding.
@@ -72,25 +72,43 @@ get_header();
                     $correct_title = $header_category_object->name;
 
                     // Define the regex pattern to find the H1 with class containing "entry-title".
+                    // This pattern targets <h1 class="any classes entry-title any other classes"> content </h1>
                     $pattern = '/(<h1[^>]*class="[^"]*entry-title[^"]*"[^>]*>)(.*?)(<\/h1>)/is';
 
-                    // Perform the replacement.
-                    $modified_block_html = preg_replace($pattern, '$1' . esc_html($correct_title) . '$3', $block_html, 1);
+                    // Perform the replacement - REMOVED the limit '1' to replace ALL occurrences.
+                    $modified_block_html = preg_replace($pattern, '$1' . esc_html($correct_title) . '$3', $block_html);
 
                     // Log replacement status.
                     if (APW_WOO_DEBUG_MODE) {
-                        if ($modified_block_html !== null && $modified_block_html !== $block_html) {
-                            apw_woo_log('Successfully replaced page header title in block output with: "' . esc_html($correct_title) . '"');
+                        // Check how many replacements were made
+                        preg_match_all($pattern, $block_html, $original_matches);
+                        $original_count = isset($original_matches[0]) ? count($original_matches[0]) : 0;
+
+                        preg_match_all($pattern, $modified_block_html, $modified_matches, PREG_SET_ORDER);
+                        $modified_count = count($modified_matches);
+                        $replaced_correctly = true;
+                        foreach ($modified_matches as $match) {
+                            if (trim($match[2]) !== esc_html($correct_title)) {
+                                $replaced_correctly = false;
+                                break;
+                            }
+                        }
+
+                        if ($modified_block_html !== null && $modified_block_html !== $block_html && $replaced_correctly) {
+                            apw_woo_log('Successfully replaced title in block output with: "' . esc_html($correct_title) . '". Found and replaced ' . $modified_count . ' H1 tag(s). Original count: ' . $original_count);
                         } elseif ($modified_block_html === null) {
-                            apw_woo_log('ERROR: preg_replace failed during title override for block ID ' . $target_block_id . '.', 'error');
-                            $modified_block_html = $block_html;
+                            apw_woo_log('ERROR: preg_replace returned null during title override for block ID ' . $target_block_id . '.', 'error');
+                            $modified_block_html = $block_html; // Fallback to original
+                        } elseif ($original_count === 0) {
+                            apw_woo_log('WARNING: Could not find any H1 matching pattern (class="...entry-title...") in block ID ' . $target_block_id . ' to replace title. Outputting original block HTML.', 'warning');
+                            $modified_block_html = $block_html; // Fallback to original
                         } else {
-                            apw_woo_log('WARNING: Could not find H1 pattern (class="entry-title") in block ID ' . $target_block_id . ' to replace title. Outputting original block HTML.', 'warning');
-                            $modified_block_html = $block_html;
+                            apw_woo_log('WARNING: preg_replace ran but HTML did not change or replacement content was incorrect. Check pattern and replacement logic. Original count: ' . $original_count, 'warning');
+                            $modified_block_html = $block_html; // Fallback to original
                         }
                     }
                     // Output the modified (or original if failed) HTML.
-                    echo wp_kses_post($modified_block_html);
+                    echo wp_kses_post($modified_block_html); // Using wp_kses_post for safety
 
                 } else {
                     // Fallback if the queried object isn't the expected category term.
@@ -107,20 +125,30 @@ get_header();
                 if (APW_WOO_DEBUG_MODE) {
                     apw_woo_log('Not a product category page. Outputting block ID ' . $target_block_id . ' without title modification.');
                 }
-                echo do_shortcode('[block id="' . $target_block_id . '"]');
+                echo do_shortcode('[block id="' . esc_attr($target_block_id) . '"]');
             } else {
                 // Fallback if '[block]' shortcode doesn't exist.
                 if (APW_WOO_DEBUG_MODE) {
                     apw_woo_log('WARNING: Shortcode [block] does not exist. Falling back to standard title.', 'warning');
                 }
-                echo '<h1 class="apw-woo-page-title">' . esc_html(single_term_title('', false)) . '</h1>';
+                // Output a fallback title structure if block shortcode fails
+                $fallback_category = get_queried_object();
+                if (is_a($fallback_category, 'WP_Term') && $fallback_category->taxonomy === 'product_cat') {
+                    echo '<div class="container page-title-container-fallback">'; // Optional container
+                    echo '<h1 class="apw-woo-page-title entry-title">' . esc_html($fallback_category->name) . '</h1>';
+                    echo '</div>';
+                } else {
+                    echo '<div class="container page-title-container-fallback">'; // Optional container
+                    echo '<h1 class="apw-woo-page-title entry-title">' . esc_html__('Category', 'apw-woo-plugin') . '</h1>';
+                    echo '</div>';
+                }
             }
 
             /**
              * Hook: apw_woo_after_category_header
-             * @param WP_Term|object|null $pre_header_category The initially queried object.
+             * @param WP_Term|object|null $header_category_object The queried object used for title replacement attempt.
              */
-            do_action('apw_woo_after_category_header', $pre_header_category);
+            do_action('apw_woo_after_category_header', $header_category_object); // Use the object we checked
             ?>
         </div><!-- /.apw-woo-header-block -->
 
@@ -130,8 +158,7 @@ get_header();
                 <div class="col apw-woo-content-wrapper">
                     <?php
                     // --- Fetch and Validate Category Object for Content Area ---
-                    // This remains crucial to ensure the rest of the template has the correct context.
-                    $current_category = get_queried_object();
+                    $current_category = get_queried_object(); // Re-fetch or use $header_category_object if needed
                     if (!is_a($current_category, 'WP_Term') || !isset($current_category->taxonomy) || $current_category->taxonomy !== 'product_cat') {
                         if (APW_WOO_DEBUG_MODE) {
                             $object_type = is_object($current_category) ? get_class($current_category) : gettype($current_category);
