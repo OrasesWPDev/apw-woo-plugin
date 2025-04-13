@@ -355,3 +355,20 @@
     /* text-align: center; */
     /* } */
 }
+
+/* --- START ADDED RULES --- */
+/* Custom Padding for third_level_bkgd element (moved from UX Builder attributes) */
+.third_level_bkgd > .col-inner {
+    padding-top: 10px;
+    padding-right: 0px;
+    padding-bottom: 0px;
+    padding-left: 0px;
+}
+
+@media (min-width: 550px) {
+    .third_level_bkgd > .col-inner {
+        padding-top: 30px;
+    }
+}
+
+/* --- END ADDED RULES --- */
