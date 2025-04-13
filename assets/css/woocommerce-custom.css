@@ -25,6 +25,11 @@
     --apw-font-medium: 500;
     --apw-woo-card-title-size: 2.375rem; /* 38px / 16px */
     --apw-woo-card-button-desc-size: 1.3125rem; /* 21px / 16px */
+    /* --- NEW: Intro Section Font Sizes (Added for Responsiveness) --- */
+    --apw-woo-intro-title-size: 2.5rem; /* 40px / 16px - Default H2 size for intro */
+    --apw-woo-intro-desc-size: 1.125rem; /* 18px / 16px - Default P size for intro */
+    /* --- End New --- */
+
 
     /* --- Dimensions & Layout --- */
     /* Image dimensions handled by aspect-ratio in rules */
@@ -226,4 +231,127 @@
 
 .apw-woo-category-description p:last-child {
     margin-bottom: 0;
+}
+
+/* --- NEW: Add base styles for Intro Section Title & Description --- */
+/* Ensure the intro title uses the new variable */
+/* Adjust selector '.apw-woo-section-title' if your H2 has a different class */
+.apw-woo-intro-section .apw-woo-section-title {
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold);
+    font-size: var(--apw-woo-intro-title-size);
+    color: var(--apw-woo-text-color); /* Or specific intro title color if needed */
+    margin-bottom: var(--apw-woo-spacing-medium); /* Adjust spacing as needed */
+    line-height: 1.3;
+}
+
+/* Ensure the intro description P tags use the new variable */
+/* Adjust selector '.apw-woo-section-description' if your description container has a different class */
+.apw-woo-intro-section .apw-woo-section-description p {
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-medium);
+    font-size: var(--apw-woo-intro-desc-size);
+    color: var(--apw-woo-text-color);
+    line-height: 1.6;
+    margin-bottom: 1em; /* Standard paragraph spacing */
+}
+
+.apw-woo-intro-section .apw-woo-section-description p:last-child {
+    margin-bottom: 0;
+}
+
+/* --- End New Base Styles --- */
+
+
+/* ----------------------------------------
+   6. RESPONSIVE ADJUSTMENTS
+   ---------------------------------------- */
+
+/* --- Tablet & Mobile Shared Styles (849px and below) --- */
+/* Styles applied from tablet breakpoint downwards */
+@media (max-width: 849px) {
+    :root {
+        /* Adjust intro font sizes for tablet */
+        --apw-woo-intro-title-size: 2.125rem; /* 34px / 16px */
+        --apw-woo-intro-desc-size: 1.0625rem; /* 17px / 16px */
+
+        /* Optional: Adjust card title size for tablet if needed - now handled by clamp() */
+        /* --apw-woo-card-button-desc-size: 1.125rem; */ /* Example: 18px */
+    }
+
+    /* Change grid to 1 column */
+    .apw-woo-category-item,
+    .apw-woo-product-item {
+        flex-basis: 100%; /* Make each item take full width */
+    }
+
+    /* Adjust grid gap for single column layout */
+    .apw-woo-categories-grid,
+    .apw-woo-products-grid {
+        column-gap: 0; /* Remove column gap when stacked */
+        /* --- FIXED: Corrected underscore to asterisk --- */
+        row-gap: calc(2 * var(--apw-woo-spacing-large)); /* Default row gap for tablet */
+        /* --- End Fix --- */
+    }
+
+    /* --- NEW: Header Stacking & Centering (Applies to Tablet & Mobile) --- */
+    .apw-woo-category-header,
+    .apw-woo-product-header {
+        padding: var(--apw-woo-spacing-small) var(--apw-woo-spacing-medium); /* Use smaller padding */
+        height: auto; /* Allow height to adjust */
+        flex-direction: column; /* Stack title and button */
+        align-items: center; /* Center stacked items horizontally */
+        gap: var(--apw-woo-spacing-small); /* Add gap between stacked items */
+        text-align: center; /* Center inline text */
+    }
+
+    .apw-woo-category-title,
+    .apw-woo-product-title {
+        margin-left: 0; /* Remove left margin */
+        white-space: normal; /* Allow title to wrap */
+        text-align: center; /* Center title text */
+        width: 100%; /* Ensure title takes full width */
+        overflow: visible; /* Override overflow hidden to prevent ellipsis when wrapping */
+        text-overflow: clip; /* Change from ellipsis */
+    }
+
+    .apw-woo-view-all-button,
+    .apw-woo-view-product-button {
+        margin-right: 0; /* Remove right margin */
+        align-self: center; /* Center button itself */
+        width: auto; /* Allow button width to adjust */
+        padding: var(--apw-woo-spacing-small); /* Use smaller padding */
+    }
+
+    /* --- End Header Stacking & Centering --- */
+    /* Adjust description padding */
+    .apw-woo-category-description {
+        padding: var(--apw-woo-spacing-medium); /* Reduce padding */
+        margin-left: 0; /* Remove left margin */
+    }
+}
+
+/* --- Mobile Only Styles (549px and below) --- */
+/* Further adjustments specifically for mobile */
+@media (max-width: 549px) {
+    :root {
+        /* Further adjust intro font sizes for mobile */
+        --apw-woo-intro-title-size: 1.875rem; /* 30px / 16px */
+        --apw-woo-intro-desc-size: 1rem; /* 16px / 16px */
+
+        /* Optional: Adjust card title size further for mobile */
+        /* --apw-woo-card-title-size: 1.75rem; */ /* Example: 28px */
+        /* --apw-woo-card-button-desc-size: 1rem; */ /* Example: 16px */
+    }
+
+    /* Reduce grid spacing further on mobile */
+    .apw-woo-categories-grid,
+    .apw-woo-products-grid {
+        row-gap: var(--apw-woo-spacing-large); /* Reduce row gap more */
+    }
+
+    /* Optional: Center description text only on mobile */
+    /* .apw-woo-category-description { */
+    /* text-align: center; */
+    /* } */
 }
