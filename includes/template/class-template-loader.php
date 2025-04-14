@@ -352,26 +352,6 @@ class APW_Woo_Template_Loader
     }
 
     /**
-     * Outputs WooCommerce notices within a custom container.
-     *
-     * This function should be hooked where notices are desired. It calls
-     * wc_print_notices() to render any queued notices (error, success, info).
-     *
-     * @since 1.2.5 (Your new version)
-     */
-    public function apw_woo_output_custom_notices()
-    {
-        if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log('Executing apw_woo_output_custom_notices function.');
-        }
-        echo '<div class="apw-woo-notices-container">';
-        // This function prints all queued notices (success, error, info)
-        wc_print_notices();
-        echo '</div>';
-    }
-
-
-    /**
      * Locate a template and return the path for inclusion.
      *
      * @param string $template Original template path.
