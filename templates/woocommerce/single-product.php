@@ -1,354 +1,316 @@
 <?php
 /**
- * Template for displaying single product pages
+ * Cart Page - APW WooCommerce Plugin Override with Structure & Debug Logging
  *
- * @package APW_Woo_Plugin
+ * This template overrides the default WooCommerce cart template, applying the
+ * standard page structure (header, footer, block, container) used in this plugin.
+ * It renders the header block using the same direct shortcode method as single-product.php.
+ * It maintains the core structure and hooks of the original WooCommerce template (version 7.9.0).
+ *
+ * @see     https://woocommerce.com/document/template-structure/
+ * @package APW_Woo_Plugin/Templates
+ * @version 7.9.0-apw.5
+ *
+ * Original WooCommerce template version: 7.9.0
  */
-// Exit if accessed directly
-if (!defined('ABSPATH')) {
-    exit;
+
+defined('ABSPATH') || exit;
+
+// APW Woo Plugin: Log cart template loading if debug mode is on
+$apw_debug_mode = defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE;
+$apw_log_exists = function_exists('apw_woo_log');
+
+if ($apw_debug_mode && $apw_log_exists) {
+    apw_woo_log('CART TEMPLATE: Loading custom cart template: templates/woocommerce/cart/cart.php with theme structure');
 }
-if (APW_WOO_DEBUG_MODE) {
-    apw_woo_log('Loading single product template');
-}
-// Hook visualization function (only for admins in debug mode)
-function apw_woo_hook_visualizer($hook_name)
-{
-    if (!APW_WOO_DEBUG_MODE || !current_user_can('manage_options')) {
-        return function () {
-        };
-    }
-    return function () use ($hook_name) {
-        $args = func_get_args();
-        apw_woo_visualize_hook($hook_name, $args);
-    };
-}
-
-// Improved compact hook visualization
-function apw_woo_visualize_hook($hook_name, $params = array())
-{
-    if (!APW_WOO_DEBUG_MODE || !current_user_can('manage_options')) {
-        return;
-    }
-    static $hook_counter = 0;
-    $hook_counter++;
-    $hook_id = 'hook-' . $hook_counter;
-    // Create a more compact display with toggle functionality
-    ?>
-    <div class="apw-hook-viz"
-         style="margin: 5px 0; padding: 5px; border: 1px dashed #ff6b6b; background-color: #fff; font-family: monospace; font-size: 12px; max-width: 100%; overflow-x: auto;">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-weight: bold; color: #ff6b6b;">HOOK: <?php echo esc_html($hook_name); ?></span>
-            <a href="#"
-               onclick="document.getElementById('<?php echo esc_attr($hook_id); ?>').style.display = document.getElementById('<?php echo esc_attr($hook_id); ?>').style.display === 'none' ? 'block' : 'none'; return false;"
-               style="color: #0073aa; text-decoration: none; font-size: 10px;">[Toggle Details]</a>
-        </div>
-        <div id="<?php echo esc_attr($hook_id); ?>"
-             style="display: none; margin-top: 5px; padding-top: 5px; border-top: 1px dotted #ddd;">
-            <?php if (!empty($params)): ?>
-                <div style="font-size: 11px; margin-bottom: 3px;">Parameters:</div>
-                <div style="margin-left: 10px;">
-                    <?php foreach ($params as $key => $value): ?>
-                        <div style="margin-bottom: 2px; word-break: break-word;">
-                            <strong><?php echo esc_html($key); ?>:</strong>
-                            <?php
-                            if (is_object($value)) {
-                                echo 'Object: ' . esc_html(get_class($value));
-                                if ($value instanceof WC_Product) {
-                                    echo ' (ID: ' . esc_html($value->get_id()) . ', Name: ' . esc_html($value->get_name()) . ')';
-                                }
-                            } elseif (is_array($value)) {
-                                // Show condensed array info
-                                echo 'Array (' . count($value) . ' items)';
-                            } else {
-                                // Truncate long values
-                                $val_str = var_export($value, true);
-                                echo esc_html(substr($val_str, 0, 50));
-                                if (strlen($val_str) > 50) echo '...';
-                            }
-                            ?>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            <?php else: ?>
-                <div style="font-style: italic; font-size: 11px;">No parameters</div>
-            <?php endif; ?>
-        </div>
-    </div>
-    <?php
-}
-
-// Only add visualization for admins in debug mode
-if (APW_WOO_DEBUG_MODE && current_user_can('manage_options')) {
-    // Register visualizers for key WooCommerce hooks
-    $hooks_to_visualize = array(
-        'woocommerce_before_single_product',
-        'woocommerce_before_single_product_summary',
-        'woocommerce_product_thumbnails',
-        'woocommerce_single_product_summary',
-        'woocommerce_before_add_to_cart_form',
-        'woocommerce_before_variations_form',
-        'woocommerce_before_add_to_cart_button',
-        'woocommerce_before_single_variation',
-        'woocommerce_single_variation',
-        'woocommerce_after_single_variation',
-        'woocommerce_after_add_to_cart_button',
-        'woocommerce_after_variations_form',
-        'woocommerce_after_add_to_cart_form',
-        'woocommerce_product_meta_start',
-        'woocommerce_product_meta_end',
-        'woocommerce_share',
-        'woocommerce_after_single_product_summary',
-        'woocommerce_after_single_product',
-        // Custom hooks for our plugin
-        'apw_woo_before_product_faqs',
-        'apw_woo_after_product_faqs',
-        'apw_woo_before_product_addons',
-        'apw_woo_after_product_addons',
-        'apw_woo_product_addons'
-    );
-    // Add visualizers to all hooks
-    foreach ($hooks_to_visualize as $hook) {
-        add_action($hook, apw_woo_hook_visualizer($hook), 999);
-    }
-}
-/**
- * Add wrapper around product options (before form)
- */
-function apw_woo_add_product_options_wrapper()
-{
-    echo '<div class="apw-woo-product-options-wrapper">';
-}
-
-add_action('woocommerce_before_add_to_cart_form', 'apw_woo_add_product_options_wrapper', 5);
-
-/**
- * Close product options wrapper and add purchase section structure
- */
-function apw_woo_add_quantity_section()
-{
-    // Close product options wrapper
-    echo '</div><!-- End product options wrapper -->';
-
-    // Create structured purchase section
-    echo '<div class="apw-woo-purchase-section">';
-    echo '<div class="apw-woo-quantity-row">';
-    echo '<span class="apw-woo-quantity-label">Quantity</span>';
-}
-
-add_action('woocommerce_before_add_to_cart_quantity', 'apw_woo_add_quantity_section', 5);
-
-/**
- * Add price display and close quantity row
- */
-/*
-function apw_woo_add_price_display()
-{
-    global $product;
-    if (!$product) return;
-
-    // Add price display and close row
-    echo '<div class="apw-woo-price-display">' . wc_price($product->get_price()) . '</div>';
-    echo '</div><!-- End quantity row -->';
-}
-
-add_action('woocommerce_after_add_to_cart_quantity', 'apw_woo_add_price_display');
-*/
-
-/**
- * Close purchase section after add to cart button
- */
-function apw_woo_close_purchase_section()
-{
-    echo '</div><!-- End purchase section -->';
-}
-
-add_action('woocommerce_after_add_to_cart_button', 'apw_woo_close_purchase_section', 15);
-
-/**
- * Remove original price display
- */
-/*
-function apw_woo_remove_price_display()
-{
-    // Priority 10 is the default for this hook
-    remove_action('woocommerce_single_product_summary', 'woocommerce_template_single_price', 10);
-}
-
-// Run at priority 5 to ensure it happens before the template_single_price function is called
-add_action('woocommerce_single_product_summary', 'apw_woo_remove_price_display', 5);
-*/
 
 get_header();
-// Get current product
-global $product;
-if (!is_a($product, 'WC_Product')) {
-    $product = wc_get_product(get_the_ID());
-}
-// Store original product to prevent global variable changes from affecting our template
-$original_product = $product;
-$original_product_id = $product ? $product->get_id() : 0;
-if (APW_WOO_DEBUG_MODE && $product) {
-    apw_woo_log("PRODUCT DEBUG: Template loading with post: " . $product->get_name() . " (ID: " . $product->get_id() . ")");
-    apw_woo_log("PRODUCT DEBUG: Current URL: " . $_SERVER['REQUEST_URI']);
-    apw_woo_log("PRODUCT DEBUG: get_the_ID() returns: " . get_the_ID());
-    global $wp_query;
-    apw_woo_log("PRODUCT DEBUG: WP Query object: " . print_r($wp_query->query, true));
-}
-if ($product) :
-    ?>
-    <main id="main" class="site-main apw-woo-single-product-main" role="main">
-        <!-- APW-WOO-TEMPLATE: single-product.php is loaded -->
-        <!-- Header Block - Contains hero image, page title, and breadcrumbs -->
-        <div class="apw-woo-section-wrapper apw-woo-header-block">
-            <?php
-            /**
-             * Hook: apw_woo_before_product_header
-             */
-            do_action('apw_woo_before_product_header', $product);
-            if (APW_WOO_DEBUG_MODE) {
-                apw_woo_log('Rendering product page header');
+
+$target_block_id = 'fourth-level-page-header'; // Same as single-product.php
+$cart_page_id = wc_get_page_id('cart');
+// Define the correct title, even though we aren't using preg_replace in the header block section anymore
+$correct_cart_title = $cart_page_id ? get_the_title($cart_page_id) : __('Cart', 'woocommerce');
+
+?>
+<main id="main" class="apw-woo-cart-main">
+    <!-- APW-WOO-TEMPLATE: cart.php (structured) is loaded -->
+
+    <!-- Header Block - Contains hero image, page title, and breadcrumbs -->
+    <div class="apw-woo-section-wrapper apw-woo-header-block">
+        <?php
+        /**
+         * Hook: apw_woo_before_cart_header
+         */
+        do_action('apw_woo_before_cart_header');
+
+        if ($apw_debug_mode && $apw_log_exists) {
+            apw_woo_log('CART TEMPLATE: Rendering header block section using direct do_shortcode. Block ID: ' . $target_block_id);
+        }
+
+        // Replicate the exact logic from single-product.php for rendering the block
+        if (shortcode_exists('block')) {
+            echo do_shortcode('[block id="' . esc_attr($target_block_id) . '"]'); // Direct echo, no ob_start/preg_replace
+        } else {
+            // Fallback if shortcode doesn't exist
+            if ($apw_debug_mode && $apw_log_exists) {
+                apw_woo_log('CART TEMPLATE WARNING: Shortcode [block] does not exist. Falling back to standard title.', 'warning');
             }
-            if (shortcode_exists('block')) {
-                echo do_shortcode('[block id="fourth-level-page-header"]');
-            } else {
-                // Fallback if shortcode doesn't exist
-                echo '<h1 class="apw-woo-page-title">' . esc_html($product->get_name()) . '</h1>';
-            }
-            /**
-             * Hook: apw_woo_after_product_header
-             */
-            do_action('apw_woo_after_product_header', $product);
-            ?>
-        </div>
-        <!-- Use Flatsome's container while keeping our plugin-specific classes -->
-        <div class="container">
-            <div class="row">
-                <div class="col apw-woo-content-wrapper">
-                    <?php
-                    /**
-                     * Hook: woocommerce_before_single_product
-                     *
-                     * @hooked woocommerce_output_all_notices - 10
-                     */
-                    do_action('woocommerce_before_single_product');
-                    ?>
-                    <div id="product-<?php the_ID(); ?>" <?php wc_product_class('', get_the_ID()); ?>>
-                        <!-- Product Content Section -->
-                        <div class="row apw-woo-row">
-                            <!-- Gallery Column - Left Side -->
-                            <div class="large-6 medium-6 small-12 apw-woo-product-gallery-col">
-                                <?php do_action('apw_woo_before_product_gallery', $product); ?>
-                                <div class="apw-woo-product-gallery-wrapper">
-                                    <?php do_action('woocommerce_before_single_product_summary'); ?>
-                                </div>
-                                <?php do_action('apw_woo_after_product_gallery', $product); ?>
-                            </div>
-                            <!-- Product Summary Column - Right Side -->
-                            <div class="large-6 medium-6 small-12 apw-woo-product-summary-col">
-                                <?php do_action('apw_woo_before_product_summary', $product); ?>
-                                <div class="apw-woo-product-summary">
-                                    <!-- Product Title -->
-                                    <div class="apw-woo-product-title-wrapper">
-                                        <?php the_title('<h1 class="apw-woo-product-title">', '</h1>'); ?>
-                                    </div>
-                                    <!-- Product Description -->
-                                    <div class="apw-woo-product-description-wrapper">
-                                        <?php echo apply_filters('the_content', $product->get_description()); ?>
-                                    </div>
-                                    <!-- Add to Cart Form -->
-                                    <div class="apw-woo-add-to-cart-wrapper">
-                                        <?php woocommerce_template_single_add_to_cart(); ?>
-                                    </div>
-                                    <!-- Product Meta -->
-                                    <div class="apw-woo-product-meta">
-                                        <?php if ($product->get_sku()) : ?>
-                                            <span class="sku_wrapper"><?php esc_html_e('SKU:', 'woocommerce'); ?>
-                                                <span class="sku"><?php echo esc_html($product->get_sku()); ?></span>
-                                            </span>
-                                            <span class="apw-woo-meta-separator">|</span>
-                                        <?php endif; ?>
-                                        <?php echo wc_get_product_category_list($product->get_id(), ', ', '<span class="posted_in">' . _n('Category:', 'Categories:', count($product->get_category_ids()), 'woocommerce') . ' ', '</span>'); ?>
-                                    </div>
-                                </div>
-                                <?php do_action('apw_woo_after_product_summary', $product); ?>
-                            </div>
-                        </div>
-                        <?php
-                        /**
-                         * Hook: woocommerce_after_single_product_summary.
-                         *
-                         * @hooked woocommerce_output_product_data_tabs - 10
-                         * @hooked woocommerce_upsell_display - 15
-                         * @hooked woocommerce_related_products - 20
-                         */
-                        do_action('woocommerce_after_single_product_summary');
-                        ?>
-                        <!-- FAQ Section -->
-                        <div class="row apw-woo-row">
-                            <div class="col apw-woo-faq-section-container">
-                                <?php
-                                // Reset product to original product before FAQ display
-                                if (APW_WOO_DEBUG_MODE) {
-                                    apw_woo_log('PRODUCT DEBUG BEFORE FAQ: Current post: ' . (isset($post) ? $post->post_title . ' (ID: ' . $post->ID . ')' : 'No post'));
-                                    apw_woo_log('PRODUCT DEBUG BEFORE FAQ: Current product: ' . ($product ? $product->get_name() . ' (ID: ' . $product->get_id() . ')' : 'No product'));
-                                    apw_woo_log('PRODUCT DEBUG BEFORE FAQ: Original product was: ' . ($original_product ? $original_product->get_name() . ' (ID: ' . $original_product_id . ')' : 'No original product'));
-                                }
-                                // Reset to original product if it has changed
-                                if ($original_product && $product && $product->get_id() != $original_product_id) {
-                                    $product = $original_product;
-                                    $post = get_post($original_product_id);
-                                    setup_postdata($post);
-                                    if (APW_WOO_DEBUG_MODE) {
-                                        apw_woo_log('PRODUCT DEBUG AFTER RESET: Current post: ' . ($post ? $post->post_title . ' (ID: ' . $post->ID . ')' : 'No post'));
-                                        apw_woo_log('PRODUCT DEBUG AFTER RESET: Current product: ' . ($product ? $product->get_name() . ' (ID: ' . $product->get_id() . ')' : 'No product'));
-                                    }
-                                }
-                                /**
-                                 * Hook: apw_woo_before_product_faqs
-                                 */
-                                do_action('apw_woo_before_product_faqs', $product);
-                                // Include the FAQ display partial
-                                if (file_exists(APW_WOO_PLUGIN_DIR . 'templates/partials/faq-display.php')) {
-                                    // Verify product is valid before passing to FAQ display
-                                    if (!is_a($product, 'WC_Product')) {
-                                        if (APW_WOO_DEBUG_MODE) {
-                                            apw_woo_log('ERROR: Invalid product object passed to FAQ display');
-                                        }
-                                        $faq_product = null;
-                                    } else {
-                                        $faq_product = apply_filters('apw_woo_faq_product', $product);
-                                        if (APW_WOO_DEBUG_MODE) {
-                                            apw_woo_log('Passing product to FAQ display: ' . $faq_product->get_name() . ' (ID: ' . $faq_product->get_id() . ')');
-                                        }
-                                    }
-                                    include(APW_WOO_PLUGIN_DIR . 'templates/partials/faq-display.php');
-                                } else {
-                                    if (APW_WOO_DEBUG_MODE) {
-                                        apw_woo_log('FAQ display partial not found');
-                                    }
-                                }
-                                /**
-                                 * Hook: apw_woo_after_product_faqs
-                                 */
-                                do_action('apw_woo_after_product_faqs', $product);
-                                ?>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-    </main>
-<?php
-else:
-    ?>
+            echo '<div class="container page-title-container-fallback">'; // Optional container
+            echo '<h1 class="apw-woo-page-title entry-title">' . esc_html($correct_cart_title) . '</h1>';
+            echo '</div>';
+        }
+
+        /**
+         * Hook: apw_woo_after_cart_header
+         */
+        do_action('apw_woo_after_cart_header');
+        ?>
+    </div><!-- /.apw-woo-header-block -->
+
+    <!-- Main Content Container -->
     <div class="container">
         <div class="row">
-            <div class="col">
-                <p><?php esc_html_e('Product not found.', 'apw-woo-plugin'); ?></p>
-            </div>
-        </div>
-    </div>
+            <div class="col apw-woo-content-wrapper">
+                <?php
+                /**
+                 * Hook: apw_woo_before_cart_content
+                 */
+                do_action('apw_woo_before_cart_content');
+
+                /**
+                 * Hook: woocommerce_before_cart.
+                 * @hooked woocommerce_output_all_notices - 10
+                 * @hooked wc_print_notices - 10
+                 */
+                do_action('woocommerce_before_cart'); ?>
+
+                <form class="woocommerce-cart-form" action="<?php echo esc_url(wc_get_cart_url()); ?>" method="post">
+                    <?php do_action('woocommerce_before_cart_table'); ?>
+
+                    <table class="shop_table shop_table_responsive cart woocommerce-cart-form__contents"
+                           cellspacing="0">
+                        <thead>
+                        <tr>
+                            <th class="product-remove"><span
+                                        class="screen-reader-text"><?php esc_html_e('Remove item', 'woocommerce'); ?></span>
+                            </th>
+                            <th class="product-thumbnail"><span
+                                        class="screen-reader-text"><?php esc_html_e('Thumbnail image', 'woocommerce'); ?></span>
+                            </th>
+                            <th class="product-name"><?php esc_html_e('Product', 'woocommerce'); ?></th>
+                            <th class="product-price"><?php esc_html_e('Price', 'woocommerce'); ?></th>
+                            <th class="product-quantity"><?php esc_html_e('Quantity', 'woocommerce'); ?></th>
+                            <th class="product-subtotal"><?php esc_html_e('Subtotal', 'woocommerce'); ?></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php do_action('woocommerce_before_cart_contents'); ?>
+
+                        <?php
+                        // APW Woo Plugin: Log before cart item loop
+                        if ($apw_debug_mode && $apw_log_exists) {
+                            $cart_contents = WC()->cart->get_cart();
+                            $cart_count = count($cart_contents);
+                            apw_woo_log("CART TEMPLATE: Starting cart items loop. Cart item count: " . $cart_count);
+                            if ($cart_count === 0) {
+                                apw_woo_log("CART TEMPLATE: Cart is empty.");
+                            }
+                        }
+
+                        foreach (WC()->cart->get_cart() as $cart_item_key => $cart_item) {
+                            // APW Woo Plugin: Log start of processing for a cart item
+                            if ($apw_debug_mode && $apw_log_exists) {
+                                apw_woo_log("CART TEMPLATE: Processing cart item key: " . $cart_item_key . " | Product ID: " . $cart_item['product_id'] . " | Qty: " . $cart_item['quantity']);
+                            }
+
+                            $_product = apply_filters('woocommerce_cart_item_product', $cart_item['data'], $cart_item, $cart_item_key);
+                            $product_id = apply_filters('woocommerce_cart_item_product_id', $cart_item['product_id'], $cart_item, $cart_item_key);
+
+                            /** Filter the product name. @since 2.1.0 */
+                            $product_name = apply_filters('woocommerce_cart_item_name', $_product->get_name(), $cart_item, $cart_item_key);
+
+                            if ($_product && $_product->exists() && $cart_item['quantity'] > 0 && apply_filters('woocommerce_cart_item_visible', true, $cart_item, $cart_item_key)) {
+                                $product_permalink = apply_filters('woocommerce_cart_item_permalink', $_product->is_visible() ? $_product->get_permalink($cart_item) : '', $cart_item, $cart_item_key);
+                                ?>
+                                <tr class="woocommerce-cart-form__cart-item <?php echo esc_attr(apply_filters('woocommerce_cart_item_class', 'cart_item', $cart_item, $cart_item_key)); ?>">
+
+                                    <td class="product-remove">
+                                        <?php
+                                        echo apply_filters( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+                                            'woocommerce_cart_item_remove_link',
+                                            sprintf(
+                                                '<a href="%s" class="remove" aria-label="%s" data-product_id="%s" data-product_sku="%s">&times;</a>',
+                                                esc_url(wc_get_cart_remove_url($cart_item_key)),
+                                                /* translators: %s is the product name */
+                                                esc_attr(sprintf(__('Remove %s from cart', 'woocommerce'), wp_strip_all_tags($product_name))),
+                                                esc_attr($product_id),
+                                                esc_attr($_product->get_sku())
+                                            ),
+                                            $cart_item_key
+                                        );
+                                        ?>
+                                    </td>
+
+                                    <td class="product-thumbnail">
+                                        <?php
+                                        /** Filter the product thumbnail displayed in the WooCommerce cart. @since 2.1.0 */
+                                        $thumbnail = apply_filters('woocommerce_cart_item_thumbnail', $_product->get_image(), $cart_item, $cart_item_key);
+
+                                        if (!$product_permalink) {
+                                            echo $thumbnail; // PHPCS: XSS ok.
+                                        } else {
+                                            printf('<a href="%s">%s</a>', esc_url($product_permalink), $thumbnail); // PHPCS: XSS ok.
+                                        }
+                                        ?>
+                                    </td>
+
+                                    <td class="product-name"
+                                        data-title="<?php esc_attr_e('Product', 'woocommerce'); ?>">
+                                        <?php
+                                        if (!$product_permalink) {
+                                            echo wp_kses_post($product_name . '&nbsp;');
+                                        } else {
+                                            /** This filter is documented above. @since 2.1.0 */
+                                            echo wp_kses_post(apply_filters('woocommerce_cart_item_name', sprintf('<a href="%s">%s</a>', esc_url($product_permalink), $_product->get_name()), $cart_item, $cart_item_key));
+                                        }
+
+                                        do_action('woocommerce_after_cart_item_name', $cart_item, $cart_item_key);
+
+                                        // Meta data.
+                                        echo wc_get_formatted_cart_item_data($cart_item); // PHPCS: XSS ok.
+
+                                        // Backorder notification.
+                                        if ($_product->backorders_require_notification() && $_product->is_on_backorder($cart_item['quantity'])) {
+                                            echo wp_kses_post(apply_filters('woocommerce_cart_item_backorder_notification', '<p class="backorder_notification">' . esc_html__('Available on backorder', 'woocommerce') . '</p>', $product_id));
+                                        }
+                                        ?>
+                                    </td>
+
+                                    <td class="product-price" data-title="<?php esc_attr_e('Price', 'woocommerce'); ?>">
+                                        <?php
+                                        echo apply_filters('woocommerce_cart_item_price', WC()->cart->get_product_price($_product), $cart_item, $cart_item_key); // PHPCS: XSS ok.
+                                        ?>
+                                    </td>
+
+                                    <td class="product-quantity"
+                                        data-title="<?php esc_attr_e('Quantity', 'woocommerce'); ?>">
+                                        <?php
+                                        if ($_product->is_sold_individually()) {
+                                            $min_quantity = 1;
+                                            $max_quantity = 1;
+                                        } else {
+                                            /* translators: %s: Quantity. */
+                                            $min_quantity = 0;
+                                            $max_quantity = $_product->get_max_purchase_quantity();
+                                        }
+
+                                        $product_quantity = woocommerce_quantity_input(
+                                            array(
+                                                'input_name' => "cart[{$cart_item_key}][qty]",
+                                                'input_value' => $cart_item['quantity'],
+                                                'max_value' => $max_quantity,
+                                                'min_value' => $min_quantity,
+                                                'product_name' => $product_name,
+                                            ),
+                                            $_product,
+                                            false
+                                        );
+
+                                        echo apply_filters('woocommerce_cart_item_quantity', $product_quantity, $cart_item_key, $cart_item); // PHPCS: XSS ok.
+                                        ?>
+                                    </td>
+
+                                    <td class="product-subtotal"
+                                        data-title="<?php esc_attr_e('Subtotal', 'woocommerce'); ?>">
+                                        <?php
+                                        echo apply_filters('woocommerce_cart_item_subtotal', WC()->cart->get_product_subtotal($_product, $cart_item['quantity']), $cart_item, $cart_item_key); // PHPCS: XSS ok.
+                                        ?>
+                                    </td>
+                                </tr>
+                                <?php
+                            } else {
+                                // APW Woo Plugin: Log if a cart item is not visible
+                                if ($apw_debug_mode && $apw_log_exists) {
+                                    apw_woo_log("CART TEMPLATE: Cart item key: " . $cart_item_key . " is not visible or invalid. Skipping display.");
+                                }
+                            }
+                        } // End foreach cart item loop
+
+                        // APW Woo Plugin: Log after cart item loop
+                        if ($apw_debug_mode && $apw_log_exists) {
+                            apw_woo_log("CART TEMPLATE: Finished cart items loop.");
+                        }
+                        ?>
+
+                        <?php do_action('woocommerce_cart_contents'); ?>
+
+                        <tr>
+                            <td colspan="6" class="actions">
+
+                                <?php if (wc_coupons_enabled()) { ?>
+                                    <div class="coupon">
+                                        <label for="coupon_code"
+                                               class="screen-reader-text"><?php esc_html_e('Coupon:', 'woocommerce'); ?></label>
+                                        <input type="text" name="coupon_code" class="input-text" id="coupon_code"
+                                               value=""
+                                               placeholder="<?php esc_attr_e('Coupon code', 'woocommerce'); ?>"/>
+                                        <button type="submit"
+                                                class="button<?php echo esc_attr(wc_wp_theme_get_element_class_name('button') ? ' ' . wc_wp_theme_get_element_class_name('button') : ''); ?>"
+                                                name="apply_coupon"
+                                                value="<?php esc_attr_e('Apply coupon', 'woocommerce'); ?>"><?php esc_html_e('Apply coupon', 'woocommerce'); ?></button>
+                                        <?php do_action('woocommerce_cart_coupon'); ?>
+                                    </div>
+                                <?php } ?>
+
+                                <button type="submit"
+                                        class="button<?php echo esc_attr(wc_wp_theme_get_element_class_name('button') ? ' ' . wc_wp_theme_get_element_class_name('button') : ''); ?>"
+                                        name="update_cart"
+                                        value="<?php esc_attr_e('Update cart', 'woocommerce'); ?>"><?php esc_html_e('Update cart', 'woocommerce'); ?></button>
+
+                                <?php do_action('woocommerce_cart_actions'); ?>
+
+                                <?php wp_nonce_field('woocommerce-cart', 'woocommerce-cart-nonce'); ?>
+                            </td>
+                        </tr>
+
+                        <?php do_action('woocommerce_after_cart_contents'); ?>
+                        </tbody>
+                    </table>
+                    <?php do_action('woocommerce_after_cart_table'); ?>
+                </form>
+
+                <?php do_action('woocommerce_before_cart_collaterals'); ?>
+
+                <div class="cart-collaterals">
+                    <?php
+                    /**
+                     * Cart collaterals hook.
+                     * @hooked woocommerce_cross_sell_display
+                     * @hooked woocommerce_cart_totals - 10
+                     */
+                    do_action('woocommerce_cart_collaterals');
+                    ?>
+                </div>
+
+                <?php do_action('woocommerce_after_cart'); ?>
+
+                <?php
+                /**
+                 * Hook: apw_woo_after_cart_content
+                 */
+                do_action('apw_woo_after_cart_content');
+                ?>
+            </div> <!-- /.col.apw-woo-content-wrapper -->
+        </div> <!-- /.row -->
+    </div> <!-- /.container -->
+</main><!-- /#main -->
 <?php
-endif;
+
+// APW Woo Plugin: Log end of cart template if debug mode is on
+if ($apw_debug_mode && $apw_log_exists) {
+    apw_woo_log('CART TEMPLATE: Finished rendering custom cart template with theme structure.');
+}
+
 get_footer();
+?>
+<!-- APW-WOO-TEMPLATE: Custom cart.php (structured) is loaded -->
