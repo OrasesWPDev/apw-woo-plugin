@@ -4,12 +4,12 @@
  *
  * This template overrides the default WooCommerce cart template, applying the
  * standard page structure (header, footer, block, container) used in this plugin.
- * It dynamically overrides the H1 title within the specified header block.
+ * It renders the header block using the same direct shortcode method as single-product.php.
  * It maintains the core structure and hooks of the original WooCommerce template (version 7.9.0).
  *
  * @see     https://woocommerce.com/document/template-structure/
  * @package APW_Woo_Plugin/Templates
- * @version 7.9.0-apw.2
+ * @version 7.9.0-apw.5
  *
  * Original WooCommerce template version: 7.9.0
  */
@@ -28,6 +28,7 @@ get_header();
 
 $target_block_id = 'fourth-level-page-header'; // Same as single-product.php
 $cart_page_id = wc_get_page_id('cart');
+// Define the correct title, even though we aren't using preg_replace in the header block section anymore
 $correct_cart_title = $cart_page_id ? get_the_title($cart_page_id) : __('Cart', 'woocommerce');
 
 ?>
@@ -43,47 +44,17 @@ $correct_cart_title = $cart_page_id ? get_the_title($cart_page_id) : __('Cart', 
         do_action('apw_woo_before_cart_header');
 
         if ($apw_debug_mode && $apw_log_exists) {
-            apw_woo_log('CART TEMPLATE: Rendering header block section. Block ID: ' . $target_block_id . '. Target Title: "' . $correct_cart_title . '"');
+            apw_woo_log('CART TEMPLATE: Rendering header block section using direct do_shortcode. Block ID: ' . $target_block_id);
         }
 
-        // Check if the block shortcode exists.
+        // Replicate the exact logic from single-product.php for rendering the block
         if (shortcode_exists('block')) {
-
-            // --- Capture and Modify Block Output ---
-            ob_start();
-            echo do_shortcode('[block id="' . esc_attr($target_block_id) . '"]');
-            $block_html = ob_get_clean();
-
-            // Define the regex pattern to find the H1 with class containing "entry-title".
-            $pattern = '/(<h1[^>]*class="[^"]*entry-title[^"]*"[^>]*>)(.*?)(<\/h1>)/is';
-
-            // Perform the replacement.
-            $modified_block_html = preg_replace($pattern, '$1' . esc_html($correct_cart_title) . '$3', $block_html);
-
-            // Log replacement status.
-            if ($apw_debug_mode && $apw_log_exists) {
-                if ($modified_block_html !== null && $modified_block_html !== $block_html && strpos($modified_block_html, esc_html($correct_cart_title)) !== false) {
-                    apw_woo_log('CART TEMPLATE: Successfully replaced title in block output with: "' . esc_html($correct_cart_title) . '".');
-                } elseif ($modified_block_html === null) {
-                    apw_woo_log('CART TEMPLATE ERROR: preg_replace returned null during title override for block ID ' . $target_block_id . '.', 'error');
-                    $modified_block_html = $block_html; // Fallback to original
-                } elseif (strpos($block_html, 'entry-title') === false) {
-                    apw_woo_log('CART TEMPLATE WARNING: Could not find any H1 matching pattern (class="...entry-title...") in block ID ' . $target_block_id . ' to replace title. Outputting original block HTML.', 'warning');
-                    $modified_block_html = $block_html; // Fallback to original
-                } else {
-                    apw_woo_log('CART TEMPLATE WARNING: preg_replace ran but HTML did not change or replacement failed. Check pattern/content. Outputting original block HTML.', 'warning');
-                    $modified_block_html = $block_html; // Fallback to original
-                }
-            }
-            // Output the modified (or original if failed) HTML.
-            echo wp_kses_post($modified_block_html); // Using wp_kses_post for safety
-
+            echo do_shortcode('[block id="' . esc_attr($target_block_id) . '"]'); // Direct echo, no ob_start/preg_replace
         } else {
-            // Fallback if '[block]' shortcode doesn't exist.
+            // Fallback if shortcode doesn't exist
             if ($apw_debug_mode && $apw_log_exists) {
                 apw_woo_log('CART TEMPLATE WARNING: Shortcode [block] does not exist. Falling back to standard title.', 'warning');
             }
-            // Output a fallback title structure
             echo '<div class="container page-title-container-fallback">'; // Optional container
             echo '<h1 class="apw-woo-page-title entry-title">' . esc_html($correct_cart_title) . '</h1>';
             echo '</div>';
