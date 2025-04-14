@@ -80,6 +80,7 @@ if (!is_a($checkout, 'WC_Checkout')) {
     <div class="container">
         <div class="row">
             <div class="col apw-woo-content-wrapper">
+                <?php do_action('apw_woo_before_page_content'); ?>
                 <?php
                 /**
                  * Hook: apw_woo_before_checkout_content
