@@ -68,6 +68,7 @@ $correct_account_title = $account_page_id ? get_the_title($account_page_id) : __
     <div class="container">
         <div class="row">
             <div class="col apw-woo-content-wrapper">
+                <?php do_action('apw_woo_before_page_content'); ?>
                 <?php
                 /**
                  * Hook: apw_woo_before_myaccount_content

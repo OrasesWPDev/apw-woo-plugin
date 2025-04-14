@@ -225,6 +225,7 @@ if ($product) :
         <div class="container">
             <div class="row">
                 <div class="col apw-woo-content-wrapper">
+                    <?php do_action('apw_woo_before_page_content'); ?>
                     <?php
                     /**
                      * Hook: woocommerce_before_single_product

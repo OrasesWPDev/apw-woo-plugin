@@ -71,6 +71,7 @@ $correct_cart_title = $cart_page_id ? get_the_title($cart_page_id) : __('Cart', 
     <div class="container">
         <div class="row">
             <div class="col apw-woo-content-wrapper">
+                <?php do_action('apw_woo_before_page_content'); ?>
                 <?php
                 /**
                  * Hook: apw_woo_before_cart_content

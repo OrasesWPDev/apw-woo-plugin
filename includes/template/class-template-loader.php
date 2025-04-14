@@ -21,7 +21,8 @@ if (!defined('ABSPATH')) {
  * Handles the loading of custom templates for WooCommerce pages,
  * including product, category, and shop pages.
  */
-class APW_Woo_Template_Loader {
+class APW_Woo_Template_Loader
+{
     /**
      * Template path constants
      */
@@ -55,7 +56,8 @@ class APW_Woo_Template_Loader {
      * @param int $product_id The product ID
      * @param WC_Product $product The product object
      */
-    public static function set_original_product($product_id, $product) {
+    public static function set_original_product($product_id, $product)
+    {
         // **OPTIMIZATION: Added validation to ensure we only store valid products**
         if ($product_id > 0 && is_a($product, 'WC_Product')) {
             self::$original_product_id = $product_id;
@@ -106,7 +108,8 @@ class APW_Woo_Template_Loader {
     /**
      * Constructor
      */
-    private function __construct() {
+    private function __construct()
+    {
         $this->template_path = APW_WOO_PLUGIN_DIR . self::TEMPLATE_DIRECTORY;
         $this->init_hooks();
 
@@ -120,7 +123,8 @@ class APW_Woo_Template_Loader {
      *
      * @return self
      */
-    public static function get_instance() {
+    public static function get_instance()
+    {
         if (null === self::$instance) {
             self::$instance = new self();
         }
@@ -130,7 +134,8 @@ class APW_Woo_Template_Loader {
     /**
      * Initialize hooks
      */
-    private function init_hooks() {
+    private function init_hooks()
+    {
         // **OPTIMIZATION: Check if hooks are already registered to prevent duplicates**
         if ($this->hooks_registered) {
             return;
@@ -162,6 +167,11 @@ class APW_Woo_Template_Loader {
         // Remove default Flatsome/WooCommerce elements
         $this->remove_default_woocommerce_elements();
 
+        // Remove default WC notices and hook our custom notice display
+        $this->apw_woo_remove_default_notices();
+        add_action('apw_woo_before_page_content', [$this, 'apw_woo_output_custom_notices'], 10);
+
+
         // Debug product permalinks
         if (APW_WOO_DEBUG_MODE) {
             add_filter('post_type_link', [$this, 'debug_product_permalinks'], 99, 2);
@@ -180,7 +190,8 @@ class APW_Woo_Template_Loader {
     /**
      * Cleanup resources at the end of the request
      */
-    public function cleanup_resources() {
+    public function cleanup_resources()
+    {
         // **OPTIMIZATION: Clear static caches to prevent memory leaks in persistent environments**
         self::$hook_removal_cache = [];
 
@@ -192,7 +203,8 @@ class APW_Woo_Template_Loader {
     /**
      * Remove default WooCommerce and Flatsome elements that we don't want
      */
-    private function remove_default_woocommerce_elements() {
+    private function remove_default_woocommerce_elements()
+    {
         // **OPTIMIZATION: Skip if already performed this operation (prevents duplicate work)**
         static $elements_removed = false;
 
@@ -219,14 +231,14 @@ class APW_Woo_Template_Loader {
         remove_action('woocommerce_before_shop_loop', 'woocommerce_catalog_ordering', 30);
 
         // Target Flatsome's shop-page-title container directly
-        add_action('wp_head', function() {
+        add_action('wp_head', function () {
             if (is_woocommerce()) {
                 echo '<style>.shop-page-title { display: none !important; }</style>';
             }
         });
 
         // Additional safety: remove at higher priority
-        add_action('init', function() {
+        add_action('init', function () {
             remove_action('flatsome_after_header', 'flatsome_pages_title', 12);
             remove_action('woocommerce_before_main_content', 'woocommerce_breadcrumb', 20);
             remove_action('woocommerce_before_shop_loop', 'woocommerce_result_count', 20);
@@ -247,7 +259,8 @@ class APW_Woo_Template_Loader {
      * @param object $post The current post
      * @return string The unchanged permalink
      */
-    public function debug_product_permalinks($permalink, $post) {
+    public function debug_product_permalinks($permalink, $post)
+    {
         // **OPTIMIZATION: Added input validation to prevent issues with unexpected inputs**
         if (is_object($post) && property_exists($post, 'post_type') && $post->post_type === 'product') {
             apw_woo_log("Product permalink for {$post->post_name} (ID: {$post->ID}): {$permalink}");
@@ -261,21 +274,113 @@ class APW_Woo_Template_Loader {
      * @param string $product_slug The current product slug
      * @param string $requested_url The requested URL
      */
-    private function debug_permalink($product_slug, $requested_url) {
+    private function debug_permalink($product_slug, $requested_url)
+    {
         if (APW_WOO_DEBUG_MODE) {
             apw_woo_log("Permalink Debug - Product Slug: {$product_slug}, Requested URL: {$requested_url}");
         }
     }
 
     /**
+     * Removes default WooCommerce notice printing functions from standard hooks.
+     *
+     * This prevents notices from appearing in their default locations, allowing
+     * us to place them consistently with apw_woo_output_custom_notices.
+     *
+     * @since 1.2.5 (Your new version)
+     */
+    public function apw_woo_remove_default_notices()
+    {
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('Attempting to remove default WooCommerce notice hooks.');
+        }
+
+        // Remove the main notice printing function from common hooks
+        // Note: wc_print_notices handles success, error, and info notices.
+        remove_action('woocommerce_before_single_product', 'wc_print_notices', 10);
+        remove_action('woocommerce_before_shop_loop', 'wc_print_notices', 10); // Often used on archives
+        remove_action('woocommerce_before_cart', 'wc_print_notices', 10);
+        remove_action('woocommerce_before_checkout_form', 'wc_print_notices', 10);
+        // Add others if necessary, e.g., account pages might use different hooks or direct calls
+
+        // Also remove the older 'woocommerce_output_all_notices' if themes/plugins might still use it
+        remove_action('woocommerce_before_single_product', 'woocommerce_output_all_notices', 10);
+        remove_action('woocommerce_before_shop_loop', 'woocommerce_output_all_notices', 10);
+        remove_action('woocommerce_before_cart', 'woocommerce_output_all_notices', 10);
+        remove_action('woocommerce_before_checkout_form', 'woocommerce_output_all_notices', 10);
+
+
+        if (APW_WOO_DEBUG_MODE) {
+            // Check if removals were successful (basic check, might not be 100% reliable)
+            $hooks_to_check = [
+                'woocommerce_before_single_product' => 'wc_print_notices',
+                'woocommerce_before_cart' => 'wc_print_notices',
+                'woocommerce_before_checkout_form' => 'wc_print_notices',
+            ];
+            $all_removed = true;
+            foreach ($hooks_to_check as $hook => $function) {
+                if (has_action($hook, $function) === 10) { // Check specific priority
+                    apw_woo_log("Failed to remove {$function} from {$hook} at priority 10.", 'warning');
+                    $all_removed = false;
+                }
+            }
+            if ($all_removed) {
+                apw_woo_log('Successfully removed default notice hooks (or they were not present).');
+            } else {
+                apw_woo_log('One or more default notice hooks might still be present.', 'warning');
+            }
+        }
+    }
+
+    /**
+     * Outputs WooCommerce notices within a custom container.
+     *
+     * This function should be hooked where notices are desired. It calls
+     * wc_print_notices() to render any queued notices (error, success, info).
+     *
+     * @since 1.2.5 (Your new version)
+     */
+    public function apw_woo_output_custom_notices()
+    {
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('Executing apw_woo_output_custom_notices function.');
+        }
+        echo '<div class="apw-woo-notices-container">';
+        // This function prints all queued notices (success, error, info)
+        wc_print_notices();
+        echo '</div>';
+    }
+
+    /**
+     * Outputs WooCommerce notices within a custom container.
+     *
+     * This function should be hooked where notices are desired. It calls
+     * wc_print_notices() to render any queued notices (error, success, info).
+     *
+     * @since 1.2.5 (Your new version)
+     */
+    public function apw_woo_output_custom_notices()
+    {
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('Executing apw_woo_output_custom_notices function.');
+        }
+        echo '<div class="apw-woo-notices-container">';
+        // This function prints all queued notices (success, error, info)
+        wc_print_notices();
+        echo '</div>';
+    }
+
+
+    /**
      * Locate a template and return the path for inclusion.
      *
-     * @param string $template      Original template path.
+     * @param string $template Original template path.
      * @param string $template_name Template name.
      * @param string $template_path Template path.
      * @return string
      */
-    public function locate_template($template, $template_name, $template_path) {
+    public function locate_template($template, $template_name, $template_path)
+    {
         // **OPTIMIZATION: Added input validation**
         if (empty($template_name)) {
             return $template;
@@ -299,11 +404,12 @@ class APW_Woo_Template_Loader {
      * Get template part (for templates in loops)
      *
      * @param string $template Original template path.
-     * @param string $slug     Template slug.
-     * @param string $name     Template name.
+     * @param string $slug Template slug.
+     * @param string $name Template name.
      * @return string
      */
-    public function get_template_part($template, $slug, $name) {
+    public function get_template_part($template, $slug, $name)
+    {
         // **OPTIMIZATION: Added input validation**
         if (empty($slug) || empty($name)) {
             return $template;
@@ -332,7 +438,8 @@ class APW_Woo_Template_Loader {
      * @param string $template_name Template name.
      * @return string|false Path to template file or false if not found.
      */
-    private function find_template_in_plugin($template_name) {
+    private function find_template_in_plugin($template_name)
+    {
         // **OPTIMIZATION: Ensure template name is valid and contains .php extension**
         if (empty($template_name) || !preg_match('/\.php$/', $template_name)) {
             if (APW_WOO_DEBUG_MODE) {
@@ -402,7 +509,8 @@ class APW_Woo_Template_Loader {
      * @param string $template_path Full path to template.
      * @return bool Whether the template exists
      */
-    private function template_exists($template_path) {
+    private function template_exists($template_path)
+    {
         // **OPTIMIZATION: Added early return for empty paths**
         if (empty($template_path)) {
             return false;
@@ -434,7 +542,8 @@ class APW_Woo_Template_Loader {
      * Load custom template based on the current view
      * Handles custom URL structures for products, categories, and shop
      */
-    public function maybe_load_custom_template() {
+    public function maybe_load_custom_template()
+    {
         global $post, $wp;
 
         // Only affect WooCommerce pages
@@ -490,7 +599,8 @@ class APW_Woo_Template_Loader {
      * @param object $wp The WordPress environment object
      * @return bool True if page is a product page
      */
-    private function detect_product_page($wp) {
+    private function detect_product_page($wp)
+    {
         // Use the dedicated page detector class
         return APW_Woo_Page_Detector::is_product_page($wp);
     }
@@ -500,7 +610,8 @@ class APW_Woo_Template_Loader {
      *
      * @return bool
      */
-    private function is_main_shop_page() {
+    private function is_main_shop_page()
+    {
         return APW_Woo_Page_Detector::is_main_shop_page();
     }
 
@@ -516,7 +627,8 @@ class APW_Woo_Template_Loader {
      * @param array $template_vars Optional variables to extract into template scope
      * @return string|bool Template content if successful, false otherwise
      */
-    public function load_template_and_remove_defaults($template_relative_path, $preserve_hooks = array(), $template_vars = array()) {
+    public function load_template_and_remove_defaults($template_relative_path, $preserve_hooks = array(), $template_vars = array())
+    {
         // **OPTIMIZATION: Added more robust security check for directory traversal attempts**
         if (strpos($template_relative_path, '..') !== false) {
             if (APW_WOO_DEBUG_MODE) {
@@ -615,7 +727,8 @@ class APW_Woo_Template_Loader {
      * @param string $template_path The template path for reference in logs
      * @return bool True if validation passes, false if issues found
      */
-    private function validate_template_structure($content, $template_path) {
+    private function validate_template_structure($content, $template_path)
+    {
         $validation_passed = true;
         $template_name = basename($template_path);
         $issues = [];
@@ -698,7 +811,8 @@ class APW_Woo_Template_Loader {
      *
      * @param array $preserve_hooks Optional array of hooks to preserve in format ['hook_name' => ['callback' => 'function_name', 'priority' => 10]]
      */
-    public function remove_default_woocommerce_content($preserve_hooks = array()) {
+    public function remove_default_woocommerce_content($preserve_hooks = array())
+    {
         // **OPTIMIZATION: Add caching so we don't repeatedly calculate the same hooks to remove**
         $cache_key = md5(serialize($preserve_hooks));
 
@@ -776,7 +890,8 @@ class APW_Woo_Template_Loader {
      * Register a filter to intercept WordPress template inclusion
      * This allows us to override templates at the WordPress level
      */
-    public function register_template_include_filter() {
+    public function register_template_include_filter()
+    {
         // **OPTIMIZATION: Added check to prevent registering the filter multiple times**
         static $filter_registered = false;
 
@@ -788,7 +903,7 @@ class APW_Woo_Template_Loader {
         $template_resolver = new APW_Woo_Template_Resolver($this);
 
         // Register filter using the resolver
-        add_filter('template_include', function($template) use ($template_resolver) {
+        add_filter('template_include', function ($template) use ($template_resolver) {
             return $template_resolver->resolve_template($template);
         }, 99);
 
@@ -809,7 +924,8 @@ class APW_Woo_Template_Loader {
      * The method checks if the global product has changed and restores it to the
      * original product when necessary to maintain consistent URLs and product data.
      */
-    public function restore_original_product() {
+    public function restore_original_product()
+    {
         global $post, $product;
 
         // Only proceed if we have stored an original product
@@ -859,7 +975,8 @@ class APW_Woo_Template_Loader {
      * This ensures the original product is maintained throughout template rendering,
      * even when related products or other WooCommerce elements might change it.
      */
-    public function register_product_restoration_hooks() {
+    public function register_product_restoration_hooks()
+    {
         // **OPTIMIZATION: Added static flag to prevent registering hooks multiple times**
         static $hooks_registered = false;
 
@@ -927,7 +1044,8 @@ class APW_Woo_Template_Loader {
      * @param array $links The breadcrumb links
      * @return array Modified breadcrumb links
      */
-    public function fix_yoast_breadcrumbs($links) {
+    public function fix_yoast_breadcrumbs($links)
+    {
         // **OPTIMIZATION: Better validation before modifying links**
         if (!is_array($links) || empty($links)) {
             return $links;
@@ -956,7 +1074,8 @@ class APW_Woo_Template_Loader {
      * @param string $title The page title
      * @return string Modified page title
      */
-    public function fix_yoast_title($title) {
+    public function fix_yoast_title($title)
+    {
         // **OPTIMIZATION: Better validation and more robust regex pattern**
         if (empty($title) || !is_string($title)) {
             return $title;
@@ -970,8 +1089,7 @@ class APW_Woo_Template_Loader {
             // Try pattern specific to our known products first
             if (strpos($title, 'Wireless Router') !== false) {
                 $new_title = preg_replace('/.*?Wireless Router/', self::$original_product->get_name(), $title);
-            }
-            // More generic approach as fallback
+            } // More generic approach as fallback
             else if (preg_match('/^.*?[\s\-–—]\s/', $title)) {
                 // This will replace the content before the first separator (-, —, –, or similar)
                 $new_title = preg_replace('/^.*?[\s\-–—]\s/', self::$original_product->get_name() . ' - ', $title);
@@ -993,7 +1111,8 @@ class APW_Woo_Template_Loader {
      * @param string $title The document title
      * @return string Modified document title
      */
-    public function fix_document_title($title) {
+    public function fix_document_title($title)
+    {
         // **OPTIMIZATION: Better validation**
         if (!empty($title) || self::$original_product_id <= 0 || !self::$original_product instanceof WC_Product) {
             return $title;
