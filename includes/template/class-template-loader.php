@@ -301,7 +301,23 @@ class APW_Woo_Template_Loader
         remove_action('woocommerce_before_shop_loop', 'wc_print_notices', 10); // Often used on archives
         remove_action('woocommerce_before_cart', 'wc_print_notices', 10);
         remove_action('woocommerce_before_checkout_form', 'wc_print_notices', 10);
-        // Add others if necessary, e.g., account pages might use different hooks or direct calls
+        remove_action('woocommerce_before_main_content', 'wc_print_notices', 10);
+        remove_action('woocommerce_before_customer_login_form', 'wc_print_notices', 10);
+        remove_action('woocommerce_before_reset_password_form', 'wc_print_notices', 10);
+        remove_action('woocommerce_before_lost_password_form', 'wc_print_notices', 10);
+
+        // Theme-specific hooks that might display notices
+        remove_action('flatsome_before_main', 'wc_print_notices', 10);
+        remove_action('flatsome_after_header', 'wc_print_notices', 10);
+        
+        // Additional theme-specific hooks that might be used
+        remove_action('flatsome_before_page', 'wc_print_notices', 10);
+        remove_action('flatsome_before_content', 'wc_print_notices', 10);
+        remove_action('flatsome_before_shop', 'wc_print_notices', 10);
+        
+        // Remove from potential header locations
+        remove_action('wp_body_open', 'wc_print_notices', 10);
+        remove_action('wp_footer', 'wc_print_notices', 10);
 
         // Also remove the older 'woocommerce_output_all_notices' if themes/plugins might still use it
         remove_action('woocommerce_before_single_product', 'woocommerce_output_all_notices', 10);
@@ -335,19 +351,24 @@ class APW_Woo_Template_Loader
     /**
      * Outputs WooCommerce notices within a custom container.
      *
-     * This function should be hooked where notices are desired. It calls
-     * wc_print_notices() to render any queued notices (error, success, info).
+     * This function prints notices in our custom container.
+     * It's used as a fallback and for backward compatibility.
      *
      * @since 1.2.5 (Your new version)
      */
     public function apw_woo_output_custom_notices()
     {
         if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log('Executing apw_woo_output_custom_notices function.');
+            apw_woo_log('apw_woo_output_custom_notices function called.');
         }
+        
+        // Print notices in our container
         echo '<div class="apw-woo-notices-container">';
-        // This function prints all queued notices (success, error, info)
-        wc_print_notices();
+        if (function_exists('wc_print_notices')) {
+            wc_print_notices();
+        } else {
+            echo '<!-- WooCommerce notices function not available -->';
+        }
         echo '</div>';
     }
 

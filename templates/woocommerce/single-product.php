@@ -221,11 +221,21 @@ if ($product) :
             do_action('apw_woo_after_product_header', $product);
             ?>
         </div>
+    
+        <!-- Notice Container - For WooCommerce messages -->
+        <div class="apw-woo-notices-container">
+            <?php 
+            // This will print all queued notices
+            if (function_exists('wc_print_notices')) {
+                wc_print_notices();
+            }
+            ?>
+        </div>
+    
         <!-- Use Flatsome's container while keeping our plugin-specific classes -->
         <div class="container">
             <div class="row">
                 <div class="col apw-woo-content-wrapper">
-                    <?php do_action('apw_woo_before_page_content'); ?>
                     <?php
                     /**
                      * Hook: woocommerce_before_single_product

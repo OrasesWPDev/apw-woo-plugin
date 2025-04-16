@@ -76,11 +76,18 @@ if (!is_a($checkout, 'WC_Checkout')) {
         ?>
     </div><!-- /.apw-woo-header-block -->
 
+    <!-- Notice Container - For WooCommerce messages -->
+    <div class="apw-woo-notices-container">
+        <?php 
+        // This will print all queued notices
+        wc_print_notices(); 
+        ?>
+    </div>
+
     <!-- Main Content Container -->
     <div class="container">
         <div class="row">
             <div class="col apw-woo-content-wrapper">
-                <?php do_action('apw_woo_before_page_content'); ?>
                 <?php
                 /**
                  * Hook: apw_woo_before_checkout_content

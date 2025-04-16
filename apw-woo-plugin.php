@@ -11,7 +11,7 @@
  * Plugin Name:       APW WooCommerce Plugin
  * Plugin URI:        https://github.com/OrasesWPDev/apw-woo-plugin
  * Description:       Custom WooCommerce enhancements for displaying products across shop, category, and product pages.
- * Version:           1.2.6.1
+ * Version:           1.2.12
  * Requires at least: 5.3
  * Requires PHP:      7.2
  * Author:            Orases
@@ -720,6 +720,9 @@ function apw_woo_init()
     // Add this line - Hook the is_product fix early
     add_action('wp', 'apw_woo_fix_is_product', 5);
 
+    // Add early class to hide notices before JS loads
+    add_action('wp_enqueue_scripts', 'apw_woo_enqueue_early_notice_styles', 1);
+
     // Define FAQ field structure
     apw_woo_define_faq_field_structure();
 
@@ -743,6 +746,29 @@ function apw_woo_init()
     apw_woo_initialize_product_addons();
     // Initialize Dynamic Pricing integration
     apw_woo_init_dynamic_pricing();
+}
+
+/**
+ * Enqueue early styles to hide notices before JavaScript loads
+ *
+ * This ensures the woocommerce-custom.css file is loaded as early as possible
+ * to prevent the flash of unstyled content where notices appear in wrong places.
+ */
+function apw_woo_enqueue_early_notice_styles()
+{
+    if (!is_admin() && function_exists('is_woocommerce') && (is_woocommerce() || is_cart() || is_checkout() || is_account_page())) {
+        wp_enqueue_style(
+            'apw-woo-early-notices',
+            APW_WOO_PLUGIN_URL . 'assets/css/woocommerce-custom.css',
+            array(),
+            filemtime(APW_WOO_PLUGIN_DIR . 'assets/css/woocommerce-custom.css'),
+            'all'
+        );
+
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('Early notice styles enqueued');
+        }
+    }
 }
 
 

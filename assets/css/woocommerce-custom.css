@@ -267,6 +267,118 @@
    6. RESPONSIVE ADJUSTMENTS
    ---------------------------------------- */
 
+/**
+ * WooCommerce Notice Styling
+ *
+ * These styles ensure that notices are properly displayed in our custom container
+ * and maintain consistent styling across the site.
+ */
+
+/* Notice container styling */
+.apw-woo-notices-container {
+    margin-bottom: 20px;
+    width: 100%;
+    clear: both;
+    display: block !important;
+    z-index: 999; /* Ensure notices are above other content */
+    min-height: 10px; /* Ensure container is visible even when empty */
+    position: relative; /* Establish positioning context */
+}
+
+/* Ensure all notice types are visible within our container */
+.apw-woo-notices-container .woocommerce-message,
+.apw-woo-notices-container .woocommerce-error,
+.apw-woo-notices-container .woocommerce-info,
+.apw-woo-notices-container .woocommerce-notice,
+.apw-woo-notices-container .message-wrapper {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: auto !important;
+    overflow: visible !important;
+    margin-bottom: 15px !important;
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    transform: none !important;
+    pointer-events: auto !important;
+}
+
+/* Ensure buttons in notices are clickable */
+.apw-woo-notices-container .woocommerce-message .button,
+.apw-woo-notices-container .woocommerce-error .button,
+.apw-woo-notices-container .woocommerce-info .button,
+.apw-woo-notices-container .woocommerce-notice .button,
+.apw-woo-notices-container .message-wrapper .button {
+    display: inline-block !important;
+    pointer-events: auto !important;
+    position: static !important;
+}
+
+/* Style adjustments for notices to match theme */
+.message-wrapper {
+    margin-bottom: 15px;
+}
+
+/* Ensure buttons in notices work properly */
+.woocommerce-message .button,
+.woocommerce-error .button,
+.woocommerce-info .button,
+.woocommerce-notice .button,
+.message-wrapper .button,
+.message-container .button {
+    display: inline-block !important;
+    pointer-events: auto !important;
+}
+
+/* Ensure message containers have proper padding */
+.message-container {
+    padding: 8px 16px;
+}
+
+/* Hide notices in their original locations */
+body > .woocommerce-message:not(.apw-woo-processed),
+body > .woocommerce-error:not(.apw-woo-processed),
+body > .woocommerce-info:not(.apw-woo-processed),
+body > .woocommerce-notice:not(.apw-woo-processed),
+body > .message-wrapper:not(.apw-woo-processed),
+.woocommerce-notices-wrapper > *:not(.apw-woo-processed),
+header.header ~ .woocommerce-message:not(.apw-woo-processed),
+header.header ~ .woocommerce-error:not(.apw-woo-processed),
+header.header ~ .woocommerce-info:not(.apw-woo-processed),
+header.header ~ .message-wrapper:not(.apw-woo-processed),
+header.header + .woocommerce-message:not(.apw-woo-processed),
+header.header + .woocommerce-error:not(.apw-woo-processed),
+header.header + .woocommerce-info:not(.apw-woo-processed),
+header.header + .message-wrapper:not(.apw-woo-processed),
+.page-wrapper > .woocommerce-message:not(.apw-woo-processed),
+.page-wrapper > .woocommerce-error:not(.apw-woo-processed),
+.page-wrapper > .woocommerce-info:not(.apw-woo-processed),
+.page-wrapper > .message-wrapper:not(.apw-woo-processed),
+#wrapper > .woocommerce-message:not(.apw-woo-processed),
+#wrapper > .woocommerce-error:not(.apw-woo-processed),
+#wrapper > .woocommerce-info:not(.apw-woo-processed),
+#wrapper > .message-wrapper:not(.apw-woo-processed),
+main > .woocommerce-message:not(.apw-woo-processed),
+main > .woocommerce-error:not(.apw-woo-processed),
+main > .woocommerce-info:not(.apw-woo-processed),
+main > .message-wrapper:not(.apw-woo-processed) {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    position: absolute !important;
+    left: -9999px !important;
+}
+
+/* Ensure notices appear only once */
+.woocommerce-notices-wrapper:empty {
+    display: none !important;
+}
+
 /* --- Tablet & Mobile Shared Styles (849px and below) --- */
 /* Styles applied from tablet breakpoint downwards */
 @media (max-width: 849px) {
