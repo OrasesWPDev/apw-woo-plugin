@@ -489,7 +489,6 @@ main > .message-wrapper:not(.apw-woo-processed) {
    7. SINGLE PRODUCT PAGE STYLES
    Base styles for the single product template
    ---------------------------------------- */
-
 :root {
     /* --- Single Product Colors --- */
     --apw-woo-text-color: #0D252C;
@@ -497,12 +496,10 @@ main > .message-wrapper:not(.apw-woo-processed) {
     --apw-woo-tab-active-text: #ffffff;
     --apw-woo-tab-inactive-bg: #B6C6CC;
     --apw-woo-tab-inactive-text: #0D252C;
-    --apw-woo-dropdown-bg: rgba(215, 224, 226, 0.3);
+    --apw-woo-dropdown-bg: rgba(215, 224, 226, 0.3); /* #D7E0E2 with 0.3 opacity */
     --apw-woo-dropdown-border: #393D72;
-
     /* For notices below cart button, a standout color option */
     --apw-woo-notice-highlight: #178093;
-
     /* Font size for all content - 21px as rem */
     --apw-woo-content-font-size: 1.3125rem; /* 21px / 16px = 1.3125rem */
 }
@@ -538,21 +535,50 @@ main > .message-wrapper:not(.apw-woo-processed) {
     padding-top: 2rem;
 }
 
-/* Product Title and Description */
-.apw-woo-product-title,
-.apw-woo-product-description-wrapper {
-    font-family: var(--apw-font-family);
-    color: var(--apw-woo-text-color);
+/* Product Gallery - Add border-radius */
+.single-product .apw-woo-product-gallery-wrapper,
+.single-product .woocommerce-product-gallery { /* Target default WC gallery wrapper */
+    border-radius: 20px !important;
+    overflow: hidden !important; /* Ensure image respects the radius */
 }
 
-.apw-woo-product-title {
+/* Optional: Target the image link or image directly if needed */
+.single-product .woocommerce-product-gallery__image a,
+.single-product .woocommerce-product-gallery__image img {
+    border-radius: 20px !important; /* Apply to link/image if wrapper isn't enough */
+}
+
+/* --- Product Title and Description on Single Product Page --- */
+/* This targets the H1 title specifically on the single product page */
+.single-product .apw-woo-product-title-wrapper .apw-woo-product-title {
+    font-family: var(--apw-font-family);
+    color: var(--apw-woo-text-color); /* Uses the dark text color */
     font-weight: var(--apw-font-bold);
     margin-bottom: var(--apw-woo-spacing-medium);
 }
 
-.apw-woo-product-description-wrapper {
+.single-product .apw-woo-product-description-wrapper {
+    font-family: var(--apw-font-family);
+    color: var(--apw-woo-text-color);
     font-weight: var(--apw-font-medium);
     margin-bottom: var(--apw-woo-spacing-large);
+}
+
+/* --- Product Title on Category/Shop Pages --- */
+/* This targets the H4 title inside product cards on archive pages */
+.apw-woo-product-item .apw-woo-product-header .apw-woo-product-title {
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold);
+    font-size: var(--apw-woo-card-title-size); /* Use card title size */
+    color: var(--apw-woo-card-header-text); /* Set back to white for cards */
+    margin: 0;
+    line-height: 1.2;
+    flex-grow: 1;
+    flex-shrink: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-left: var(--apw-woo-spacing-small);
 }
 
 /* Product Meta - Category Styling */
@@ -576,7 +602,6 @@ main > .message-wrapper:not(.apw-woo-processed) {
 /* Keep category links blue and underlined on hover */
 .apw-woo-product-meta .posted_in a {
     font-weight: var(--apw-font-medium);
-    /* Leave color as is for blue links */
     text-decoration: none;
 }
 
@@ -584,16 +609,31 @@ main > .message-wrapper:not(.apw-woo-processed) {
     text-decoration: underline;
 }
 
-/* Quantity and Price Layout - Fix Flatsome Override Issues */
+/* Two-Column Layout for Product Gallery and Summary */
+/* Target the specific row containing gallery and summary */
+.single-product .apw-woo-content-wrapper > .apw-woo-row:first-of-type { /* Target the first direct child row in the content wrapper */
+    display: flex !important;
+    flex-wrap: wrap !important; /* Allow wrapping on smaller screens */
+}
+
+/* Target our specific column classes */
+.single-product .apw-woo-product-gallery-col,
+.single-product .apw-woo-product-summary-col {
+    padding-left: 15px !important; /* Standard column padding */
+    padding-right: 15px !important; /* Standard column padding */
+    box-sizing: border-box !important;
+}
+
+/* Quantity and Price Layout - Fix Flatsome Override Issues & Adjust Styling */
 .single-product form.cart {
     display: flex;
     flex-direction: column;
 }
 
-/* Make quantity row a flex container to hold quantity and price side by side */
+/* Make quantity row a flex container */
 .apw-woo-quantity-row {
     display: flex;
-    align-items: center;
+    align-items: center; /* Align items vertically */
     justify-content: flex-start;
     width: 100%;
     margin-bottom: 1rem;
@@ -612,72 +652,90 @@ main > .message-wrapper:not(.apw-woo-processed) {
 .apw-woo-quantity-row .quantity,
 .single-product .quantity {
     display: flex !important;
-    margin-right: 2rem !important;
+    align-items: stretch; /* Align items vertically based on full height */
+    margin-right: 2rem !important; /* Space between quantity and price */
     opacity: 1 !important;
 }
 
-/* Ensure Flatsome doesn't override our button styles */
+/* Style quantity buttons specifically with correct border radius and font size */
 .apw-woo-quantity-row .quantity .button.minus,
-.apw-woo-quantity-row .quantity .button.plus,
 .single-product .quantity .button.minus,
-.single-product .quantity .button.plus,
-.single-product .quantity .minus,
-.single-product .quantity .plus {
-    border-radius: 50px !important;
+.single-product .quantity .minus {
+    border-radius: 50px 0 0 50px !important; /* Rounded left corners */
     background-color: var(--apw-woo-dropdown-bg) !important;
     border: 1px solid var(--apw-woo-dropdown-border) !important;
     color: var(--apw-woo-text-color) !important;
     box-shadow: none !important;
+    height: 50px !important; /* Fixed height */
     min-height: 50px !important;
     margin: 0 !important;
+    border-right-width: 0 !important; /* Remove border between button and input */
+    font-size: 2.65rem !important; /* Updated font size */
+    line-height: 48px !important; /* Adjust line-height */
+    padding: 0 15px !important;
+    box-sizing: border-box !important;
 }
 
-/* Style the quantity input field with overrides for Flatsome */
+.apw-woo-quantity-row .quantity .button.plus,
+.single-product .quantity .button.plus,
+.single-product .quantity .plus {
+    border-radius: 0 50px 50px 0 !important; /* Rounded right corners */
+    background-color: var(--apw-woo-dropdown-bg) !important;
+    border: 1px solid var(--apw-woo-dropdown-border) !important;
+    color: var(--apw-woo-text-color) !important;
+    box-shadow: none !important;
+    height: 50px !important; /* Fixed height */
+    min-height: 50px !important;
+    margin: 0 !important;
+    border-left-width: 0 !important; /* Remove border between input and button */
+    font-size: 1.8rem !important; /* Updated font size */
+    line-height: 48px !important; /* Adjust line-height */
+    padding: 0 15px !important;
+    box-sizing: border-box !important;
+}
+
+/* Style the quantity input field (middle part) with overrides for Flatsome */
 .apw-woo-quantity-row .quantity input[type="number"],
 .apw-woo-quantity-row .quantity input.qty,
 .apw-woo-quantity-row .quantity .qty,
 .single-product .quantity input[type="number"],
 .single-product .quantity input.qty,
 .single-product .quantity .qty {
-    border-radius: 50px !important;
+    border-radius: 0 !important; /* NO border radius */
     width: 60px !important;
-    height: 50px !important;
-    border: 1px solid var(--apw-woo-dropdown-border) !important;
+    height: 50px !important; /* Match button height */
+    min-height: 50px !important;
+    border: 1px solid var(--apw-woo-dropdown-border) !important; /* Apply full border first */
+    border-left: none !important; /* Then remove side borders */
+    border-right: none !important; /* Then remove side borders */
     background-color: var(--apw-woo-dropdown-bg) !important;
     color: var(--apw-woo-text-color) !important;
     font-family: var(--apw-font-family) !important;
     font-size: var(--apw-woo-content-font-size) !important;
     text-align: center !important;
     padding: 0 !important;
-    margin: 0 5px !important;
+    margin: 0 !important; /* No margin */
     box-shadow: none !important;
-    min-height: 50px !important;
+    box-sizing: border-box !important; /* Ensure consistent box model */
+    line-height: normal !important;
 }
 
-/* Override Flatsome's border-radius removal */
-.button.is-form,
-button.is-form,
-input[type='submit'].is-form,
-input[type='reset'].is-form,
-input[type='button'].is-form {
-    border-radius: 50px !important;
-}
-
-/* Price display - Override Flatsome's price styles */
+/* Price display - Override Flatsome's price styles and remove margin-left: auto */
 .woocommerce div.product p.price,
 .woocommerce div.product span.price,
 .price,
-.apw-woo-price-display,
+.apw-woo-price-display, /* Target our custom class */
 span.amount,
 .woocommerce-Price-amount {
     display: inline-block !important;
     margin: 0 !important;
-    margin-left: auto !important; /* Push to right side of row */
+    /* margin-left: auto !important; REMOVED */
     font-family: var(--apw-font-family) !important;
     font-size: var(--apw-woo-content-font-size) !important;
     font-weight: var(--apw-font-bold) !important;
     color: var(--apw-woo-text-color) !important;
     line-height: 1 !important;
+    align-self: center; /* Align vertically */
 }
 
 /* Make sure the price amount is bold and has the right color */
@@ -691,7 +749,7 @@ span.amount,
     color: var(--apw-woo-text-color) !important;
 }
 
-/* Add to Cart Button - Fix gradient and border radius */
+/* Add to Cart Button - Position below */
 .woocommerce button.button.alt,
 .woocommerce #respond input#submit.alt,
 .woocommerce a.button.alt,
@@ -709,7 +767,7 @@ span.amount,
     color: #ffffff !important;
     border: none !important;
     text-decoration: none !important;
-    margin-top: 1rem !important;
+    margin-top: 1rem !important; /* Space above button */
     margin-bottom: 1rem !important;
     align-self: flex-start;
 }
@@ -818,7 +876,7 @@ select.wc-pao-addon-field {
     -webkit-appearance: none !important;
     -moz-appearance: none !important;
     border-radius: 20px !important;
-    background-color: var(--apw-woo-dropdown-bg) !important;
+    background-color: var(--apw-woo-dropdown-bg) !important; /* Includes opacity */
     border: 1px solid var(--apw-woo-dropdown-border) !important;
     color: var(--apw-woo-text-color) !important;
     font-family: var(--apw-font-family) !important;
@@ -835,7 +893,6 @@ select.wc-pao-addon-field {
 }
 
 /* Custom styling for the dropdown */
-/* This uses a CSS trick to style native select options by styling the entire select during focus */
 .wc-pao-addon-select:focus,
 select.wc-pao-addon-field:focus {
     box-shadow: 0 0 0 1px var(--apw-woo-dropdown-border) !important;
@@ -856,7 +913,7 @@ select.wc-pao-addon-field:focus {
 select.wc-pao-addon-field option {
     font-family: var(--apw-font-family) !important;
     color: var(--apw-woo-text-color) !important;
-    background-color: var(--apw-woo-dropdown-bg) !important;
+    background-color: var(--apw-woo-dropdown-bg) !important; /* Includes opacity */
     font-size: var(--apw-woo-content-font-size) !important;
     padding: 10px !important;
 }
@@ -865,14 +922,13 @@ select.wc-pao-addon-field option {
 @-moz-document url-prefix() {
     .wc-pao-addon-select,
     select.wc-pao-addon-field {
-        background-color: var(--apw-woo-dropdown-bg) !important;
+        background-color: var(--apw-woo-dropdown-bg) !important; /* Includes opacity */
         color: var(--apw-woo-text-color) !important;
         border-radius: 20px !important;
     }
-
     .wc-pao-addon-select option,
     select.wc-pao-addon-field option {
-        background-color: var(--apw-woo-dropdown-bg) !important;
+        background-color: var(--apw-woo-dropdown-bg) !important; /* Includes opacity */
         color: var(--apw-woo-text-color) !important;
         padding: 10px 20px !important;
     }
@@ -908,42 +964,20 @@ select.wc-pao-addon-field option {
     border: none !important;
 }
 
-/* --- CATEGORY TEMPLATE STYLES --- */
-/* Add 1rem padding between image and content */
-.apw-woo-category-item .apw-card-column,
-.apw-woo-product-item .apw-card-column {
-    padding-left: 1rem;
-    padding-right: 1rem;
-}
-
-.apw-woo-category-image-wrapper {
-    margin-right: 1rem;
-}
-
-.apw-woo-category-image-col,
-.apw-woo-product-image-col {
-    padding-right: 1rem;
-}
-
-.apw-woo-category-desc-col,
-.apw-woo-product-desc-col {
-    padding-left: 1rem;
-}
-
-/* Ensure category card headers align properly */
-.apw-woo-category-header,
-.apw-woo-product-header {
-    padding-left: 1rem;
-    padding-right: 1rem;
-}
-
 /* ----------------------------------------
    8. RESPONSIVE SINGLE PRODUCT STYLING
    Responsive adjustments for the single product page
    ---------------------------------------- */
-
 /* --- Tablet Styles (849px and below) --- */
-@media (max-width: 849px) {
+@media (min-width: 550px) and (max-width: 849px) {
+    /* Ensure two columns */
+    .single-product .apw-woo-product-gallery-col,
+    .single-product .apw-woo-product-summary-col {
+        flex-basis: 50% !important;
+        max-width: 50% !important;
+        width: 50% !important;
+    }
+
     /* Adjust tab padding for tablets */
     .woocommerce-tabs ul.tabs li {
         width: auto;
@@ -974,6 +1008,19 @@ select.wc-pao-addon-field option {
 
 /* --- Mobile Styles (549px and below) --- */
 @media (max-width: 549px) {
+    /* Ensure stacking */
+    .single-product .apw-woo-product-gallery-col,
+    .single-product .apw-woo-product-summary-col {
+        flex-basis: 100% !important;
+        max-width: 100% !important;
+        width: 100% !important; /* Full width on mobile */
+        padding-top: 1rem !important; /* Add spacing when stacked */
+    }
+
+    .single-product .apw-woo-product-gallery-col {
+        padding-top: 0 !important; /* Remove top padding from the first item when stacked */
+    }
+
     /* Make tabs more compact on mobile */
     .woocommerce-tabs ul.tabs {
         display: flex;
@@ -983,6 +1030,7 @@ select.wc-pao-addon-field option {
     .woocommerce-tabs ul.tabs li {
         flex: 1 1 100%;
         margin: 0 0 5px 0;
+        width: 100%; /* Ensure full width */
     }
 
     .woocommerce-tabs ul.tabs li a {
