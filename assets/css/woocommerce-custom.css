@@ -484,3 +484,541 @@ main > .message-wrapper:not(.apw-woo-processed) {
 }
 
 /* --- END ADDED RULES --- */
+
+/* ----------------------------------------
+   7. SINGLE PRODUCT PAGE STYLES
+   Base styles for the single product template
+   ---------------------------------------- */
+
+:root {
+    /* --- Single Product Colors --- */
+    --apw-woo-text-color: #0D252C;
+    --apw-woo-tab-active-bg: #0D252C;
+    --apw-woo-tab-active-text: #ffffff;
+    --apw-woo-tab-inactive-bg: #B6C6CC;
+    --apw-woo-tab-inactive-text: #0D252C;
+    --apw-woo-dropdown-bg: rgba(215, 224, 226, 0.3);
+    --apw-woo-dropdown-border: #393D72;
+
+    /* For notices below cart button, a standout color option */
+    --apw-woo-notice-highlight: #178093;
+
+    /* Font size for all content - 21px as rem */
+    --apw-woo-content-font-size: 1.3125rem; /* 21px / 16px = 1.3125rem */
+}
+
+/* Global font size for all content in single product */
+.single-product p,
+.single-product label,
+.single-product .woocommerce-message,
+.single-product .woocommerce-error,
+.single-product .woocommerce-info,
+.single-product .woocommerce-notice,
+.single-product .posted_in,
+.single-product .sku_wrapper,
+.single-product .woocommerce-product-details__short-description,
+.single-product .product-addon-totals,
+.single-product .product_meta,
+.single-product .woocommerce-tabs .panel,
+.single-product .apw-woo-product-description-wrapper,
+.single-product .apw-woo-quantity-label,
+.single-product .product-addon-totals dt,
+.single-product .wc-pao-addon-name,
+.single-product .apw-woo-product-options-wrapper label,
+.single-product .product-addon label,
+.single-product .wc-pao-addon-description p,
+.apw-woo-notices-below-cart .woocommerce-message {
+    font-size: var(--apw-woo-content-font-size) !important;
+    line-height: 1.5 !important;
+}
+
+/* Add padding between header and content */
+.apw-woo-product-gallery-wrapper,
+.apw-woo-product-summary {
+    padding-top: 2rem;
+}
+
+/* Product Title and Description */
+.apw-woo-product-title,
+.apw-woo-product-description-wrapper {
+    font-family: var(--apw-font-family);
+    color: var(--apw-woo-text-color);
+}
+
+.apw-woo-product-title {
+    font-weight: var(--apw-font-bold);
+    margin-bottom: var(--apw-woo-spacing-medium);
+}
+
+.apw-woo-product-description-wrapper {
+    font-weight: var(--apw-font-medium);
+    margin-bottom: var(--apw-woo-spacing-large);
+}
+
+/* Product Meta - Category Styling */
+.apw-woo-product-meta {
+    font-family: var(--apw-font-family);
+    color: var(--apw-woo-text-color);
+    margin-top: 20px;
+}
+
+.apw-woo-product-meta .posted_in {
+    font-weight: var(--apw-font-medium);
+}
+
+/* Style "Category:" label to be bold and match text color */
+.apw-woo-product-meta .posted_in,
+.apw-woo-product-meta .sku_wrapper {
+    font-weight: var(--apw-font-bold);
+    color: var(--apw-woo-text-color);
+}
+
+/* Keep category links blue and underlined on hover */
+.apw-woo-product-meta .posted_in a {
+    font-weight: var(--apw-font-medium);
+    /* Leave color as is for blue links */
+    text-decoration: none;
+}
+
+.apw-woo-product-meta .posted_in a:hover {
+    text-decoration: underline;
+}
+
+/* Quantity and Price Layout - Fix Flatsome Override Issues */
+.single-product form.cart {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Make quantity row a flex container to hold quantity and price side by side */
+.apw-woo-quantity-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+/* Style the quantity label */
+.apw-woo-quantity-label {
+    font-family: var(--apw-font-family);
+    font-size: var(--apw-woo-content-font-size);
+    font-weight: var(--apw-font-bold);
+    color: var(--apw-woo-text-color);
+    margin-right: 1rem;
+}
+
+/* Fix Flatsome override for quantity inputs */
+.apw-woo-quantity-row .quantity,
+.single-product .quantity {
+    display: flex !important;
+    margin-right: 2rem !important;
+    opacity: 1 !important;
+}
+
+/* Ensure Flatsome doesn't override our button styles */
+.apw-woo-quantity-row .quantity .button.minus,
+.apw-woo-quantity-row .quantity .button.plus,
+.single-product .quantity .button.minus,
+.single-product .quantity .button.plus,
+.single-product .quantity .minus,
+.single-product .quantity .plus {
+    border-radius: 50px !important;
+    background-color: var(--apw-woo-dropdown-bg) !important;
+    border: 1px solid var(--apw-woo-dropdown-border) !important;
+    color: var(--apw-woo-text-color) !important;
+    box-shadow: none !important;
+    min-height: 50px !important;
+    margin: 0 !important;
+}
+
+/* Style the quantity input field with overrides for Flatsome */
+.apw-woo-quantity-row .quantity input[type="number"],
+.apw-woo-quantity-row .quantity input.qty,
+.apw-woo-quantity-row .quantity .qty,
+.single-product .quantity input[type="number"],
+.single-product .quantity input.qty,
+.single-product .quantity .qty {
+    border-radius: 50px !important;
+    width: 60px !important;
+    height: 50px !important;
+    border: 1px solid var(--apw-woo-dropdown-border) !important;
+    background-color: var(--apw-woo-dropdown-bg) !important;
+    color: var(--apw-woo-text-color) !important;
+    font-family: var(--apw-font-family) !important;
+    font-size: var(--apw-woo-content-font-size) !important;
+    text-align: center !important;
+    padding: 0 !important;
+    margin: 0 5px !important;
+    box-shadow: none !important;
+    min-height: 50px !important;
+}
+
+/* Override Flatsome's border-radius removal */
+.button.is-form,
+button.is-form,
+input[type='submit'].is-form,
+input[type='reset'].is-form,
+input[type='button'].is-form {
+    border-radius: 50px !important;
+}
+
+/* Price display - Override Flatsome's price styles */
+.woocommerce div.product p.price,
+.woocommerce div.product span.price,
+.price,
+.apw-woo-price-display,
+span.amount,
+.woocommerce-Price-amount {
+    display: inline-block !important;
+    margin: 0 !important;
+    margin-left: auto !important; /* Push to right side of row */
+    font-family: var(--apw-font-family) !important;
+    font-size: var(--apw-woo-content-font-size) !important;
+    font-weight: var(--apw-font-bold) !important;
+    color: var(--apw-woo-text-color) !important;
+    line-height: 1 !important;
+}
+
+/* Make sure the price amount is bold and has the right color */
+.woocommerce div.product p.price .woocommerce-Price-amount,
+.woocommerce div.product span.price .woocommerce-Price-amount,
+.price .woocommerce-Price-amount,
+span.amount,
+.woocommerce-Price-amount,
+.woocommerce-Price-currencySymbol {
+    font-weight: var(--apw-font-bold) !important;
+    color: var(--apw-woo-text-color) !important;
+}
+
+/* Add to Cart Button - Fix gradient and border radius */
+.woocommerce button.button.alt,
+.woocommerce #respond input#submit.alt,
+.woocommerce a.button.alt,
+.woocommerce button.button.alt,
+.woocommerce input.button.alt,
+.woocommerce button.single_add_to_cart_button,
+.single_add_to_cart_button {
+    background: var(--apw-woo-button-background) !important;
+    border-radius: 58px !important;
+    padding: 10px 30px !important;
+    text-transform: uppercase;
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold);
+    font-size: var(--apw-woo-content-font-size) !important;
+    color: #ffffff !important;
+    border: none !important;
+    text-decoration: none !important;
+    margin-top: 1rem !important;
+    margin-bottom: 1rem !important;
+    align-self: flex-start;
+}
+
+/* Add padding between content and tabs */
+.woocommerce-tabs {
+    margin-top: 2rem;
+}
+
+/* Product Tabs */
+.woocommerce-tabs ul.tabs {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0 0 30px 0;
+    border: none;
+    overflow: visible;
+}
+
+.woocommerce-tabs ul.tabs::before {
+    display: none; /* Remove default border */
+}
+
+.woocommerce-tabs ul.tabs li {
+    width: 284px;
+    border: none;
+    background-color: var(--apw-woo-tab-inactive-bg);
+    border-radius: 10px !important; /* Full 10px border radius on all corners */
+    margin: 0 5px 0 0;
+    padding: 0;
+    position: relative;
+}
+
+.woocommerce-tabs ul.tabs li a {
+    display: block;
+    width: 100%;
+    padding: 15px 0;
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold) !important;
+    font-size: var(--apw-woo-content-font-size) !important;
+    color: var(--apw-woo-tab-inactive-text) !important;
+    text-transform: uppercase;
+    text-decoration: none;
+    text-align: center;
+    letter-spacing: 0.5px;
+}
+
+/* Active tab styling */
+.woocommerce-tabs ul.tabs li.active {
+    background-color: var(--apw-woo-tab-active-bg);
+    z-index: 2;
+}
+
+.woocommerce-tabs ul.tabs li.active a {
+    color: var(--apw-woo-tab-active-text) !important;
+}
+
+/* Remove default WooCommerce tab pseudo-elements */
+.woocommerce-tabs ul.tabs li::before,
+.woocommerce-tabs ul.tabs li::after,
+.woocommerce-tabs ul.tabs li.active::before,
+.woocommerce-tabs ul.tabs li.active::after {
+    display: none !important;
+    content: none !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Tab content styling */
+.woocommerce-tabs .panel {
+    padding: 30px;
+    border: none;
+    margin: 0;
+    color: var(--apw-woo-text-color);
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-medium);
+}
+
+.woocommerce-tabs .panel h2:first-of-type {
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold);
+    color: var(--apw-woo-text-color);
+    margin-bottom: 20px;
+}
+
+/* Product Add-ons - Comprehensive Styling */
+/* Container styling */
+.wc-pao-addon-container {
+    margin-bottom: 20px;
+}
+
+/* Label styling */
+.wc-pao-addon-name {
+    font-family: var(--apw-font-family) !important;
+    font-weight: var(--apw-font-medium) !important;
+    font-size: var(--apw-woo-content-font-size) !important;
+    color: var(--apw-woo-text-color) !important;
+    margin-bottom: 10px !important;
+    display: block;
+}
+
+/* Base select field styling - product agnostic */
+.wc-pao-addon-select,
+select.wc-pao-addon-field {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    border-radius: 20px !important;
+    background-color: var(--apw-woo-dropdown-bg) !important;
+    border: 1px solid var(--apw-woo-dropdown-border) !important;
+    color: var(--apw-woo-text-color) !important;
+    font-family: var(--apw-font-family) !important;
+    font-weight: var(--apw-font-medium) !important;
+    font-size: var(--apw-woo-content-font-size) !important;
+    padding: 12px 20px !important;
+    min-height: 50px !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="6" viewBox="0 0 12 6"><path fill="%230D252C" d="M0 0l6 6 6-6z"/></svg>') !important;
+    background-repeat: no-repeat !important;
+    background-position: right 15px center !important;
+    background-size: 12px !important;
+}
+
+/* Custom styling for the dropdown */
+/* This uses a CSS trick to style native select options by styling the entire select during focus */
+.wc-pao-addon-select:focus,
+select.wc-pao-addon-field:focus {
+    box-shadow: 0 0 0 1px var(--apw-woo-dropdown-border) !important;
+    outline: none !important;
+}
+
+/* Fix validation notice */
+.wc-pao-validation-notice {
+    display: block;
+    color: #e2401c !important;
+    font-family: var(--apw-font-family) !important;
+    font-size: 0.875rem !important;
+    margin-top: 5px;
+}
+
+/* CSS attempt to style the dropdown options - product agnostic */
+.wc-pao-addon-select option,
+select.wc-pao-addon-field option {
+    font-family: var(--apw-font-family) !important;
+    color: var(--apw-woo-text-color) !important;
+    background-color: var(--apw-woo-dropdown-bg) !important;
+    font-size: var(--apw-woo-content-font-size) !important;
+    padding: 10px !important;
+}
+
+/* Firefox specific dropdown styling - product agnostic */
+@-moz-document url-prefix() {
+    .wc-pao-addon-select,
+    select.wc-pao-addon-field {
+        background-color: var(--apw-woo-dropdown-bg) !important;
+        color: var(--apw-woo-text-color) !important;
+        border-radius: 20px !important;
+    }
+
+    .wc-pao-addon-select option,
+    select.wc-pao-addon-field option {
+        background-color: var(--apw-woo-dropdown-bg) !important;
+        color: var(--apw-woo-text-color) !important;
+        padding: 10px 20px !important;
+    }
+}
+
+/* Notices Below Add to Cart Button */
+.apw-woo-notices-below-cart {
+    margin-top: 20px;
+}
+
+.apw-woo-notices-below-cart .woocommerce-message,
+.apw-woo-notices-below-cart .woocommerce-error,
+.apw-woo-notices-below-cart .woocommerce-info,
+.apw-woo-notices-below-cart .woocommerce-notice {
+    border-left-color: var(--apw-woo-notice-highlight);
+    background-color: rgba(23, 128, 147, 0.1);
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-medium);
+    font-size: var(--apw-woo-content-font-size) !important;
+    border-radius: 5px;
+}
+
+/* Fix for empty error messages */
+.woocommerce-error.message-wrapper.apw-woo-processed:empty,
+.woocommerce-error.message-wrapper.apw-woo-processed ul:empty,
+.woocommerce-error.message-wrapper.apw-woo-processed:not(:has(*)),
+.woocommerce-error.message-wrapper.apw-woo-processed li:empty {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+}
+
+/* --- CATEGORY TEMPLATE STYLES --- */
+/* Add 1rem padding between image and content */
+.apw-woo-category-item .apw-card-column,
+.apw-woo-product-item .apw-card-column {
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+.apw-woo-category-image-wrapper {
+    margin-right: 1rem;
+}
+
+.apw-woo-category-image-col,
+.apw-woo-product-image-col {
+    padding-right: 1rem;
+}
+
+.apw-woo-category-desc-col,
+.apw-woo-product-desc-col {
+    padding-left: 1rem;
+}
+
+/* Ensure category card headers align properly */
+.apw-woo-category-header,
+.apw-woo-product-header {
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+/* ----------------------------------------
+   8. RESPONSIVE SINGLE PRODUCT STYLING
+   Responsive adjustments for the single product page
+   ---------------------------------------- */
+
+/* --- Tablet Styles (849px and below) --- */
+@media (max-width: 849px) {
+    /* Adjust tab padding for tablets */
+    .woocommerce-tabs ul.tabs li {
+        width: auto;
+        flex: 1;
+    }
+
+    .woocommerce-tabs ul.tabs li a {
+        padding: 12px 15px;
+        font-size: 1.1rem !important;
+    }
+
+    /* Adjust dropdown padding */
+    .wc-pao-addon-select,
+    select.wc-pao-addon-field {
+        padding: 10px 15px !important;
+        min-height: 45px;
+    }
+
+    /* Tablet font size adjustment */
+    .single-product p,
+    .single-product label,
+    .single-product .woocommerce-message,
+    .single-product .posted_in,
+    .single-product .sku_wrapper {
+        font-size: 1.1rem !important;
+    }
+}
+
+/* --- Mobile Styles (549px and below) --- */
+@media (max-width: 549px) {
+    /* Make tabs more compact on mobile */
+    .woocommerce-tabs ul.tabs {
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .woocommerce-tabs ul.tabs li {
+        flex: 1 1 100%;
+        margin: 0 0 5px 0;
+    }
+
+    .woocommerce-tabs ul.tabs li a {
+        padding: 10px 15px;
+        font-size: 1rem !important;
+    }
+
+    /* Adjust tab content padding */
+    .woocommerce-tabs .panel {
+        padding: 20px 15px;
+    }
+
+    /* Further adjust dropdown styling */
+    .wc-pao-addon-select,
+    select.wc-pao-addon-field {
+        padding: 8px 12px !important;
+        min-height: 40px;
+    }
+
+    /* Mobile font size adjustment */
+    .single-product p,
+    .single-product label,
+    .single-product .woocommerce-message,
+    .single-product .posted_in,
+    .single-product .sku_wrapper {
+        font-size: 1rem !important;
+    }
+
+    /* Handle quantity and price stack on mobile */
+    .apw-woo-quantity-row {
+        flex-wrap: wrap;
+    }
+
+    .price {
+        margin-left: 0 !important;
+        margin-top: 0.5rem !important;
+        width: 100%;
+    }
+}
