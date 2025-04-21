@@ -1,15 +1,16 @@
 <?php
 /**
- * Cart Page - APW WooCommerce Plugin Override with Structure & Debug Logging
+ * Cart Page - APW WooCommerce Plugin Override with Structure, Debug Logging & Custom Classes
  *
  * This template overrides the default WooCommerce cart template, applying the
  * standard page structure (header, footer, block, container) used in this plugin.
  * It renders the header block using the same direct shortcode method as single-product.php.
- * It maintains the core structure and hooks of the original WooCommerce template (version 7.9.0).
+ * It maintains the core structure and hooks of the original WooCommerce template (version 7.9.0)
+ * while adding 'apw-woo-' prefixed CSS classes for custom styling and adjusting the actions area structure.
  *
  * @see     https://woocommerce.com/document/template-structure/
  * @package APW_Woo_Plugin/Templates
- * @version 7.9.0-apw.5
+ * @version 7.9.0-apw.7 // Increment version
  *
  * Original WooCommerce template version: 7.9.0
  */
@@ -21,7 +22,7 @@ $apw_debug_mode = defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE;
 $apw_log_exists = function_exists('apw_woo_log');
 
 if ($apw_debug_mode && $apw_log_exists) {
-    apw_woo_log('CART TEMPLATE: Loading custom cart template: templates/woocommerce/cart/cart.php with theme structure');
+    apw_woo_log('CART TEMPLATE: Loading custom cart template: templates/woocommerce/cart/cart.php with theme structure, APW classes, and revised actions structure');
 }
 
 get_header();
@@ -76,8 +77,8 @@ $correct_cart_title = $cart_page_id ? get_the_title($cart_page_id) : __('Cart', 
     </div>
 
     <!-- Main Content Container -->
-    <div class="container">
-        <div class="row">
+    <div class="container apw-woo-cart-container">
+        <div class="row apw-woo-cart-row">
             <div class="col apw-woo-content-wrapper">
                 <?php
                 /**
@@ -87,31 +88,33 @@ $correct_cart_title = $cart_page_id ? get_the_title($cart_page_id) : __('Cart', 
 
                 /**
                  * Hook: woocommerce_before_cart.
-                 * @hooked woocommerce_output_all_notices - 10
-                 * @hooked wc_print_notices - 10
+                 * @hooked woocommerce_output_all_notices - 10 // Removed by plugin?
+                 * @hooked wc_print_notices - 10 // Moved to apw-woo-notices-container
                  */
-                do_action('woocommerce_before_cart'); ?>
+                do_action('woocommerce_before_cart');
+                ?>
 
-                <form class="woocommerce-cart-form" action="<?php echo esc_url(wc_get_cart_url()); ?>" method="post">
+                <form class="apw-woo-cart-form woocommerce-cart-form" action="<?php echo esc_url(wc_get_cart_url()); ?>"
+                      method="post">
                     <?php do_action('woocommerce_before_cart_table'); ?>
 
-                    <table class="shop_table shop_table_responsive cart woocommerce-cart-form__contents"
+                    <table class="apw-woo-cart-table shop_table shop_table_responsive cart woocommerce-cart-form__contents"
                            cellspacing="0">
-                        <thead>
-                        <tr>
-                            <th class="product-remove"><span
+                        <thead class="apw-woo-cart-thead">
+                        <tr class="apw-woo-cart-header-row">
+                            <th class="apw-woo-product-remove product-remove"><span
                                         class="screen-reader-text"><?php esc_html_e('Remove item', 'woocommerce'); ?></span>
                             </th>
-                            <th class="product-thumbnail"><span
+                            <th class="apw-woo-product-thumbnail product-thumbnail"><span
                                         class="screen-reader-text"><?php esc_html_e('Thumbnail image', 'woocommerce'); ?></span>
                             </th>
-                            <th class="product-name"><?php esc_html_e('Product', 'woocommerce'); ?></th>
-                            <th class="product-price"><?php esc_html_e('Price', 'woocommerce'); ?></th>
-                            <th class="product-quantity"><?php esc_html_e('Quantity', 'woocommerce'); ?></th>
-                            <th class="product-subtotal"><?php esc_html_e('Subtotal', 'woocommerce'); ?></th>
+                            <th class="apw-woo-product-name product-name"><?php esc_html_e('Product', 'woocommerce'); ?></th>
+                            <th class="apw-woo-product-price product-price"><?php esc_html_e('Price', 'woocommerce'); ?></th>
+                            <th class="apw-woo-product-quantity product-quantity"><?php esc_html_e('Quantity', 'woocommerce'); ?></th>
+                            <th class="apw-woo-product-subtotal product-subtotal"><?php esc_html_e('Subtotal', 'woocommerce'); ?></th>
                         </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="apw-woo-cart-tbody">
                         <?php do_action('woocommerce_before_cart_contents'); ?>
 
                         <?php
@@ -140,14 +143,14 @@ $correct_cart_title = $cart_page_id ? get_the_title($cart_page_id) : __('Cart', 
                             if ($_product && $_product->exists() && $cart_item['quantity'] > 0 && apply_filters('woocommerce_cart_item_visible', true, $cart_item, $cart_item_key)) {
                                 $product_permalink = apply_filters('woocommerce_cart_item_permalink', $_product->is_visible() ? $_product->get_permalink($cart_item) : '', $cart_item, $cart_item_key);
                                 ?>
-                                <tr class="woocommerce-cart-form__cart-item <?php echo esc_attr(apply_filters('woocommerce_cart_item_class', 'cart_item', $cart_item, $cart_item_key)); ?>">
+                                <tr class="apw-woo-cart-item woocommerce-cart-form__cart-item <?php echo esc_attr(apply_filters('woocommerce_cart_item_class', 'cart_item', $cart_item, $cart_item_key)); ?>">
 
-                                    <td class="product-remove">
+                                    <td class="apw-woo-product-remove product-remove">
                                         <?php
                                         echo apply_filters( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                                             'woocommerce_cart_item_remove_link',
                                             sprintf(
-                                                '<a href="%s" class="remove" aria-label="%s" data-product_id="%s" data-product_sku="%s">&times;</a>',
+                                                '<a href="%s" class="apw-woo-remove remove" aria-label="%s" data-product_id="%s" data-product_sku="%s">&times;</a>',
                                                 esc_url(wc_get_cart_remove_url($cart_item_key)),
                                                 /* translators: %s is the product name */
                                                 esc_attr(sprintf(__('Remove %s from cart', 'woocommerce'), wp_strip_all_tags($product_name))),
@@ -159,50 +162,61 @@ $correct_cart_title = $cart_page_id ? get_the_title($cart_page_id) : __('Cart', 
                                         ?>
                                     </td>
 
-                                    <td class="product-thumbnail">
+                                    <td class="apw-woo-product-thumbnail product-thumbnail">
                                         <?php
                                         /** Filter the product thumbnail displayed in the WooCommerce cart. @since 2.1.0 */
-                                        $thumbnail = apply_filters('woocommerce_cart_item_thumbnail', $_product->get_image(), $cart_item, $cart_item_key);
+                                        $thumbnail = apply_filters('woocommerce_cart_item_thumbnail', $_product->get_image('woocommerce_thumbnail', ['class' => 'apw-woo-cart-item-thumbnail-img']), $cart_item, $cart_item_key); // Added class
 
                                         if (!$product_permalink) {
                                             echo $thumbnail; // PHPCS: XSS ok.
                                         } else {
-                                            printf('<a href="%s">%s</a>', esc_url($product_permalink), $thumbnail); // PHPCS: XSS ok.
+                                            // Added class to link
+                                            printf('<a href="%s" class="apw-woo-cart-item-thumbnail-link">%s</a>', esc_url($product_permalink), $thumbnail); // PHPCS: XSS ok.
                                         }
                                         ?>
                                     </td>
 
-                                    <td class="product-name"
+                                    <td class="apw-woo-product-name product-name"
                                         data-title="<?php esc_attr_e('Product', 'woocommerce'); ?>">
                                         <?php
                                         if (!$product_permalink) {
-                                            echo wp_kses_post($product_name . '&nbsp;');
+                                            // Added class to product name span/text
+                                            echo '<span class="apw-woo-cart-item-name">' . wp_kses_post($product_name . '&nbsp;') . '</span>';
                                         } else {
                                             /** This filter is documented above. @since 2.1.0 */
-                                            echo wp_kses_post(apply_filters('woocommerce_cart_item_name', sprintf('<a href="%s">%s</a>', esc_url($product_permalink), $_product->get_name()), $cart_item, $cart_item_key));
+                                            // Added class to product name link
+                                            echo wp_kses_post(apply_filters('woocommerce_cart_item_name', sprintf('<a class="apw-woo-cart-item-name-link" href="%s">%s</a>', esc_url($product_permalink), $_product->get_name()), $cart_item, $cart_item_key));
                                         }
 
                                         do_action('woocommerce_after_cart_item_name', $cart_item, $cart_item_key);
 
-                                        // Meta data.
+                                        // Meta data. Added wrapper div
+                                        echo '<div class="apw-woo-cart-item-meta">';
                                         echo wc_get_formatted_cart_item_data($cart_item); // PHPCS: XSS ok.
+                                        echo '</div>';
 
-                                        // Backorder notification.
+                                        // Backorder notification. Added class to p
                                         if ($_product->backorders_require_notification() && $_product->is_on_backorder($cart_item['quantity'])) {
-                                            echo wp_kses_post(apply_filters('woocommerce_cart_item_backorder_notification', '<p class="backorder_notification">' . esc_html__('Available on backorder', 'woocommerce') . '</p>', $product_id));
+                                            echo wp_kses_post(apply_filters('woocommerce_cart_item_backorder_notification', '<p class="apw-woo-backorder-notification backorder_notification">' . esc_html__('Available on backorder', 'woocommerce') . '</p>', $product_id));
                                         }
                                         ?>
                                     </td>
 
-                                    <td class="product-price" data-title="<?php esc_attr_e('Price', 'woocommerce'); ?>">
+                                    <td class="apw-woo-product-price product-price"
+                                        data-title="<?php esc_attr_e('Price', 'woocommerce'); ?>">
                                         <?php
+                                        // Added wrapper span with class
+                                        echo '<span class="apw-woo-cart-item-price">';
                                         echo apply_filters('woocommerce_cart_item_price', WC()->cart->get_product_price($_product), $cart_item, $cart_item_key); // PHPCS: XSS ok.
+                                        echo '</span>';
                                         ?>
                                     </td>
 
-                                    <td class="product-quantity"
+                                    <td class="apw-woo-product-quantity product-quantity"
                                         data-title="<?php esc_attr_e('Quantity', 'woocommerce'); ?>">
                                         <?php
+                                        // Added wrapper div with class
+                                        echo '<div class="apw-woo-quantity-input quantity">'; // Keep 'quantity' for WC JS maybe
                                         if ($_product->is_sold_individually()) {
                                             $min_quantity = 1;
                                             $max_quantity = 1;
@@ -214,24 +228,30 @@ $correct_cart_title = $cart_page_id ? get_the_title($cart_page_id) : __('Cart', 
 
                                         $product_quantity = woocommerce_quantity_input(
                                             array(
+                                                // Added apw-woo class to input
                                                 'input_name' => "cart[{$cart_item_key}][qty]",
                                                 'input_value' => $cart_item['quantity'],
                                                 'max_value' => $max_quantity,
                                                 'min_value' => $min_quantity,
                                                 'product_name' => $product_name,
+                                                'classes' => array('apw-woo-qty', 'input-text', 'qty', 'text') // Added apw-woo-qty
                                             ),
                                             $_product,
                                             false
                                         );
 
                                         echo apply_filters('woocommerce_cart_item_quantity', $product_quantity, $cart_item_key, $cart_item); // PHPCS: XSS ok.
+                                        echo '</div>'; // Close apw-woo-quantity-input
                                         ?>
                                     </td>
 
-                                    <td class="product-subtotal"
+                                    <td class="apw-woo-product-subtotal product-subtotal"
                                         data-title="<?php esc_attr_e('Subtotal', 'woocommerce'); ?>">
                                         <?php
+                                        // Added wrapper span with class
+                                        echo '<span class="apw-woo-cart-item-subtotal">';
                                         echo apply_filters('woocommerce_cart_item_subtotal', WC()->cart->get_product_subtotal($_product, $cart_item['quantity']), $cart_item, $cart_item_key); // PHPCS: XSS ok.
+                                        echo '</span>';
                                         ?>
                                     </td>
                                 </tr>
@@ -252,30 +272,40 @@ $correct_cart_title = $cart_page_id ? get_the_title($cart_page_id) : __('Cart', 
 
                         <?php do_action('woocommerce_cart_contents'); ?>
 
-                        <tr>
-                            <td colspan="6" class="actions">
+                        <tr class="apw-woo-cart-actions-row">
+                            <td colspan="6" class="apw-woo-actions actions">
 
-                                <?php if (wc_coupons_enabled()) { ?>
-                                    <div class="coupon">
-                                        <label for="coupon_code"
-                                               class="screen-reader-text"><?php esc_html_e('Coupon:', 'woocommerce'); ?></label>
-                                        <input type="text" name="coupon_code" class="input-text" id="coupon_code"
-                                               value=""
-                                               placeholder="<?php esc_attr_e('Coupon code', 'woocommerce'); ?>"/>
+                                <?php // This hook usually adds the Continue Shopping button - Placed first for Flexbox layout ?>
+                                <?php do_action('woocommerce_cart_actions'); ?>
+
+                                <div class="apw-woo-actions-right"> <?php // Wrapper for right-aligned elements ?>
+
+                                    <?php if (wc_coupons_enabled()) { ?>
+                                        <div class="apw-woo-coupon coupon">
+                                            <label for="coupon_code"
+                                                   class="apw-woo-coupon-label screen-reader-text"><?php esc_html_e('Coupon:', 'woocommerce'); ?></label>
+                                            <input type="text" name="coupon_code" class="apw-woo-coupon-code input-text"
+                                                   id="coupon_code" value=""
+                                                   placeholder="<?php esc_attr_e('Coupon code', 'woocommerce'); ?>"/>
+                                            <?php do_action('woocommerce_cart_coupon'); // Hook for plugins ?>
+                                        </div>
+                                    <?php } ?>
+
+                                    <div class="apw-woo-action-buttons"> <?php // Wrapper for side-by-side buttons ?>
+                                        <?php if (wc_coupons_enabled()) { ?>
+                                            <button type="submit"
+                                                    class="apw-woo-apply-coupon-button button<?php echo esc_attr(wc_wp_theme_get_element_class_name('button') ? ' ' . wc_wp_theme_get_element_class_name('button') : ''); ?>"
+                                                    name="apply_coupon"
+                                                    value="<?php esc_attr_e('Apply coupon', 'woocommerce'); ?>"><?php esc_html_e('Apply coupon', 'woocommerce'); ?></button>
+                                        <?php } ?>
+
                                         <button type="submit"
                                                 class="button<?php echo esc_attr(wc_wp_theme_get_element_class_name('button') ? ' ' . wc_wp_theme_get_element_class_name('button') : ''); ?>"
-                                                name="apply_coupon"
-                                                value="<?php esc_attr_e('Apply coupon', 'woocommerce'); ?>"><?php esc_html_e('Apply coupon', 'woocommerce'); ?></button>
-                                        <?php do_action('woocommerce_cart_coupon'); ?>
-                                    </div>
-                                <?php } ?>
+                                                name="update_cart"
+                                                value="<?php esc_attr_e('Update cart', 'woocommerce'); ?>"><?php esc_html_e('Update cart', 'woocommerce'); ?></button>
+                                    </div><?php // <!-- END BUTTON WRAPPER --> ?>
 
-                                <button type="submit"
-                                        class="button<?php echo esc_attr(wc_wp_theme_get_element_class_name('button') ? ' ' . wc_wp_theme_get_element_class_name('button') : ''); ?>"
-                                        name="update_cart"
-                                        value="<?php esc_attr_e('Update cart', 'woocommerce'); ?>"><?php esc_html_e('Update cart', 'woocommerce'); ?></button>
-
-                                <?php do_action('woocommerce_cart_actions'); ?>
+                                </div> <?php // <!-- END RIGHT WRAPPER --> ?>
 
                                 <?php wp_nonce_field('woocommerce-cart', 'woocommerce-cart-nonce'); ?>
                             </td>
@@ -284,19 +314,20 @@ $correct_cart_title = $cart_page_id ? get_the_title($cart_page_id) : __('Cart', 
                         <?php do_action('woocommerce_after_cart_contents'); ?>
                         </tbody>
                     </table>
-                    <?php do_action('woocommerce_after_cart_table'); ?>
+                    <?php // do_action('woocommerce_after_cart_table'); // Intentionally commented out by user ?>
                 </form>
 
                 <?php do_action('woocommerce_before_cart_collaterals'); ?>
 
-                <div class="cart-collaterals">
+                <div class="apw-woo-cart-collaterals cart-collaterals">
                     <?php
                     /**
                      * Cart collaterals hook.
-                     * @hooked woocommerce_cross_sell_display
+                     * @hooked woocommerce_cross_sell_display - 10 (Removed by user request)
                      * @hooked woocommerce_cart_totals - 10
                      */
-                    do_action('woocommerce_cart_collaterals');
+                    // do_action('woocommerce_cart_collaterals'); // Cross-sells removed as requested
+                    woocommerce_cart_totals(); // Directly call cart totals
                     ?>
                 </div>
 
@@ -309,16 +340,15 @@ $correct_cart_title = $cart_page_id ? get_the_title($cart_page_id) : __('Cart', 
                 do_action('apw_woo_after_cart_content');
                 ?>
             </div> <!-- /.col.apw-woo-content-wrapper -->
-        </div> <!-- /.row -->
-    </div> <!-- /.container -->
+        </div> <!-- /.row.apw-woo-cart-row -->
+    </div> <!-- /.container.apw-woo-cart-container -->
 </main><!-- /#main -->
 <?php
-
 // APW Woo Plugin: Log end of cart template if debug mode is on
 if ($apw_debug_mode && $apw_log_exists) {
-    apw_woo_log('CART TEMPLATE: Finished rendering custom cart template with theme structure.');
+    apw_woo_log('CART TEMPLATE: Finished rendering custom cart template with theme structure, APW classes, and revised actions structure.');
 }
 
 get_footer();
 ?>
-<!-- APW-WOO-TEMPLATE: Custom cart.php (structured) is loaded -->
+<!-- APW-WOO-TEMPLATE: Custom cart.php (structured & revised actions) is loaded -->
