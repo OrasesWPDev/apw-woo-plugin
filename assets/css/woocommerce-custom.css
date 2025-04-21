@@ -904,7 +904,7 @@ select.wc-pao-addon-field:focus {
     display: block;
     color: #e2401c !important;
     font-family: var(--apw-font-family) !important;
-    font-size: 0.875rem !important;
+    font-size: 1.5rem !important;
     margin-top: 5px;
 }
 
