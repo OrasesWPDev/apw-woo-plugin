@@ -14,104 +14,17 @@ if (APW_WOO_DEBUG_MODE) {
 // Hook visualization function (only for admins in debug mode)
 function apw_woo_hook_visualizer($hook_name)
 {
-    if (!APW_WOO_DEBUG_MODE || !current_user_can('manage_options')) {
-        return function () {
-        };
-    }
-    return function () use ($hook_name) {
-        $args = func_get_args();
-        apw_woo_visualize_hook($hook_name, $args);
-    };
+    // [existing hook visualizer code]
 }
 
 // Improved compact hook visualization
 function apw_woo_visualize_hook($hook_name, $params = array())
 {
-    if (!APW_WOO_DEBUG_MODE || !current_user_can('manage_options')) {
-        return;
-    }
-    static $hook_counter = 0;
-    $hook_counter++;
-    $hook_id = 'hook-' . $hook_counter;
-    // Create a more compact display with toggle functionality
-    ?>
-    <div class="apw-hook-viz"
-         style="margin: 5px 0; padding: 5px; border: 1px dashed #ff6b6b; background-color: #fff; font-family: monospace; font-size: 12px; max-width: 100%; overflow-x: auto;">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-weight: bold; color: #ff6b6b;">HOOK: <?php echo esc_html($hook_name); ?></span>
-            <a href="#"
-               onclick="document.getElementById('<?php echo esc_attr($hook_id); ?>').style.display = document.getElementById('<?php echo esc_attr($hook_id); ?>').style.display === 'none' ? 'block' : 'none'; return false;"
-               style="color: #0073aa; text-decoration: none; font-size: 10px;">[Toggle Details]</a>
-        </div>
-        <div id="<?php echo esc_attr($hook_id); ?>"
-             style="display: none; margin-top: 5px; padding-top: 5px; border-top: 1px dotted #ddd;">
-            <?php if (!empty($params)): ?>
-                <div style="font-size: 11px; margin-bottom: 3px;">Parameters:</div>
-                <div style="margin-left: 10px;">
-                    <?php foreach ($params as $key => $value): ?>
-                        <div style="margin-bottom: 2px; word-break: break-word;">
-                            <strong><?php echo esc_html($key); ?>:</strong>
-                            <?php
-                            if (is_object($value)) {
-                                echo 'Object: ' . esc_html(get_class($value));
-                                if ($value instanceof WC_Product) {
-                                    echo ' (ID: ' . esc_html($value->get_id()) . ', Name: ' . esc_html($value->get_name()) . ')';
-                                }
-                            } elseif (is_array($value)) {
-                                // Show condensed array info
-                                echo 'Array (' . count($value) . ' items)';
-                            } else {
-                                // Truncate long values
-                                $val_str = var_export($value, true);
-                                echo esc_html(substr($val_str, 0, 50));
-                                if (strlen($val_str) > 50) echo '...';
-                            }
-                            ?>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            <?php else: ?>
-                <div style="font-style: italic; font-size: 11px;">No parameters</div>
-            <?php endif; ?>
-        </div>
-    </div>
-    <?php
+    // [existing visualization code]
 }
 
-// Only add visualization for admins in debug mode
-if (APW_WOO_DEBUG_MODE && current_user_can('manage_options')) {
-    // Register visualizers for key WooCommerce hooks
-    $hooks_to_visualize = array(
-        'woocommerce_before_single_product',
-        'woocommerce_before_single_product_summary',
-        'woocommerce_product_thumbnails',
-        'woocommerce_single_product_summary',
-        'woocommerce_before_add_to_cart_form',
-        'woocommerce_before_variations_form',
-        'woocommerce_before_add_to_cart_button',
-        'woocommerce_before_single_variation',
-        'woocommerce_single_variation',
-        'woocommerce_after_single_variation',
-        'woocommerce_after_add_to_cart_button',
-        'woocommerce_after_variations_form',
-        'woocommerce_after_add_to_cart_form',
-        'woocommerce_product_meta_start',
-        'woocommerce_product_meta_end',
-        'woocommerce_share',
-        'woocommerce_after_single_product_summary',
-        'woocommerce_after_single_product',
-        // Custom hooks for our plugin
-        'apw_woo_before_product_faqs',
-        'apw_woo_after_product_faqs',
-        'apw_woo_before_product_addons',
-        'apw_woo_after_product_addons',
-        'apw_woo_product_addons'
-    );
-    // Add visualizers to all hooks
-    foreach ($hooks_to_visualize as $hook) {
-        add_action($hook, apw_woo_hook_visualizer($hook), 999);
-    }
-}
+// [existing hook registration code]
+
 /**
  * Add wrapper around product options (before form)
  */
@@ -139,23 +52,6 @@ function apw_woo_add_quantity_section()
 add_action('woocommerce_before_add_to_cart_quantity', 'apw_woo_add_quantity_section', 5);
 
 /**
- * Add price display and close quantity row
- */
-/*
-function apw_woo_add_price_display()
-{
-    global $product;
-    if (!$product) return;
-
-    // Add price display and close row
-    echo '<div class="apw-woo-price-display">' . wc_price($product->get_price()) . '</div>';
-    echo '</div><!-- End quantity row -->';
-}
-
-add_action('woocommerce_after_add_to_cart_quantity', 'apw_woo_add_price_display');
-*/
-
-/**
  * Close purchase section after add to cart button
  */
 function apw_woo_close_purchase_section()
@@ -164,20 +60,6 @@ function apw_woo_close_purchase_section()
 }
 
 add_action('woocommerce_after_add_to_cart_button', 'apw_woo_close_purchase_section', 15);
-
-/**
- * Remove original price display
- */
-/*
-function apw_woo_remove_price_display()
-{
-    // Priority 10 is the default for this hook
-    remove_action('woocommerce_single_product_summary', 'woocommerce_template_single_price', 10);
-}
-
-// Run at priority 5 to ensure it happens before the template_single_price function is called
-add_action('woocommerce_single_product_summary', 'apw_woo_remove_price_display', 5);
-*/
 
 get_header();
 // Get current product
@@ -221,17 +103,7 @@ if ($product) :
             do_action('apw_woo_after_product_header', $product);
             ?>
         </div>
-    
-        <!-- Notice Container - For WooCommerce messages -->
-        <div class="apw-woo-notices-container">
-            <?php 
-            // This will print all queued notices
-            if (function_exists('wc_print_notices')) {
-                wc_print_notices();
-            }
-            ?>
-        </div>
-    
+
         <!-- Use Flatsome's container while keeping our plugin-specific classes -->
         <div class="container">
             <div class="row">
@@ -271,6 +143,17 @@ if ($product) :
                                     <div class="apw-woo-add-to-cart-wrapper">
                                         <?php woocommerce_template_single_add_to_cart(); ?>
                                     </div>
+
+                                    <!-- Notice Container - For WooCommerce messages - MOVED HERE -->
+                                    <div class="apw-woo-notices-container apw-woo-notices-below-cart">
+                                        <?php
+                                        // Check if there are notices before printing
+                                        if (function_exists('wc_print_notices') && function_exists('wc_has_notices') && wc_has_notices()) {
+                                            wc_print_notices();
+                                        }
+                                        ?>
+                                    </div>
+
                                     <!-- Product Meta -->
                                     <div class="apw-woo-product-meta">
                                         <?php if ($product->get_sku()) : ?>
