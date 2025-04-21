@@ -759,7 +759,7 @@ span.amount,
 .single_add_to_cart_button {
     background: var(--apw-woo-button-background) !important;
     border-radius: 58px !important;
-    padding: 10px 30px !important;
+    /*     padding: 10px 30px !important; */
     text-transform: uppercase;
     font-family: var(--apw-font-family);
     font-weight: var(--apw-font-bold);
@@ -934,35 +934,162 @@ select.wc-pao-addon-field option {
     }
 }
 
-/* Notices Below Add to Cart Button */
-.apw-woo-notices-below-cart {
-    margin-top: 20px;
-}
 
-.apw-woo-notices-below-cart .woocommerce-message,
-.apw-woo-notices-below-cart .woocommerce-error,
-.apw-woo-notices-below-cart .woocommerce-info,
-.apw-woo-notices-below-cart .woocommerce-notice {
-    border-left-color: var(--apw-woo-notice-highlight);
-    background-color: rgba(23, 128, 147, 0.1);
-    font-family: var(--apw-font-family);
-    font-weight: var(--apw-font-medium);
-    font-size: var(--apw-woo-content-font-size) !important;
-    border-radius: 5px;
-}
+/* --- Custom Styling for Flatsome Success Notice Below Cart --- */
 
-/* Fix for empty error messages */
-.woocommerce-error.message-wrapper.apw-woo-processed:empty,
-.woocommerce-error.message-wrapper.apw-woo-processed ul:empty,
-.woocommerce-error.message-wrapper.apw-woo-processed:not(:has(*)),
-.woocommerce-error.message-wrapper.apw-woo-processed li:empty {
+/* Hide the checkmark icon in the success notice */
+.apw-woo-notices-below-cart .message-container.success-color .icon-checkmark {
     display: none !important;
-    visibility: hidden !important;
-    height: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    border: none !important;
 }
+
+/* Style the main text of the success notice */
+.apw-woo-notices-below-cart .message-container.success-color {
+    font-family: var(--apw-font-family) !important;
+    font-size: var(--apw-woo-content-font-size) !important; /* Match main content font size */
+    font-weight: var(--apw-font-medium) !important; /* Match standard text weight */
+    line-height: 1.5 !important; /* Improve readability */
+    /* Keep Flatsome's success color unless overridden */
+    /* background-color: transparent; /* Optional: Override Flatsome bg if needed */
+    /* color: var(--apw-woo-text-color); /* Optional: Override Flatsome text color if needed */
+    padding: 1em 1.5em !important; /* Adjust padding if needed */
+    border-radius: 5px !important; /* Consistent radius */
+    /*border-left: 5px solid var(--apw-woo-notice-highlight) !important; !* Use existing highlight color *!*/
+}
+
+/* Style the 'View cart' button within the success notice */
+.apw-woo-notices-below-cart .message-container.success-color .button.wc-forward {
+    /* --- Inherit styles from Add to Cart button --- */
+    background: var(--apw-woo-button-background) !important;
+    border-radius: 58px !important;
+    /*padding: 10px 30px !important; !* Revert to match Add to Cart padding *!*/
+    text-transform: uppercase !important;
+    font-family: var(--apw-font-family) !important;
+    font-weight: var(--apw-font-bold) !important;
+    font-size: var(--apw-woo-content-font-size) !important; /* Revert to match Add to Cart font size */
+    color: #ffffff !important;
+    border: none !important;
+    text-decoration: none !important;
+    box-shadow: none !important; /* Remove potential theme shadows */
+    transition: opacity 0.3s ease; /* Add hover effect */
+
+    /* --- NEW STYLES FOR BLOCK DISPLAY --- */
+    display: block !important; /* Make the button a block element */
+    width: fit-content !important; /* Make width only as wide as content + padding */
+    margin-top: 15px !important; /* Add space above the button */
+    margin-left: 0 !important; /* Remove left margin (was for inline) */
+    /* vertical-align: middle !important; /* Remove vertical align (not needed for block) */
+    text-align: center; /* Center text within button */
+    height: auto !important; /* Let padding define height */
+}
+
+/* Hover effect for the button */
+.apw-woo-notices-below-cart .message-container.success-color .button.wc-forward:hover {
+    opacity: 0.85 !important;
+    color: #ffffff !important; /* Ensure text color stays white */
+}
+
+/* Style the icon (optional, if Flatsome's icon needs adjustment) */
+.apw-woo-notices-below-cart .message-container.success-color .icon-checkmark {
+    /* color: var(--apw-woo-notice-highlight); /* Optional: Change icon color */
+    margin-right: 8px !important;
+    vertical-align: middle !important;
+}
+
+/* ----------------------------------------
+   X. CROSS-SELLS SECTION STYLING
+   Styles for the "You may be interested in..." section below FAQs
+   ---------------------------------------- */
+
+.apw-woo-cross-sells-section {
+    margin-top: 40px; /* Add some space above the section */
+    margin-bottom: 40px; /* Add some space below the section */
+    padding: 0 15px; /* Add padding consistent with container if needed */
+}
+
+/* Title Styling ("You may be interested in...") */
+.apw-woo-cross-sells-title {
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-extrabold); /* Weight 800 */
+    font-size: 3.75rem; /* 60px / 16px */
+    color: #B6C6CC;
+    text-align: center; /* Center the title */
+    margin-bottom: 30px; /* Space below title */
+}
+
+/* Grid Layout for Cross-Sell Items */
+.apw-woo-cross-sells-grid {
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    justify-content: space-around; /* Distribute items nicely */
+    gap: 30px; /* Space between items */
+    list-style: none; /* Remove potential list styling */
+    padding: 0;
+    margin: 0;
+}
+
+/* Individual Cross-Sell Item Container */
+.apw-woo-cross-sell-item {
+    flex: 0 1 calc(33.333% - 20px); /* Aim for 3 items per row, adjust calc() based on final gap */
+    box-sizing: border-box;
+    text-align: center; /* Center content within item */
+    display: flex; /* Make item a flex container for link */
+    flex-direction: column; /* Stack elements vertically inside */
+    overflow: hidden; /* Hide overflow to respect border radius */
+    max-width: 470px; /* Ensure item doesn't exceed image width */
+    margin-left: auto; /* Center align items if fewer than 3 */
+    margin-right: auto; /* Center align items if fewer than 3 */
+}
+
+.apw-woo-cross-sell-link {
+    display: flex; /* Make link a flex container */
+    flex-direction: column; /* Stack image and name vertically */
+    height: 100%; /* Make link fill the item */
+    text-decoration: none;
+}
+
+/* Image Wrapper - controls dimensions and top-left radius */
+.apw-woo-cross-sell-image-wrapper {
+    width: 100%;
+    height: 330px;
+    overflow: hidden; /* Important: Clip image to wrapper's radius */
+    border-top-left-radius: 43px;
+    background-color: #f0f0f0; /* Placeholder background */
+}
+
+/* Image Styling */
+.apw-woo-cross-sell-img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Cover the area, might crop */
+    object-position: center;
+    border: none; /* Remove default borders */
+    /* Radius is applied to the wrapper */
+}
+
+/* Product Name (H3) Styling */
+.apw-woo-cross-sell-name {
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold); /* Weight 700 */
+    font-size: 1.625rem; /* 26px / 16px */
+    color: #ffffff !important; /* Force white color */
+    background-color: #244B5A;
+    width: 100%; /* Match image width */
+    padding: 20px; /* Add some padding inside the H3 */
+    margin: 0; /* Reset default H3 margin */
+    box-sizing: border-box; /* Include padding in width */
+    border-bottom-right-radius: 43px;
+    line-height: 1.4; /* Adjust line height */
+    text-align: center; /* Center text inside H3 */
+    /* Remove potential underline from parent link */
+    text-decoration: none !important;
+}
+
+/* Ensure link doesn't add underline to H3 */
+.apw-woo-cross-sell-link:hover .apw-woo-cross-sell-name {
+    text-decoration: none !important;
+}
+
 
 /* ----------------------------------------
    8. RESPONSIVE SINGLE PRODUCT STYLING
