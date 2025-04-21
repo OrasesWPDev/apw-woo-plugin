@@ -759,7 +759,7 @@ span.amount,
 .single_add_to_cart_button {
     background: var(--apw-woo-button-background) !important;
     border-radius: 58px !important;
-    padding: 10px 30px !important;
+    /*padding: 10px 30px !important;*/
     text-transform: uppercase;
     font-family: var(--apw-font-family);
     font-weight: var(--apw-font-bold);
@@ -934,35 +934,67 @@ select.wc-pao-addon-field option {
     }
 }
 
-/* Notices Below Add to Cart Button */
-.apw-woo-notices-below-cart {
-    margin-top: 20px;
-}
 
-.apw-woo-notices-below-cart .woocommerce-message,
-.apw-woo-notices-below-cart .woocommerce-error,
-.apw-woo-notices-below-cart .woocommerce-info,
-.apw-woo-notices-below-cart .woocommerce-notice {
-    border-left-color: var(--apw-woo-notice-highlight);
-    background-color: rgba(23, 128, 147, 0.1);
-    font-family: var(--apw-font-family);
-    font-weight: var(--apw-font-medium);
-    font-size: var(--apw-woo-content-font-size) !important;
-    border-radius: 5px;
-}
+/* --- Custom Styling for Flatsome Success Notice Below Cart --- */
 
-/* Fix for empty error messages */
-.woocommerce-error.message-wrapper.apw-woo-processed:empty,
-.woocommerce-error.message-wrapper.apw-woo-processed ul:empty,
-.woocommerce-error.message-wrapper.apw-woo-processed:not(:has(*)),
-.woocommerce-error.message-wrapper.apw-woo-processed li:empty {
+/* Hide the checkmark icon in the success notice */
+.apw-woo-notices-below-cart .message-container.success-color .icon-checkmark {
     display: none !important;
-    visibility: hidden !important;
-    height: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    border: none !important;
 }
+
+/* Style the main text of the success notice */
+.apw-woo-notices-below-cart .message-container.success-color {
+    font-family: var(--apw-font-family) !important;
+    font-size: var(--apw-woo-content-font-size) !important; /* Match main content font size */
+    font-weight: var(--apw-font-medium) !important; /* Match standard text weight */
+    line-height: 1.5 !important; /* Improve readability */
+    /* Keep Flatsome's success color unless overridden */
+    /* background-color: transparent; /* Optional: Override Flatsome bg if needed */
+    /* color: var(--apw-woo-text-color); /* Optional: Override Flatsome text color if needed */
+    padding: 1em 1.5em !important; /* Adjust padding if needed */
+    border-radius: 5px !important; /* Consistent radius */
+    /*border-left: 5px solid var(--apw-woo-notice-highlight) !important; !* Use existing highlight color *!*/
+}
+
+/* Style the 'View cart' button within the success notice */
+.apw-woo-notices-below-cart .message-container.success-color .button.wc-forward {
+    /* --- Inherit styles from Add to Cart button --- */
+    background: var(--apw-woo-button-background) !important;
+    border-radius: 58px !important;
+    /*padding: 10px 30px !important; !* Revert to match Add to Cart padding *!*/
+    text-transform: uppercase !important;
+    font-family: var(--apw-font-family) !important;
+    font-weight: var(--apw-font-bold) !important;
+    font-size: var(--apw-woo-content-font-size) !important; /* Revert to match Add to Cart font size */
+    color: #ffffff !important;
+    border: none !important;
+    text-decoration: none !important;
+    box-shadow: none !important; /* Remove potential theme shadows */
+    transition: opacity 0.3s ease; /* Add hover effect */
+
+    /* --- NEW STYLES FOR BLOCK DISPLAY --- */
+    display: block !important; /* Make the button a block element */
+    width: fit-content !important; /* Make width only as wide as content + padding */
+    margin-top: 15px !important; /* Add space above the button */
+    margin-left: 0 !important; /* Remove left margin (was for inline) */
+    /* vertical-align: middle !important; /* Remove vertical align (not needed for block) */
+    text-align: center; /* Center text within button */
+    height: auto !important; /* Let padding define height */
+}
+
+/* Hover effect for the button */
+.apw-woo-notices-below-cart .message-container.success-color .button.wc-forward:hover {
+    opacity: 0.85 !important;
+    color: #ffffff !important; /* Ensure text color stays white */
+}
+
+/* Style the icon (optional, if Flatsome's icon needs adjustment) */
+.apw-woo-notices-below-cart .message-container.success-color .icon-checkmark {
+    /* color: var(--apw-woo-notice-highlight); /* Optional: Change icon color */
+    margin-right: 8px !important;
+    vertical-align: middle !important;
+}
+
 
 /* ----------------------------------------
    8. RESPONSIVE SINGLE PRODUCT STYLING
