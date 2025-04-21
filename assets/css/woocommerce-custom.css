@@ -290,7 +290,7 @@
 }
 
 /* Ensure all notice types are visible within our container */
-.apw-woo-notices-container .woocommerce-message,
+/* .apw-woo-notices-container .woocommerce-message,
 .apw-woo-notices-container .woocommerce-error,
 .apw-woo-notices-container .woocommerce-info,
 .apw-woo-notices-container .woocommerce-notice,
@@ -306,7 +306,7 @@
     top: auto !important;
     transform: none !important;
     pointer-events: auto !important;
-}
+} */
 
 /* Ensure buttons in notices are clickable */
 .apw-woo-notices-container .woocommerce-message .button,
@@ -903,13 +903,26 @@ select.wc-pao-addon-field:focus {
     outline: none !important;
 }
 
-/* Fix validation notice */
-.wc-pao-validation-notice {
-    display: block;
-    color: #e2401c !important;
-    font-family: var(--apw-font-family) !important;
-    font-size: 1.5rem !important;
-    margin-top: 5px;
+/* Fix PAO validation notice AND Style Flatsome validation in our container */
+.wc-pao-validation-notice, /* Original selector */
+.apw-woo-notices-below-cart .message-container.container.alert-color /* Added selector for Flatsome */ {
+    display: block !important;
+    color: #e2401c !important;                      /* Apply desired color */
+    font-family: var(--apw-font-family) !important; /* Apply desired font */
+    font-size: 1.5rem !important;                   /* Apply desired font size */
+    margin-top: 5px !important;                     /* Apply desired margin */
+    /* --- Resets needed for the Flatsome selector --- */
+    background-color: transparent !important;       /* Remove Flatsome background */
+    border: none !important;                        /* Remove Flatsome border */
+    padding: 0 !important;                          /* Remove Flatsome padding */
+    text-align: left !important;                    /* Override Flatsome text-align */
+    font-weight: var(--apw-font-medium) !important; /* Standardize font weight */
+    line-height: 1.4 !important;                    /* Standardize line height */
+}
+
+/* Hide the Flatsome icon separately */
+.apw-woo-notices-below-cart .message-container.container.alert-color .message-icon.icon-close {
+    display: none !important;
 }
 
 /* CSS attempt to style the dropdown options - product agnostic */
@@ -955,8 +968,8 @@ select.wc-pao-addon-field option {
     /* Keep Flatsome's success color unless overridden */
     /* background-color: transparent; /* Optional: Override Flatsome bg if needed */
     /* color: var(--apw-woo-text-color); /* Optional: Override Flatsome text color if needed */
-    padding: 1em 1.5em !important; /* Adjust padding if needed */
-    border-radius: 5px !important; /* Consistent radius */
+    /*     padding: 1em 1.5em !important; /* Adjust padding if needed */ */
+border-radius: 5px !important; /* Consistent radius */
     /*border-left: 5px solid var(--apw-woo-notice-highlight) !important; !* Use existing highlight color *!*/
 }
 
@@ -1065,7 +1078,7 @@ select.wc-pao-addon-field option {
     display: block;
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Fill the container, may crop */
+    object-fit: contain; /* Fill the container, may crop */
     object-position: center;
     border: none; /* Remove default borders */
     /* Radius is applied to the wrapper */
