@@ -16,7 +16,7 @@ Thumbs.db
 
 # Build/dependency directories
 node_modules/
-vendor/
+
 
 # Logs
 *.log
