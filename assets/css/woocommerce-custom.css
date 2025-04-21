@@ -759,7 +759,7 @@ span.amount,
 .single_add_to_cart_button {
     background: var(--apw-woo-button-background) !important;
     border-radius: 58px !important;
-    /*padding: 10px 30px !important;*/
+    /*     padding: 10px 30px !important; */
     text-transform: uppercase;
     font-family: var(--apw-font-family);
     font-weight: var(--apw-font-bold);
@@ -993,6 +993,101 @@ select.wc-pao-addon-field option {
     /* color: var(--apw-woo-notice-highlight); /* Optional: Change icon color */
     margin-right: 8px !important;
     vertical-align: middle !important;
+}
+
+/* ----------------------------------------
+   X. CROSS-SELLS SECTION STYLING
+   Styles for the "You may be interested in..." section below FAQs
+   ---------------------------------------- */
+
+.apw-woo-cross-sells-section {
+    margin-top: 40px; /* Add some space above the section */
+    margin-bottom: 40px; /* Add some space below the section */
+    padding: 0 15px; /* Add padding consistent with container if needed */
+}
+
+/* Title Styling ("You may be interested in...") */
+.apw-woo-cross-sells-title {
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-extrabold); /* Weight 800 */
+    font-size: 3.75rem; /* 60px / 16px */
+    color: #B6C6CC;
+    text-align: center; /* Center the title */
+    margin-bottom: 30px; /* Space below title */
+}
+
+/* Grid Layout for Cross-Sell Items */
+.apw-woo-cross-sells-grid {
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    justify-content: space-around; /* Distribute items nicely */
+    gap: 30px; /* Space between items */
+    list-style: none; /* Remove potential list styling */
+    padding: 0;
+    margin: 0;
+}
+
+/* Individual Cross-Sell Item Container */
+.apw-woo-cross-sell-item {
+    flex: 0 1 calc(33.333% - 20px); /* Aim for 3 items per row, adjust calc() based on final gap */
+    box-sizing: border-box;
+    text-align: center; /* Center content within item */
+    display: flex; /* Make item a flex container for link */
+    flex-direction: column; /* Stack elements vertically inside */
+    overflow: hidden; /* Hide overflow to respect border radius */
+    max-width: 470px; /* Ensure item doesn't exceed image width */
+    margin-left: auto; /* Center align items if fewer than 3 */
+    margin-right: auto; /* Center align items if fewer than 3 */
+}
+
+.apw-woo-cross-sell-link {
+    display: flex; /* Make link a flex container */
+    flex-direction: column; /* Stack image and name vertically */
+    height: 100%; /* Make link fill the item */
+    text-decoration: none;
+}
+
+/* Image Wrapper - controls dimensions and top-left radius */
+.apw-woo-cross-sell-image-wrapper {
+    width: 100%;
+    height: 330px;
+    overflow: hidden; /* Important: Clip image to wrapper's radius */
+    border-top-left-radius: 43px;
+    background-color: #f0f0f0; /* Placeholder background */
+}
+
+/* Image Styling */
+.apw-woo-cross-sell-img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Cover the area, might crop */
+    object-position: center;
+    border: none; /* Remove default borders */
+    /* Radius is applied to the wrapper */
+}
+
+/* Product Name (H3) Styling */
+.apw-woo-cross-sell-name {
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold); /* Weight 700 */
+    font-size: 1.625rem; /* 26px / 16px */
+    color: #ffffff !important; /* Force white color */
+    background-color: #244B5A;
+    width: 100%; /* Match image width */
+    padding: 20px; /* Add some padding inside the H3 */
+    margin: 0; /* Reset default H3 margin */
+    box-sizing: border-box; /* Include padding in width */
+    border-bottom-right-radius: 43px;
+    line-height: 1.4; /* Adjust line height */
+    text-align: center; /* Center text inside H3 */
+    /* Remove potential underline from parent link */
+    text-decoration: none !important;
+}
+
+/* Ensure link doesn't add underline to H3 */
+.apw-woo-cross-sell-link:hover .apw-woo-cross-sell-name {
+    text-decoration: none !important;
 }
 
 
