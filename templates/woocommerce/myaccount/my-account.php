@@ -25,7 +25,7 @@ if ($apw_debug_mode && $apw_log_exists) {
 
 get_header();
 
-$target_block_id = 'fourth-level-page-header'; // Consistent block ID
+$target_block_id = 'third-level-woo-page-header'; // Consistent block ID
 $account_page_id = wc_get_page_id('myaccount');
 // Define the correct title ONLY for the fallback scenario
 $correct_account_title = $account_page_id ? get_the_title($account_page_id) : __('My account', 'woocommerce');
@@ -66,9 +66,9 @@ $correct_account_title = $account_page_id ? get_the_title($account_page_id) : __
 
     <!-- Notice Container - For WooCommerce messages -->
     <div class="apw-woo-notices-container">
-        <?php 
+        <?php
         // This will print all queued notices
-        wc_print_notices(); 
+        wc_print_notices();
         ?>
     </div>
 

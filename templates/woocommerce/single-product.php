@@ -92,7 +92,7 @@ if ($product) :
                 apw_woo_log('Rendering product page header');
             }
             if (shortcode_exists('block')) {
-                echo do_shortcode('[block id="fourth-level-page-header"]');
+                echo do_shortcode('[block id="third-level-woo-page-header"]');
             } else {
                 // Fallback if shortcode doesn't exist
                 echo '<h1 class="apw-woo-page-title">' . esc_html($product->get_name()) . '</h1>';

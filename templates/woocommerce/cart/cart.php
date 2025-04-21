@@ -26,7 +26,7 @@ if ($apw_debug_mode && $apw_log_exists) {
 
 get_header();
 
-$target_block_id = 'fourth-level-page-header'; // Same as single-product.php
+$target_block_id = 'third-level-woo-page-header'; // Same as single-product.php
 $cart_page_id = wc_get_page_id('cart');
 // Define the correct title, even though we aren't using preg_replace in the header block section anymore
 $correct_cart_title = $cart_page_id ? get_the_title($cart_page_id) : __('Cart', 'woocommerce');
@@ -69,9 +69,9 @@ $correct_cart_title = $cart_page_id ? get_the_title($cart_page_id) : __('Cart', 
 
     <!-- Notice Container - For WooCommerce messages -->
     <div class="apw-woo-notices-container">
-        <?php 
+        <?php
         // This will print all queued notices
-        wc_print_notices(); 
+        wc_print_notices();
         ?>
     </div>
 
