@@ -132,9 +132,10 @@ if ($product) :
                                 <?php do_action('apw_woo_before_product_summary', $product); ?>
                                 <div class="apw-woo-product-summary">
                                     <!-- Product Title -->
-                                    <div class="apw-woo-product-title-wrapper">
-                                        <?php the_title('<h1 class="apw-woo-product-title">', '</h1>'); ?>
-                                    </div>
+                                    <!--                                    <div class="apw-woo-product-title-wrapper">-->
+                                    <!--                                        --><?php //the_title('<h1 class="apw-woo-product-title">', '</h1>');
+                                    ?>
+                                    <!--                                    </div>-->
                                     <!-- Product Description -->
                                     <div class="apw-woo-product-description-wrapper">
                                         <?php echo apply_filters('the_content', $product->get_description()); ?>
