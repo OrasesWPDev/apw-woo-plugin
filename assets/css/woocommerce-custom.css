@@ -239,20 +239,24 @@
 .apw-woo-intro-section .apw-woo-section-title {
     font-family: var(--apw-font-family);
     font-weight: var(--apw-font-bold);
-    font-size: var(--apw-woo-intro-title-size);
-    color: var(--apw-woo-text-color); /* Or specific intro title color if needed */
+    font-size: 6.25rem;
+    text-align: center;
+    color: #244B5A; /* Or specific intro title color if needed */
+    padding-top: 4.688rem;
     margin-bottom: var(--apw-woo-spacing-medium); /* Adjust spacing as needed */
     line-height: 1.3;
 }
 
 /* Ensure the intro description P tags use the new variable */
 /* Adjust selector '.apw-woo-section-description' if your description container has a different class */
-.apw-woo-intro-section .apw-woo-section-description p {
+.apw-woo-intro-section .apw-woo-section-description {
     font-family: var(--apw-font-family);
     font-weight: var(--apw-font-medium);
-    font-size: var(--apw-woo-intro-desc-size);
-    color: var(--apw-woo-text-color);
+    font-size: 1.313rem;
+    text-align: center;
+    color: #0D252C;
     line-height: 1.6;
+    padding-bottom: 4.688rem;
     margin-bottom: 1em; /* Standard paragraph spacing */
 }
 
@@ -1061,7 +1065,7 @@ select.wc-pao-addon-field option {
     display: block;
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Cover the area, might crop */
+    object-fit: cover; /* Fill the container, may crop */
     object-position: center;
     border: none; /* Remove default borders */
     /* Radius is applied to the wrapper */
@@ -1256,3 +1260,390 @@ select.wc-pao-addon-field option {
     }
 
 }
+
+
+/* --- END SINGLE PRODUCT STYLES --- */
+
+/* ----------------------------------------
+   8. CART PAGE STYLES (cart.php)
+   Styles specific to the WooCommerce cart page template.
+   Utilizes 'apw-woo-' prefixed classes added in cart.php.
+   ---------------------------------------- */
+
+/* General Cart Table Structure */
+.apw-woo-cart-table {
+    width: 100%; /* Ensure table takes full width */
+    border-collapse: collapse; /* Clean up borders */
+    margin-bottom: 2rem; /* Space below the table */
+    font-family: var(--apw-font-family); /* Apply base font */
+}
+
+/* Cart Table Header Cells (Product, Price, Quantity, etc.) */
+.apw-woo-cart-table thead.apw-woo-cart-thead th {
+    font-weight: var(--apw-font-bold); /* Bold header text */
+    font-size: 1.1rem; /* Slightly larger header font */
+    color: var(--apw-woo-text-color); /* Use standard text color */
+    padding: 15px 10px; /* Padding inside header cells */
+    text-align: left; /* Align text left */
+    border-bottom: 2px solid var(--apw-faq-separator-color); /* Use separator color for border */
+    text-transform: uppercase; /* Uppercase headers */
+    letter-spacing: 0.5px;
+}
+
+/* Cart Table Body Cells */
+.apw-woo-cart-table tbody.apw-woo-cart-tbody td {
+    padding: 15px 10px; /* Padding inside body cells */
+    vertical-align: middle; /* Align content vertically centered */
+    border-bottom: 1px solid var(--apw-faq-separator-color); /* Separator lines between rows */
+    font-size: var(--apw-woo-content-font-size); /* Standard content font size */
+    color: var(--apw-woo-text-color); /* Standard text color */
+}
+
+/* Specifically target the product name cell for potential adjustments */
+.apw-woo-cart-table td.apw-woo-product-name {
+    /* Add any specific styles for the product name column if needed */
+}
+
+/* Style the product name link */
+.apw-woo-cart-table td.apw-woo-product-name a.apw-woo-cart-item-name-link {
+    color: var(--apw-woo-text-color); /* Or a specific link color */
+    font-weight: var(--apw-font-medium);
+    text-decoration: none;
+}
+
+.apw-woo-cart-table td.apw-woo-product-name a.apw-woo-cart-item-name-link:hover {
+    text-decoration: underline;
+}
+
+/* Product thumbnail image adjustments */
+.apw-woo-cart-table td.apw-woo-product-thumbnail img.apw-woo-cart-item-thumbnail-img {
+    width: 80px; /* Example size, adjust as needed */
+    height: auto;
+    display: block; /* Remove extra space below image */
+}
+
+/* Remove item link (X button) */
+.apw-woo-cart-table td.apw-woo-product-remove a.apw-woo-remove {
+    color: #cc0000; /* Example red color */
+    font-size: 1.5rem;
+    text-decoration: none;
+    font-weight: var(--apw-font-bold);
+}
+
+.apw-woo-cart-table td.apw-woo-product-remove a.apw-woo-remove:hover {
+    color: #990000; /* Darker red on hover */
+}
+
+/* Item meta data (variations, add-ons) styling */
+.apw-woo-cart-table .apw-woo-cart-item-meta dl {
+    margin: 0.5em 0 0 0; /* Add space above meta */
+    font-size: 0.9em; /* Slightly smaller font for meta */
+    color: #555; /* Slightly lighter color */
+}
+
+.apw-woo-cart-table .apw-woo-cart-item-meta dt {
+    font-weight: var(--apw-font-bold);
+    display: block; /* Display dt on its own line */
+    margin-bottom: 0.2em;
+}
+
+.apw-woo-cart-table .apw-woo-cart-item-meta dd {
+    display: block; /* Display dd on its own line */
+    margin: 0 0 0.5em 1em; /* Indent dd slightly */
+    padding: 0;
+}
+
+.apw-woo-cart-table .apw-woo-cart-item-meta dd p {
+    display: inline; /* Keep inner p tags inline */
+    margin: 0;
+}
+
+
+/* Quantity Input Styling */
+.apw-woo-cart-table .apw-woo-quantity-input.quantity {
+    border: none;
+    padding: 0;
+    margin: 0;
+    position: relative; /* For potential custom +/- buttons */
+    display: inline-block; /* Prevent taking full width */
+}
+
+/* Style the number input field */
+.apw-woo-cart-table .apw-woo-quantity-input input.apw-woo-qty {
+    border: 1px solid var(--apw-woo-dropdown-border) !important;
+    height: 40px !important;
+    width: 60px !important;
+    text-align: center !important;
+    font-size: var(--apw-woo-content-font-size) !important;
+    font-family: var(--apw-font-family) !important;
+    color: var(--apw-woo-text-color) !important;
+    border-radius: 4px !important; /* Example rounding */
+    box-shadow: none !important;
+    padding: 0 5px !important;
+    margin: 0 !important;
+    -moz-appearance: textfield; /* Hide spinners in Firefox */
+    appearance: textfield; /* Hide spinners in Chrome, Safari, Edge, Opera */
+}
+
+/* Hide spinners for Webkit browsers */
+.apw-woo-cart-table .apw-woo-quantity-input input.apw-woo-qty::-webkit-outer-spin-button,
+.apw-woo-cart-table .apw-woo-quantity-input input.apw-woo-qty::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+
+/* Hide Flatsome's quantity buttons */
+.apw-woo-cart-table .apw-woo-quantity-input .ux-quantity__button {
+    display: none !important;
+}
+
+
+/* --- Cart Actions (Coupon, Update Cart) --- */
+.apw-woo-cart-actions-row td.apw-woo-actions {
+    padding: 20px 10px; /* More padding for the actions row */
+    text-align: right; /* Align buttons/coupon to the right */
+    border-top: 2px solid var(--apw-faq-separator-color); /* Stronger separator */
+}
+
+.apw-woo-coupon {
+    display: inline-block; /* Keep coupon inline */
+    margin-right: 10px; /* Space between coupon and update button */
+    vertical-align: middle;
+}
+
+.apw-woo-coupon input.apw-woo-coupon-code {
+    padding: 8px 10px;
+    border: 1px solid var(--apw-faq-separator-color);
+    border-radius: 4px;
+    min-width: 350px; /* Ensure input is wide enough */
+    margin-right: 5px;
+    vertical-align: middle;
+    font-size: var(--apw-woo-content-font-size); /* Match other content */
+    font-family: var(--apw-font-family);
+}
+
+/* Style action buttons (Apply Coupon, Update Cart) using variables */
+.apw-woo-actions .button,
+.apw-woo-apply-coupon-button,
+.apw-woo-update-cart-button {
+    background: var(--apw-woo-button-background) !important; /* Use button gradient */
+    color: #ffffff !important;
+    border-radius: 58px !important;
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold);
+    font-size: 1rem !important; /* Slightly smaller button text */
+    text-transform: uppercase !important;
+    padding: 10px 20px !important;
+    border: none !important;
+    cursor: pointer;
+    transition: opacity 0.3s ease;
+    vertical-align: middle;
+}
+
+.apw-woo-actions .button:hover,
+.apw-woo-apply-coupon-button:hover,
+.apw-woo-update-cart-button:hover {
+    opacity: 0.85;
+    color: #ffffff !important;
+}
+
+/* --- Cart Totals --- */
+.apw-woo-cart-collaterals {
+    margin-top: 2rem; /* Space above cart totals */
+    width: 100%;
+}
+
+/* Style the cart totals wrapper output by WC */
+.apw-woo-cart-collaterals .cart_totals {
+    float: right; /* Align totals to the right */
+    width: 48%; /* Adjust width as needed */
+    box-sizing: border-box; /* Include padding/border in width */
+}
+
+/* Ensure totals clear floats */
+.apw-woo-cart-collaterals::after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+
+.apw-woo-cart-collaterals .cart_totals h2 {
+    font-family: var(--apw-font-family);
+    font-size: 1.5rem; /* Example size */
+    font-weight: var(--apw-font-bold);
+    color: var(--apw-woo-text-color);
+    margin-bottom: 1rem;
+    text-align: left; /* Align title left */
+}
+
+.apw-woo-cart-collaterals .cart_totals table.shop_table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid var(--apw-faq-separator-color);
+    border-radius: 5px; /* Slight rounding */
+    overflow: hidden; /* Clip content to radius */
+    margin-bottom: 1rem; /* Space below totals table */
+}
+
+.apw-woo-cart-collaterals .cart_totals table.shop_table th,
+.apw-woo-cart-collaterals .cart_totals table.shop_table td {
+    padding: 10px 15px;
+    font-size: var(--apw-woo-content-font-size);
+    border-bottom: 1px solid var(--apw-faq-separator-color);
+    text-align: left;
+    vertical-align: middle; /* Align vertically */
+}
+
+.apw-woo-cart-collaterals .cart_totals table.shop_table tr:last-child th,
+.apw-woo-cart-collaterals .cart_totals table.shop_table tr:last-child td {
+    border-bottom: none; /* Remove bottom border on last row */
+}
+
+.apw-woo-cart-collaterals .cart_totals table.shop_table th {
+    font-weight: var(--apw-font-bold);
+    width: 40%; /* Adjust label column width */
+}
+
+.apw-woo-cart-collaterals .cart_totals table.shop_table td {
+    text-align: right;
+}
+
+/* Style the "Proceed to Checkout" button */
+.apw-woo-cart-collaterals .wc-proceed-to-checkout a.checkout-button {
+    display: block; /* Make it full width within its container */
+    width: 100%; /* Make it take full width of the totals container */
+    box-sizing: border-box; /* Include padding in width */
+    margin-top: 1rem; /* Space above button */
+    background: var(--apw-woo-button-background) !important; /* Use button gradient */
+    color: #ffffff !important;
+    border-radius: 58px !important;
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold);
+    font-size: 1.1rem !important; /* Slightly larger font */
+    text-transform: uppercase !important;
+    padding: 12px 25px !important;
+    border: none !important;
+    text-align: center;
+    text-decoration: none;
+    transition: opacity 0.3s ease;
+}
+
+.apw-woo-cart-collaterals .wc-proceed-to-checkout a.checkout-button:hover {
+    opacity: 0.85;
+    color: #ffffff !important;
+}
+
+/* --- Responsive Adjustments for Cart --- */
+
+@media (max-width: 768px) {
+    /* Example breakpoint for tablets/smaller desktops */
+    .apw-woo-cart-table thead.apw-woo-cart-thead {
+        display: none; /* Hide table header on small screens */
+    }
+
+    .apw-woo-cart-table tbody.apw-woo-cart-tbody tr.apw-woo-cart-item {
+        display: block; /* Stack rows */
+        margin-bottom: 20px;
+        border-bottom: 2px solid var(--apw-faq-separator-color);
+        padding-bottom: 15px;
+    }
+
+    .apw-woo-cart-table tbody.apw-woo-cart-tbody tr.apw-woo-cart-item:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+
+    .apw-woo-cart-table tbody.apw-woo-cart-tbody td {
+        display: block; /* Stack cells */
+        width: 100%;
+        text-align: right !important; /* Align cell content right */
+        padding: 8px 10px;
+        border-bottom: none; /* Remove inner borders */
+        border-top: 1px solid #eee; /* Add light separator */
+        position: relative; /* For label positioning */
+    }
+
+    .apw-woo-cart-table tbody.apw-woo-cart-tbody td:first-child {
+        border-top: none; /* Remove top border on first cell */
+    }
+
+    /* Add data labels using ::before pseudo-element */
+    .apw-woo-cart-table tbody.apw-woo-cart-tbody td::before {
+        content: attr(data-title); /* Get title from data-title attribute */
+        font-weight: var(--apw-font-bold);
+        position: absolute;
+        left: 10px;
+        text-align: left;
+        white-space: nowrap;
+        padding-right: 10px;
+    }
+
+    /* Specific adjustments for certain cells */
+    .apw-woo-cart-table td.apw-woo-product-thumbnail {
+        text-align: center !important; /* Center thumbnail */
+    }
+
+    .apw-woo-cart-table td.apw-woo-product-thumbnail::before {
+        display: none; /* Hide label for thumbnail */
+    }
+
+    .apw-woo-cart-table td.apw-woo-product-thumbnail img.apw-woo-cart-item-thumbnail-img {
+        margin: 0 auto; /* Center image */
+        width: 100px; /* Slightly larger thumbnail */
+    }
+
+
+    .apw-woo-cart-table td.apw-woo-product-remove {
+        text-align: center !important;
+        padding-top: 15px;
+        padding-bottom: 15px;
+    }
+
+    .apw-woo-cart-table td.apw-woo-product-remove::before {
+        display: none; /* Hide label for remove button */
+    }
+
+    .apw-woo-cart-table td.apw-woo-product-remove a.apw-woo-remove {
+        font-size: 1.8rem;
+    }
+
+    .apw-woo-cart-table td.apw-woo-product-quantity .apw-woo-quantity-input {
+        display: inline-block; /* Ensure quantity input doesn't take full width */
+        margin-top: 5px;
+    }
+
+    /* Adjust actions area for mobile */
+    .apw-woo-cart-actions-row td.apw-woo-actions {
+        text-align: center; /* Center actions */
+    }
+
+    .apw-woo-coupon {
+        display: block; /* Stack coupon */
+        margin-bottom: 15px;
+        margin-right: 0;
+    }
+
+    .apw-woo-coupon input.apw-woo-coupon-code {
+        width: calc(100% - 140px); /* Adjust width based on button */
+        max-width: 200px;
+    }
+
+    .apw-woo-apply-coupon-button {
+        /* width: 120px; */ /* Give button fixed width if needed */
+    }
+
+    .apw-woo-update-cart-button {
+        display: block; /* Stack update button */
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    /* Stack cart totals */
+    .apw-woo-cart-collaterals .cart_totals {
+        float: none;
+        width: 100%; /* Full width on mobile */
+    }
+}
+
