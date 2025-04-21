@@ -1131,7 +1131,42 @@ select.wc-pao-addon-field option {
     .single-product .sku_wrapper {
         font-size: 1.1rem !important;
     }
+
+    /* --- Responsive Cross-Sells (Tablet) --- */
+    .apw-woo-cross-sells-title {
+        font-size: 3rem; /* ~48px / 16px */
+    }
+
+    .apw-woo-cross-sells-grid {
+        /* Adjust gap for potentially closer spacing on tablets */
+        gap: 25px;
+    }
+
+    .apw-woo-cross-sell-item {
+        /* Allow slightly more width if needed, adjust basis */
+        flex-basis: calc(50% - 15px); /* Example: 2 items per row on tablet */
+        max-width: 90%; /* Allow items to shrink slightly */
+    }
+
+    .apw-woo-cross-sell-image-wrapper,
+    .apw-woo-cross-sell-name {
+        width: 100%; /* Make image/name wrapper fill the item width */
+        /* Adjust height proportionally or set auto */
+        height: auto; /* Let aspect-ratio handle image height */
+    }
+
+    .apw-woo-cross-sell-image-wrapper {
+        aspect-ratio: 470 / 330; /* Maintain aspect ratio */
+        height: auto; /* Override fixed height */
+    }
+
+    .apw-woo-cross-sell-name {
+        font-size: 1.375rem; /* ~22px / 16px */
+        /* Radius remains */
+    }
+
 }
+
 
 /* --- Mobile Styles (549px and below) --- */
 @media (max-width: 549px) {
@@ -1196,4 +1231,28 @@ select.wc-pao-addon-field option {
         margin-top: 0.5rem !important;
         width: 100%;
     }
+
+    /* --- Responsive Cross-Sells (Mobile) --- */
+    .apw-woo-cross-sells-title {
+        font-size: 2.5rem; /* ~40px / 16px */
+    }
+
+    .apw-woo-cross-sells-grid {
+        flex-direction: column; /* Stack items vertically */
+        align-items: center; /* Center stacked items */
+        gap: 20px; /* Adjust gap for vertical stacking */
+    }
+
+    .apw-woo-cross-sell-item {
+        flex-basis: 100%; /* Ensure item takes full width when stacked */
+        max-width: 400px; /* Optional: Set a max-width for very small screens */
+        width: 95%; /* Use most of the available width */
+    }
+
+    /* Image wrapper and name already set to 100% width, aspect ratio applies */
+    .apw-woo-cross-sell-name {
+        font-size: 1.25rem; /* ~20px / 16px */
+        /* Radius remains */
+    }
+
 }
