@@ -85,7 +85,7 @@ get_header();
                             <div class="apw-woo-product-intro">
                                 <h1 class="apw-woo-section-title"><?php echo esc_html(apply_filters('apw_woo_shop_intro_title', __('Our Products', 'apw-woo-plugin'))); ?></h1>
                                 <div class="apw-woo-section-description">
-                                    <?php echo wp_kses_post(apply_filters('apw_woo_shop_intro_description', '<p>' . __('This is a placeholder paragraph that can be edited later. It will provide an introduction to the product categories offered by the company.', 'apw-woo-plugin') . '</p>')); ?>
+                                    <?php echo wp_kses_post(apply_filters('apw_woo_shop_intro_description', '<p>' . __('Discover our range of advanced wireless routers, smart accessories, and global IoT SIM cards. Each product is built to keep your network fast, reliable, and ready to grow with your connectivity needs.', 'apw-woo-plugin') . '</p>')); ?>
                                 </div>
                             </div>
 
