@@ -776,6 +776,10 @@ span.amount,
     align-self: flex-start;
 }
 
+.apw-woo-notices-container .woocommerce-message {
+    outline: none !important;
+}
+
 /* Add padding between content and tabs */
 .woocommerce-tabs {
     margin-top: 2rem;
