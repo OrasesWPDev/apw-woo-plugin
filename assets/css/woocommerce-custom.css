@@ -952,6 +952,59 @@ select.wc-pao-addon-field option {
 }
 
 
+/* --- Style Variable Product Dropdowns --- */
+
+/* Target the select elements within the variations form */
+.variations_form .variations select {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    border-radius: 20px !important;
+    background-color: var(--apw-woo-dropdown-bg) !important; /* Use the PAO background */
+    border: 1px solid var(--apw-woo-dropdown-border) !important; /* Use the PAO border */
+    color: var(--apw-woo-text-color) !important; /* Use standard text color */
+    font-family: var(--apw-font-family) !important; /* Use standard font */
+    font-weight: var(--apw-font-medium) !important; /* Use medium weight */
+    font-size: var(--apw-woo-content-font-size) !important; /* Use standard content size */
+    padding: 12px 40px 12px 20px !important; /* Adjusted right padding for arrow */
+    min-height: 50px !important; /* Match PAO height */
+    width: 100% !important; /* Make dropdown full width of its container */
+    box-shadow: none !important;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="6" viewBox="0 0 12 6"><path fill="%230D252C" d="M0 0l6 6 6-6z"/></svg>') !important; /* Custom arrow */
+    background-repeat: no-repeat !important;
+    background-position: right 15px center !important;
+    background-size: 12px !important;
+    cursor: pointer; /* Indicate it's clickable */
+    box-sizing: border-box; /* Ensure padding is included in width/height */
+}
+
+/* Style the options within the variation dropdowns */
+.variations_form .variations select option {
+    font-family: var(--apw-font-family) !important;
+    color: var(--apw-woo-text-color) !important;
+    background-color: var(--apw-woo-dropdown-bg) !important; /* Match dropdown background */
+    font-size: var(--apw-woo-content-font-size) !important;
+    padding: 10px 20px !important; /* Add padding to options */
+}
+
+/* Focus style for variation dropdowns */
+.variations_form .variations select:focus {
+    box-shadow: 0 0 0 1px var(--apw-woo-dropdown-border) !important; /* Match PAO focus */
+    outline: none !important;
+}
+
+/* Optional: Firefox specific adjustments if needed (usually background color helps) */
+@-moz-document url-prefix() {
+    .variations_form .variations select {
+        background-color: var(--apw-woo-dropdown-bg) !important; /* Explicitly set for Firefox */
+    }
+    .variations_form .variations select option {
+        background-color: #ffffff !important; /* Firefox often needs a solid option background */
+        color: var(--apw-woo-text-color) !important;
+    }
+}
+
+
 /* --- Custom Styling for Flatsome Success Notice Below Cart --- */
 
 /* Hide the checkmark icon in the success notice */
