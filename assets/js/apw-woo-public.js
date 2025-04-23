@@ -1,117 +1,152 @@
 /**
  * APW WooCommerce Plugin Public Scripts
- * Notice handling that moves notices to our custom container
+ * - Handles moving WooCommerce notices to a custom container.
+ * - Hides duplicate elements added by Avalara on the checkout page.
  */
 (function ($) {
     'use strict';
 
+    // --- Global Debug Log Helper ---
+    // Ensure apwWooData is available or provide a fallback
+    window.apwWooData = window.apwWooData || {debug_mode: false};
+
+    window.apwWooLog = function (message) {
+        // Check if debug_mode is explicitly true in the localized data
+        if (window.apwWooData && window.apwWooData.debug_mode === true && console) {
+            console.log('APW Log:', message);
+        }
+    };
+
+    // --- Notice Handling ---
+
     // Function to move notices to our container
     function moveNoticesToContainer() {
-        // Define the target container where notices should be moved
         const $targetContainer = $('.apw-woo-notices-container');
-        
-        // Ensure target container exists
         if (!$targetContainer.length) {
-            console.error('APW Woo Plugin Error: Target notice container ".apw-woo-notices-container" not found.');
+            if (!window.apwNoticeContainerNotFound) {
+                console.error('APW Woo Plugin Error: Target notice container ".apw-woo-notices-container" not found.');
+                window.apwNoticeContainerNotFound = true;
+            }
             return false;
         }
-        
-        // Define notice selectors - all possible notice types outside our container
+
         const noticeSelectors = [
-            // WooCommerce standard notices
-            'body > .woocommerce-message',
-            'body > .woocommerce-error',
-            'body > .woocommerce-info',
-            'body > .woocommerce-notice',
-            'body > .message-wrapper',
-            '.woocommerce-notices-wrapper > *',
-            // Notices after header
-            'header.header ~ .woocommerce-message',
-            'header.header ~ .woocommerce-error',
-            'header.header ~ .woocommerce-info',
-            'header.header ~ .message-wrapper',
-            // Notices in page wrapper
-            '.page-wrapper > .woocommerce-message',
-            '.page-wrapper > .woocommerce-error',
-            '.page-wrapper > .woocommerce-info',
-            '.page-wrapper > .message-wrapper',
-            // Flatsome specific selectors
+            'body > .woocommerce-message', 'body > .woocommerce-error', 'body > .woocommerce-info',
+            'body > .woocommerce-notice', 'body > .message-wrapper', '.woocommerce-notices-wrapper > *',
+            'header.header ~ .woocommerce-message', 'header.header ~ .woocommerce-error',
+            'header.header ~ .woocommerce-info', 'header.header ~ .message-wrapper',
+            '.page-wrapper > .woocommerce-message', '.page-wrapper > .woocommerce-error',
+            '.page-wrapper > .woocommerce-info', '.page-wrapper > .message-wrapper',
             '.message-container:not(.apw-woo-notices-container .message-container)',
             '.woocommerce-message.message-wrapper:not(.apw-woo-notices-container .message-wrapper)'
         ];
-        
-        // Combined selector for finding notices
+        // Corrected selector for direct children of .woocommerce-notices-wrapper
+        noticeSelectors[5] = '.woocommerce-notices-wrapper > *';
         const combinedSelector = noticeSelectors.join(', ');
-        
-        // Find notices outside our container
-        const $notices = $(combinedSelector).filter(function() {
-            // Exclude notices that are already in our container
+
+        const $notices = $(combinedSelector).filter(function () {
             return !$(this).closest('.apw-woo-notices-container').length;
         });
-        
+
         if ($notices.length > 0) {
-            console.log(`APW Woo Plugin: Found ${$notices.length} notices to move`);
-            
-            // Clear existing notices in our container
+            // apwWooLog(`Found ${$notices.length} notices to move`); // Can be noisy
             $targetContainer.empty();
-            
-            $notices.each(function() {
+            $notices.each(function () {
                 const $notice = $(this);
-                console.log('Moving notice:', $notice[0]);
-                
-                // Instead of cloning, move the actual notice to preserve all event handlers
-                $notice.detach().appendTo($targetContainer);
-                
-                // Ensure the notice is visible
-                $notice.css({
-                    'display': 'block',
-                    'visibility': 'visible',
-                    'opacity': '1',
-                    'position': 'static'
+                // apwWooLog('Moving notice:', $notice[0]); // Can be noisy
+                $notice.detach().appendTo($targetContainer).css({
+                    'display': 'block', 'visibility': 'visible', 'opacity': '1', 'position': 'static'
                 }).addClass('apw-woo-processed');
             });
-            
             return true;
         }
-        
         return false;
     }
 
-    // Debug function to help diagnose notice issues
+    // Debug function to help diagnose notice issues (if needed)
     function debugNotices() {
-        console.log('APW Woo Plugin: Debugging notices');
-        
-        // Check for notices in various locations
-        const locations = [
-            'body > .woocommerce-message, body > .woocommerce-error, body > .woocommerce-info',
-            '.woocommerce-notices-wrapper > *',
-            'header.header ~ .woocommerce-message, header.header ~ .woocommerce-error',
-            '.page-wrapper > .woocommerce-message, .page-wrapper > .woocommerce-error',
-            '.apw-woo-notices-container > *'
-        ];
-        
-        locations.forEach(selector => {
-            const $elements = $(selector);
-            console.log(`Found ${$elements.length} notices matching: ${selector}`);
-            if ($elements.length > 0) {
-                $elements.each(function(i) {
-                    console.log(`- Notice ${i+1}: ${this.className}, Visible: ${$(this).is(':visible')}, Text: ${$(this).text().substring(0, 50)}...`);
-                });
-            }
-        });
+        // Example: Log count of notices in target container
+        // const noticeCount = $('.apw-woo-notices-container').children().length;
+        // apwWooLog(`Debug Notices: Found ${noticeCount} notices in target container.`);
     }
 
-    // Run on document ready
+    // --- Checkout Page Specific Adjustments ---
+
+    // Function to hide unwanted Avalara elements on checkout (REFINED VERSION)
+    function hideDuplicateAvalaraElements() {
+
+        // Selector for the container where Avalara adds its notice/checkbox
+        const fieldWrapperSelector = '.woocommerce-shipping-fields > .shipping_address > .woocommerce-shipping-fields__field-wrapper';
+
+        // Selector for the duplicate H3 (inside the nested div)
+        const duplicateCheckboxSelector = fieldWrapperSelector + ' h3#ship-to-different-address';
+
+        // Selector for the button we WANT TO KEEP (inside .shipping_address)
+        const keepButtonSelector = '.shipping_address button.wc_avatax_validate_address[data-address-type="shipping"]';
+
+        // Selector for ALL shipping validate buttons on the page
+        const allShippingButtonsSelector = 'button.wc_avatax_validate_address[data-address-type="shipping"]';
+
+        var $wrapper = $(fieldWrapperSelector);
+
+        // --- Hide the duplicate elements ---
+        if ($wrapper.length) {
+            // Hide the notice text node by wrapping it
+            $wrapper.contents().filter(function () {
+                return this.nodeType === 3 && this.nodeValue.trim().startsWith('AvaTax uses this email ID');
+            }).each(function () {
+                if (!$(this).parent().hasClass('apw-hidden-avatax-notice')) {
+                    $(this).wrap('<span class="apw-hidden-avatax-notice" style="display: none !important;"></span>');
+                    apwWooLog('JS Hide: Wrapped and hid Avalara notice text.');
+                }
+            });
+
+            // Hide the duplicate H3 checkbox section added by Avalara inside the wrapper
+            const $duplicateCheckbox = $(duplicateCheckboxSelector);
+            if ($duplicateCheckbox.length > 0 && $duplicateCheckbox.is(':visible')) {
+                $duplicateCheckbox.hide();
+                apwWooLog('JS Hide: Duplicate checkbox H3 hidden.');
+            }
+        } else {
+            // Log if the primary wrapper isn't found when expected
+            // apwWooLog('JS Hide Warning: Could not find fieldWrapperSelector: ' + fieldWrapperSelector);
+        }
+
+        // --- Hide the SECOND 'Validate Address' button ---
+        // Find ALL shipping buttons, then exclude the one we want to keep, and hide the rest.
+        const $allShippingButtons = $(allShippingButtonsSelector);
+        const $buttonToKeep = $(keepButtonSelector);
+
+        // Ensure we target accurately, hide buttons NOT inside .shipping_address
+        $allShippingButtons.each(function () {
+            const $thisButton = $(this);
+            // Check if this button is the one inside .shipping_address
+            if ($thisButton.closest('.shipping_address').length === 0) {
+                // This button is NOT inside .shipping_address, so hide it
+                if ($thisButton.is(':visible')) {
+                    $thisButton.hide();
+                    apwWooLog('JS Hide: Hid duplicate shipping validation button (outside .shipping_address).');
+                }
+            } else {
+                // This IS the button inside .shipping_address, ensure it's visible (optional)
+                // $thisButton.show(); // Usually not needed unless hidden by other means
+            }
+        });
+
+    } // End hideDuplicateAvalaraElements function
+
+
+    // --- Document Ready ---
     $(document).ready(function () {
-        console.log('APW Woo Plugin: Document Ready. Notice handler loaded.');
 
-        // Immediately check for notices to move
-        moveNoticesToContainer();
-        
-        // Debug notices after a short delay
-        setTimeout(debugNotices, 500);
+        apwWooLog('APW Woo Plugin: Document Ready.');
 
-        // Define elements to observe - include all possible notice containers
+        // --- Notice Handling Initialization ---
+        apwWooLog('Initializing Notice Handler.');
+        moveNoticesToContainer(); // Initial check
+        // setTimeout(debugNotices, 500); // Uncomment if notice debugging is needed
+
+        // Observe for dynamically added notices
         const observeElements = [
             document.querySelector('.woocommerce-notices-wrapper'),
             document.querySelector('header.header'),
@@ -120,70 +155,89 @@
             document.querySelector('body')
         ].filter(el => el !== null);
 
-        if (observeElements.length === 0) {
-            console.error('APW Woo Plugin: Could not find elements to observe.');
-            return;
+        if (observeElements.length > 0) {
+            const noticeObserver = new MutationObserver(function (mutations) {
+                clearTimeout(window.apwNoticeCheckTimeout);
+                window.apwNoticeCheckTimeout = setTimeout(moveNoticesToContainer, 50);
+            });
+            const config = {childList: true, subtree: true};
+            observeElements.forEach(element => {
+                noticeObserver.observe(element, config);
+            });
+        } else {
+            console.error('APW Woo Plugin: Could not find elements to observe for notices.');
         }
 
-        // Create a MutationObserver to watch for new notices
-        const observer = new MutationObserver(function (mutations) {
-            // Use setTimeout to allow WooCommerce to fully process the DOM
-            setTimeout(function () {
-                moveNoticesToContainer();
-            }, 10);
-        });
-
-        // Configuration for the observer
-        const config = {
-            childList: true,
-            subtree: true
-        };
-
-        // Start observing key elements
-        observeElements.forEach(element => {
-            observer.observe(element, config);
-        });
-
-        // Check after AJAX requests complete
+        // Check notices on ajax completion and clicks (existing logic)
         $(document).ajaxComplete(function () {
-            console.log('APW Woo Plugin: AJAX completed, checking for notices');
-            // Use setTimeout to allow WooCommerce to fully process the DOM
-            setTimeout(function () {
-                moveNoticesToContainer();
-            }, 50);
+            setTimeout(moveNoticesToContainer, 100);
         });
-
-        // Also check when add-to-cart buttons are clicked
         $(document).on('click', '.add_to_cart_button, .single_add_to_cart_button', function () {
-            console.log('APW Woo Plugin: Add to cart button clicked');
-            // Wait for WooCommerce to process the request and add notices
-            setTimeout(function () {
-                moveNoticesToContainer();
-            }, 100);
-            
-            // Check multiple times after button click to catch delayed notices
-            for (let delay of [200, 500, 1000, 1500]) {
-                setTimeout(function() {
-                    moveNoticesToContainer();
-                }, delay);
+            setTimeout(moveNoticesToContainer, 150);
+            for (let delay of [300, 600, 1200]) {
+                setTimeout(moveNoticesToContainer, delay);
             }
         });
-        
-        // Periodically check for notices for the first few seconds
+
+        // Periodic check (reduced frequency/count as Observer is primary)
         let checkCount = 0;
-        const maxChecks = 20; // Increased from 10 to 20
-        const checkInterval = setInterval(function() {
+        const maxChecks = 5;
+        const checkInterval = setInterval(function () {
             moveNoticesToContainer();
             checkCount++;
             if (checkCount >= maxChecks) {
                 clearInterval(checkInterval);
             }
-        }, 250); // Reduced from 500ms to 250ms for more frequent checks
-        
-        // Also check when the page is fully loaded
-        $(window).on('load', function() {
-            moveNoticesToContainer();
+        }, 1000); // Check every second for 5 seconds
+
+        // Final check on load
+        $(window).on('load', function () {
+            setTimeout(moveNoticesToContainer, 200);
         });
-    });
+        // --- End Notice Handling Initialization ---
+
+
+        // --- Checkout Page Specific Initialization ---
+        if ($('body').hasClass('woocommerce-checkout')) {
+            apwWooLog('Initializing Checkout adjustments.');
+
+            // Function to run the check + hide logic for Avalara elements
+            function runAvalaraHideLogic() {
+                // Check if the main checkbox exists - ensures we are likely in the right state
+                if ($('h3#ship-to-different-address input#ship-to-different-address-checkbox').length) {
+                    hideDuplicateAvalaraElements();
+                }
+            }
+
+            // Initial run with delay
+            setTimeout(runAvalaraHideLogic, 250);
+
+            // Listen for the change event on the *correct* primary checkbox
+            $(document).on('change', 'h3#ship-to-different-address > label > input#ship-to-different-address-checkbox', function () {
+                apwWooLog('Checkbox changed, running hide logic.');
+                setTimeout(runAvalaraHideLogic, 150);
+            });
+
+            // Fallback: Use MutationObserver on the shipping_address div style attribute
+            const shippingDiv = document.querySelector('.shipping_address');
+            if (shippingDiv) {
+                const observer = new MutationObserver(function (mutationsList) {
+                    for (let mutation of mutationsList) {
+                        if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                            apwWooLog('Shipping div style changed, running hide logic.');
+                            setTimeout(runAvalaraHideLogic, 150);
+                            break;
+                        }
+                    }
+                });
+                observer.observe(shippingDiv, {attributes: true});
+                apwWooLog('MutationObserver attached to .shipping_address style attribute.');
+            } else {
+                apwWooLog('Could not find .shipping_address div for MutationObserver.');
+            }
+        }
+        // --- End Checkout Page Specific Initialization ---
+
+    }); // End Document Ready
 
 })(jQuery);
