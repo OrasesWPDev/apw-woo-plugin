@@ -776,7 +776,7 @@ span.amount,
     align-self: flex-start;
 }
 
-.apw-woo-notices-container .woocommerce-message {
+.apw-woo-notices-container .woocommerce-message .woocommerce-error .message-wrapper .apw-woo-processed {
     outline: none !important;
 }
 
