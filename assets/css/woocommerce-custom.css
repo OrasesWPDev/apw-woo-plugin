@@ -776,7 +776,7 @@ span.amount,
     align-self: flex-start;
 }
 
-.apw-woo-notices-container .woocommerce-message .woocommerce-error .message-wrapper .apw-woo-processed {
+.apw-woo-notices-container .apw-woo-processed {
     outline: none !important;
 }
 
@@ -1741,55 +1741,34 @@ border-radius: 5px !important; /* Consistent radius */
     font-weight: var(--apw-font-bold);
     color: var(--apw-woo-text-color);
     margin-bottom: 1.5em;
-    clear: both; /* Ensure headings take full width */
-    width: 100%; /* Explicit full width */
+    /* Add other styles: text-transform, letter-spacing, specific color? */
 }
 
-
-/* --- Billing & Shipping Fields Layout (Manual Template Version) --- */
-
-/* Custom Row Wrapper Styling */
-.woocommerce-checkout .apw-woo-form-row {
-    display: flex;
-    flex-wrap: wrap;     /* Allow wrapping on smaller screens */
-    margin-left: -10px;  /* Gutter compensation */
-    margin-right: -10px; /* Gutter compensation */
-    margin-bottom: 1em;  /* Space below row */
-    width: 100%; /* Ensure row takes full width */
+/* Form Row Styling (wraps label and input) */
+.woocommerce-checkout .form-row {
+    margin-bottom: 1em; /* Adjust spacing */
+    /* Add other styles */
 }
 
-/* Custom Field Wrapper Styling */
-.woocommerce-checkout .apw-woo-field {
-    padding-left: 10px;  /* Gutter */
-    padding-right: 10px; /* Gutter */
-    box-sizing: border-box;
-    margin-bottom: 0; /* Remove any default margin from inner p */
+/* Form Labels */
+.woocommerce-checkout .form-row label {
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-medium); /* Or --apw-font-bold? */
+    font-size: 1rem; /* Placeholder - Adjust as needed */
+    color: var(--apw-woo-text-color);
+    margin-bottom: 0.5em;
+    display: block;
+    /* Add other styles */
 }
 
-/* Specific Widths for Columns */
-.woocommerce-checkout .apw-woo-field-half {
-    width: 50%;
+/* Required Field Indicator */
+.woocommerce-checkout .form-row label .required {
+    color: red; /* Placeholder - Adjust color */
+    font-weight: var(--apw-font-bold);
+    margin-left: 0.25em;
 }
 
-.woocommerce-checkout .apw-woo-field-third {
-    width: 33.333%;
-}
-
-.woocommerce-checkout .apw-woo-field-full {
-    width: 100%;
-}
-
-/* Ensure the <p> tag output by woocommerce_form_field inside our wrappers doesn't add extra margin or interfere */
-.woocommerce-checkout .apw-woo-field > p.form-row {
-    margin-bottom: 0 !important; /* Override WC default margin */
-    padding: 0 !important; /* Reset padding as it's handled by the outer .apw-woo-field wrapper */
-    width: 100%; /* Ensure the inner paragraph takes full width of its container */
-}
-
-/* --- End Billing & Shipping Fields Layout --- */
-
-
-/* --- General Input Field Styling (Includes styles from previous steps) --- */
+/* --- Input Fields --- */
 
 /* General Input Fields (Text, Email, Tel, Select, etc.) */
 .woocommerce-checkout input[type="text"],
@@ -1799,12 +1778,12 @@ border-radius: 5px !important; /* Consistent radius */
 .woocommerce-checkout textarea,
 .woocommerce-checkout select:not(.select2-hidden-accessible) { /* Exclude hidden original select */
     font-family: var(--apw-font-family);
-    font-size: var(--apw-woo-content-font-size);
+    font-size: var(--apw-woo-content-font-size); /* Match product page inputs? */
     color: var(--apw-woo-text-color);
-    background-color: var(--apw-woo-dropdown-bg);
-    border: 1px solid var(--apw-woo-dropdown-border);
-    border-radius: 20px;
-    padding: 12px 20px; /* Default padding */
+    background-color: var(--apw-woo-dropdown-bg); /* Use existing dropdown bg? */
+    border: 1px solid var(--apw-woo-dropdown-border); /* Use existing dropdown border? */
+    border-radius: 20px; /* Match product page dropdowns? */
+    padding: 12px 20px; /* Default padding for most inputs */
     min-height: 50px; /* Default min-height */
     width: 100%;
     box-shadow: none;
@@ -1824,8 +1803,10 @@ border-radius: 5px !important; /* Consistent radius */
     box-sizing: border-box;
     width: 100%;
     margin: 0;
-    height: 55px !important; /* Applied height */
-    padding: 0 !important;   /* Removed padding from container */
+
+    /* --- User Requirements --- */
+    height: 55px !important; /* Applied height, using !important for specificity */
+    padding: 0 !important;   /* Removed padding from container, using !important */
     line-height: 55px; /* Vertically align text inside */
 }
 
@@ -1834,7 +1815,7 @@ border-radius: 5px !important; /* Consistent radius */
     line-height: 55px; /* Match container height */
     padding-left: 20px !important;  /* Re-add left padding for text */
     padding-right: 40px !important; /* Re-add right padding for text (space for arrow) */
-    color: var(--apw-woo-text-color);
+    color: var(--apw-woo-text-color); /* Ensure text color is inherited */
 }
 
 /* Adjust position of the Select2 arrow */
@@ -1847,53 +1828,35 @@ border-radius: 5px !important; /* Consistent radius */
 /* Style for Order Notes Textarea */
 .woocommerce-checkout textarea#order_comments {
     min-height: 80px;
-    height: auto; /* Allow textarea to grow */
-    padding: 12px 20px; /* Keep padding */
-    line-height: 1.5;
+    height: auto; /* Allow textarea to grow if needed, override inline style */
+    padding: 12px 20px; /* Keep padding for textarea */
+    line-height: 1.5; /* Improve readability */
+    /* Inherits border, background etc. from the general rule above */
 }
 
 /* Specific style for the custom "Additional Emails" field if needed */
-/* We target the wrapper div added in the template now */
-.woocommerce-checkout .apw-woo-field input[name="apw_woo_billing_additional_emails"] {
-    /* Inherits general styles, override if needed, e.g., */
-    /* min-height: 50px; /* Ensure it matches other inputs */
+.woocommerce-checkout #apw_woo_billing_additional_emails_field input {
+    /* Add specific overrides if needed, e.g., different height or padding */
 }
 
-/* Form Labels */
-.woocommerce-checkout .form-row label { /* Targets label inside the default <p> */
-    font-family: var(--apw-font-family);
-    font-weight: var(--apw-font-medium);
-    font-size: 1rem;
-    color: var(--apw-woo-text-color);
-    margin-bottom: 0.5em;
-    display: block;
-}
-
-/* Required Field Indicator */
-.woocommerce-checkout .form-row label .required {
-    color: red; /* Placeholder - Adjust color */
-    font-weight: var(--apw-font-bold);
-    margin-left: 0.25em;
-}
-
-/* --- End Input Field Styling --- */
+/* --- End Input Fields --- */
 
 
 /* --- Order Review Table --- */
 .woocommerce-checkout #order_review table.woocommerce-checkout-review-order-table {
     width: 100%;
-    border: 1px solid var(--apw-faq-separator-color);
-    border-radius: 5px;
+    border: 1px solid var(--apw-faq-separator-color); /* Example border */
+    border-radius: 5px; /* Example rounding */
     margin-bottom: 2em;
-    border-collapse: collapse;
+    border-collapse: collapse; /* Clean look */
 }
 
 .woocommerce-checkout #order_review table th,
 .woocommerce-checkout #order_review table td {
     padding: 1em;
-    border-bottom: 1px solid var(--apw-faq-separator-color);
+    border-bottom: 1px solid var(--apw-faq-separator-color); /* Separator */
     text-align: left;
-    font-size: 1rem;
+    font-size: 1rem; /* Placeholder */
     vertical-align: middle;
 }
 
@@ -1921,80 +1884,65 @@ border-radius: 5px !important; /* Consistent radius */
 
 
 /* --- Payment Methods Section --- */
-/* NOTE: The #payment div structure might need review if issues arise */
-.woocommerce-checkout #payment {
+.woocommerce-checkout .apw-woo-payment-section {
+    /* Add styles */
     margin-top: 2em;
-    background-color: #f7f7f7; /* Example background */
-    padding: 1.5em;
-    border-radius: 5px;
 }
 
 .woocommerce-checkout #payment ul.payment_methods {
     list-style: none;
     padding: 0;
     margin: 0 0 1em 0;
-    border: none; /* Remove border if #payment has one */
-    border-radius: 0;
+    border: 1px solid var(--apw-faq-separator-color); /* Example border */
+    border-radius: 5px; /* Example rounding */
 }
 
 .woocommerce-checkout #payment ul.payment_methods li {
-    padding: 0 0 1em 0; /* Adjust padding */
+    padding: 1em;
     border-bottom: 1px solid var(--apw-faq-separator-color); /* Separator */
-    margin: 0 0 1em 0;
+    margin: 0;
 }
 .woocommerce-checkout #payment ul.payment_methods li:last-child {
     border-bottom: none;
-    margin-bottom: 0;
-    padding-bottom: 0;
 }
 
 .woocommerce-checkout #payment ul.payment_methods li input[type="radio"] {
     margin-right: 0.75em;
-    float: left; /* Align radio button */
-    margin-top: 0.2em;
 }
 
 .woocommerce-checkout #payment ul.payment_methods li label {
-    display: block; /* Allow label to take full width */
+    display: inline; /* Make label sit next to radio */
     font-weight: var(--apw-font-bold);
-    margin-left: 2em; /* Space for radio button */
 }
 
 .woocommerce-checkout #payment .payment_box {
-    background-color: #eee; /* Lighter background for payment box */
+    background-color: #f9f9f9; /* Placeholder bg */
     padding: 1em;
     margin-top: 1em;
     border-radius: 4px;
-    box-shadow: none;
+    box-shadow: inset 0 1px 1px rgba(0,0,0,.05);
     color: var(--apw-woo-text-color);
-    clear: both;
-    margin-left: 2em; /* Align with label */
 }
 /* --- End Payment Methods Section --- */
 
 
 /* --- Place Order Button --- */
-.woocommerce-checkout .place-order { /* Wrapper div for button */
-    margin-top: 1.5em;
-    padding-top: 1.5em;
-    border-top: 1px solid var(--apw-faq-separator-color);
-}
 .woocommerce-checkout .place-order button#place_order {
-    background: var(--apw-woo-button-background) !important;
+    background: var(--apw-woo-button-background) !important; /* Use button gradient */
     color: #ffffff !important;
     border-radius: 58px !important;
     font-family: var(--apw-font-family);
     font-weight: var(--apw-font-bold);
-    font-size: 1.1rem !important;
+    font-size: 1.1rem !important; /* Placeholder */
     text-transform: uppercase !important;
-    padding: 12px 30px !important;
+    padding: 12px 30px !important; /* Placeholder */
     border: none !important;
     text-align: center;
     text-decoration: none;
     transition: opacity 0.3s ease;
     width: 100%; /* Make full width? */
+    margin-top: 1em;
     cursor: pointer;
-    display: block; /* Ensure it takes full width if needed */
 }
 
 .woocommerce-checkout .place-order button#place_order:hover {
