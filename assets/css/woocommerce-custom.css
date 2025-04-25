@@ -2040,6 +2040,12 @@ border-radius: 5px !important; /* Consistent radius */
 }
 
 /* --- End Buttons --- */
-
+/* --- START: Style Check Payment Instructions --- */
+.woocommerce-checkout #payment .payment_box.payment_method_cheque p {
+    color: #C60307; /* Apply the requested red color */
+    font-weight: var(--apw-font-bold); /* Use the existing bold variable (700) */
+    /* You could also use font-weight: bold; or font-weight: 700; directly */
+}
+/* --- END: Style Check Payment Instructions --- */
 
 /* --- End Checkout Styles --- */
