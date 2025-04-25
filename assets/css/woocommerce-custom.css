@@ -7,6 +7,16 @@
    GLOBAL CSS VARIABLES (CUSTOM PROPERTIES)
       Used across Shop, Category, and Product templates unless overridden.
    ---------------------------------------- */
+/* --- START: Reduce content wrapper width --- */
+/* Target the main content column specifically on checkout */
+.woocommerce-checkout .col.apw-woo-content-wrapper {
+    max-width: 85%;
+    margin-left: auto;
+    margin-right: auto;
+    float: none; /* Ensure it doesn't float */
+}
+/* --- END: Reduce content wrapper width --- */
+
 :root {
     /* --- Colors --- */
     --apw-woo-card-header-bg: #003E57;
@@ -1733,6 +1743,16 @@ border-radius: 5px !important; /* Consistent radius */
     color: var(--apw-woo-text-color);   /* Example: Use base text color */
 }
 
+/* --- START: Reduce content wrapper width --- */
+/* Target the main content column specifically on checkout */
+.woocommerce-checkout .col.apw-woo-content-wrapper {
+    max-width: 85%;
+    margin-left: auto;
+    margin-right: auto;
+    float: none; /* Ensure it doesn't float */
+}
+/* --- END: Reduce content wrapper width --- */
+
 /* Section Headings (Billing details, Shipping details, Your order) */
 .woocommerce-checkout h3,
 .woocommerce-checkout h3#order_review_heading.apw-woo-order-review-heading {
@@ -1882,9 +1902,45 @@ border-radius: 5px !important; /* Consistent radius */
 }
 /* --- End Order Review Table --- */
 
+/* --- START: Hide Exemption Section Elements --- */
+/* These selectors target elements assumed to be added by a tax exemption plugin (like Avalara)
+   and placed *after* the main order review table within the #order_review div. */
+
+/* Hide the 'Exemption' H3 and its following HR */
+.woocommerce-checkout #order_review table.woocommerce-checkout-review-order-table ~ div.field h3,
+.woocommerce-checkout #order_review table.woocommerce-checkout-review-order-table ~ div.field hr {
+    display: none !important;
+}
+/* Hide the exemption zone selection row and proceed button row */
+.woocommerce-checkout #order_review table.woocommerce-checkout-review-order-table ~ div.field.form-row {
+    display: none !important;
+}
+/* Hide the second HR */
+.woocommerce-checkout #order_review table.woocommerce-checkout-review-order-table ~ hr {
+    display: none !important;
+}
+/* Hide the form container and related buttons/labels */
+.woocommerce-checkout #order_review table.woocommerce-checkout-review-order-table ~ div#form_container,
+.woocommerce-checkout #order_review table.woocommerce-checkout-review-order-table ~ label, /* Hide labels potentially associated with hidden buttons */
+.woocommerce-checkout #order_review table.woocommerce-checkout-review-order-table ~ button#btnRefreshCertificates,
+.woocommerce-checkout #order_review table.woocommerce-checkout-review-order-table ~ button#btnWcClose {
+    display: none !important;
+}
+/* Hide the invalidation message */
+.woocommerce-checkout #order_review table.woocommerce-checkout-review-order-table ~ div.field > p#invalidateMsg {
+    display: none !important;
+}
+/* Hide the "Add Certificates" / "Manage existing certificates" links (using general selectors - JS is more reliable for text content) */
+.woocommerce-checkout #order_review table.woocommerce-checkout-review-order-table ~ p,
+.woocommerce-checkout #order_review table.woocommerce-checkout-review-order-table ~ a {
+    /* This hides *all* p and a tags following the table within #order_review.
+       Adjust if necessary to be more specific if this hides desired content. */
+    display: none !important;
+}
+/* --- END: Hide Exemption Section Elements --- */
 
 /* --- Payment Methods Section --- */
-.woocommerce-checkout .apw-woo-payment-section {
+.woocommerce-checkout .apw-woo-payment-section { /* Added apw-woo class */
     /* Add styles */
     margin-top: 2em;
 }
@@ -1925,8 +1981,16 @@ border-radius: 5px !important; /* Consistent radius */
 }
 /* --- End Payment Methods Section --- */
 
+/* --- START: Hide Privacy Policy Text --- */
+.woocommerce-checkout .woocommerce-privacy-policy-text {
+    display: none !important;
+}
+/* --- END: Hide Privacy Policy Text --- */
 
-/* --- Place Order Button --- */
+
+/* --- Buttons --- */
+
+/* Place Order Button */
 .woocommerce-checkout .place-order button#place_order {
     background: var(--apw-woo-button-background) !important; /* Use button gradient */
     color: #ffffff !important;
@@ -1949,7 +2013,33 @@ border-radius: 5px !important; /* Consistent radius */
     opacity: 0.85;
     color: #ffffff !important;
 }
-/* --- End Place Order Button --- */
+
+/* Validate Address Button */
+.woocommerce-checkout button.wc_avatax_validate_address.button {
+    background: var(--apw-woo-button-background) !important; /* Use button gradient */
+    color: #ffffff !important;
+    border-radius: 58px !important;
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold);
+    font-size: 1.1rem !important; /* Match Place Order button size */
+    text-transform: uppercase !important;
+    padding: 12px 30px !important; /* Match Place Order padding */
+    border: none !important;
+    cursor: pointer;
+    transition: opacity 0.3s ease;
+    line-height: normal; /* Ensure consistent line height */
+    height: auto; /* Let padding determine height */
+    vertical-align: middle; /* Align with adjacent elements if any */
+    margin-top: 0; /* Adjust margin as needed */
+    margin-right: 10px; /* Optional: Add space if next to other elements */
+}
+
+.woocommerce-checkout button.wc_avatax_validate_address.button:hover {
+    opacity: 0.85;
+    color: #ffffff !important;
+}
+
+/* --- End Buttons --- */
 
 
 /* --- End Checkout Styles --- */
