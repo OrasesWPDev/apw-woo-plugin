@@ -46,7 +46,7 @@ define('APW_WOO_PLUGIN_BASENAME', plugin_basename(__FILE__));
  *
  * @see templates/woocommerce/single-product.php for hook visualization
  */
-define('APW_WOO_DEBUG_MODE', true);
+define('APW_WOO_DEBUG_MODE', false);
 
 /**
  * WooCommerce HPOS compatibility declaration
