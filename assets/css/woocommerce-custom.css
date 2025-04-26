@@ -2049,3 +2049,252 @@ border-radius: 5px !important; /* Consistent radius */
 /* --- END: Style Check Payment Instructions --- */
 
 /* --- End Checkout Styles --- */
+
+/* ========================================
+   10. MY ACCOUNT PAGE STYLES (my-account.php)
+   ======================================== */
+
+/* --- Start My Account Styles --- */
+
+/* General container for My Account content */
+.woocommerce-account .woocommerce-MyAccount-content { /* Added .woocommerce-account for specificity */
+    font-family: var(--apw-font-family);
+    color: var(--apw-woo-text-color);
+    line-height: 1.6; /* Standard line height */
+    padding-top: 1.5em; /* Add some space above the content */
+}
+
+/* Style the paragraphs within the My Account content area */
+.woocommerce-account .woocommerce-MyAccount-content p {
+    font-size: var(--apw-woo-content-font-size); /* Use existing variable for consistency (21px) */
+    margin-bottom: 1.5em; /* Spacing between paragraphs */
+}
+
+/* Style the bold text within paragraphs (e.g., username) */
+.woocommerce-account .woocommerce-MyAccount-content p strong {
+    font-weight: var(--apw-font-bold); /* Use existing bold variable */
+    color: inherit; /* Inherit the paragraph color */
+}
+
+/* Style the links within the paragraphs */
+.woocommerce-account .woocommerce-MyAccount-content p a {
+    color: var(--apw-woo-notice-highlight); /* Use a noticeable link color (e.g., #178093) */
+    font-weight: var(--apw-font-medium); /* Or bold? */
+    text-decoration: underline; /* Standard link underline */
+    transition: color 0.3s ease;
+}
+
+.woocommerce-account .woocommerce-MyAccount-content p a:hover {
+    color: var(--apw-woo-text-color); /* Darken link on hover */
+    text-decoration: none; /* Remove underline on hover */
+}
+
+/* --- START: My Account Form Field Styles --- */
+
+/* Apply consistent styling to input fields, textareas, and selects within My Account */
+/* Targeting elements within the main My Account content area */
+.woocommerce-account .woocommerce-MyAccount-content input[type="text"],
+.woocommerce-account .woocommerce-MyAccount-content input[type="email"],
+.woocommerce-account .woocommerce-MyAccount-content input[type="tel"],
+.woocommerce-account .woocommerce-MyAccount-content input[type="password"],
+.woocommerce-account .woocommerce-MyAccount-content input[type="number"], /* Added number input */
+.woocommerce-account .woocommerce-MyAccount-content textarea,
+.woocommerce-account .woocommerce-MyAccount-content select {
+    font-family: var(--apw-font-family);
+    font-size: var(--apw-woo-content-font-size); /* Match product/checkout inputs */
+    color: var(--apw-woo-text-color);
+    background-color: var(--apw-woo-dropdown-bg); /* Use existing dropdown bg */
+    border: 1px solid var(--apw-woo-dropdown-border); /* Use existing dropdown border */
+    border-radius: 20px; /* Match product/checkout dropdowns */
+    padding: 12px 20px; /* Default padding */
+    min-height: 50px; /* Default min-height */
+    width: 100%; /* Make fields take full width of their container */
+    box-shadow: none;
+    box-sizing: border-box; /* Include padding/border in width */
+    margin-bottom: 1em; /* Add spacing below fields */
+}
+
+/* Style Select2 dropdowns specifically if they appear in My Account */
+.woocommerce-account .woocommerce-MyAccount-content .select2-container--default .select2-selection--single {
+    font-family: var(--apw-font-family);
+    font-size: var(--apw-woo-content-font-size);
+    color: var(--apw-woo-text-color);
+    background-color: var(--apw-woo-dropdown-bg);
+    border: 1px solid var(--apw-woo-dropdown-border);
+    border-radius: 20px;
+    box-shadow: none;
+    box-sizing: border-box;
+    width: 100%;
+    height: 55px !important; /* Match checkout height */
+    padding: 0 !important;
+    line-height: 55px;
+}
+
+.woocommerce-account .woocommerce-MyAccount-content .select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 55px;
+    padding-left: 20px !important;
+    padding-right: 40px !important;
+    color: var(--apw-woo-text-color);
+}
+
+.woocommerce-account .woocommerce-MyAccount-content .select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 53px;
+    right: 10px;
+    top: 1px;
+}
+
+/* Ensure labels above fields have consistent styling */
+.woocommerce-account .woocommerce-MyAccount-content form .form-row label {
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-medium);
+    font-size: 1rem; /* Match checkout labels */
+    color: var(--apw-woo-text-color);
+    margin-bottom: 0.5em;
+    display: block;
+}
+
+.woocommerce-account .woocommerce-MyAccount-content form .form-row label .required {
+    color: red;
+    font-weight: var(--apw-font-bold);
+    margin-left: 0.25em;
+}
+
+/* --- END: My Account Form Field Styles --- */
+
+/* --- START: My Account Button Styles --- */
+
+/* Style general buttons within the My Account content area */
+/* Targets .button, common WC buttons, and potentially form submit buttons */
+.woocommerce-account .woocommerce-MyAccount-content .button,
+.woocommerce-account .woocommerce-MyAccount-content button[type="submit"],
+.woocommerce-account .woocommerce-MyAccount-content a.button { /* Include links styled as buttons */
+    background: var(--apw-woo-button-background) !important; /* Use button gradient */
+    color: #ffffff !important;
+    border-radius: 58px !important;
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold);
+    font-size: 1.1rem !important; /* Match Place Order button size */
+    text-transform: uppercase !important;
+    padding: 12px 30px !important; /* Match Place Order padding */
+    border: none !important;
+    text-align: center;
+    text-decoration: none !important; /* Remove underline from <a> tags */
+    transition: opacity 0.3s ease;
+    cursor: pointer;
+    line-height: normal; /* Ensure consistent line height */
+    height: auto; /* Let padding determine height */
+    display: inline-block; /* Default display */
+    margin-top: 0.5em; /* Add some top margin */
+    margin-right: 10px; /* Add space between adjacent buttons */
+    vertical-align: middle;
+    box-shadow: none; /* Remove potential theme shadows */
+}
+
+/* Style specific buttons like 'Save changes' to ensure they are caught */
+.woocommerce-account .woocommerce-MyAccount-content form button[name="save_account_details"],
+.woocommerce-account .woocommerce-MyAccount-content form button[name="save_address"],
+.woocommerce-account .woocommerce-MyAccount-content a.edit { /* Often used for 'Edit' links next to addresses */
+    /* Inherits styles from the general rule above */
+    /* Add specific overrides here if needed */
+}
+
+/* Hover Styles for My Account buttons */
+.woocommerce-account .woocommerce-MyAccount-content .button:hover,
+.woocommerce-account .woocommerce-MyAccount-content button[type="submit"]:hover,
+.woocommerce-account .woocommerce-MyAccount-content a.button:hover {
+    opacity: 0.85;
+    color: #ffffff !important;
+}
+
+/* --- END: My Account Button Styles --- */
+
+
+/* --- START: My Account Dashboard Links List --- */
+.woocommerce-MyAccount-content ul.dashboard-links {
+    list-style: none;
+    padding: 0;
+    margin: 2em 0 1em 0; /* Add spacing around the list */
+    border: 1px solid var(--apw-faq-separator-color); /* Add a light border */
+    border-radius: 5px; /* Slight rounding */
+    overflow: hidden; /* Contain borders */
+}
+
+.woocommerce-MyAccount-content ul.dashboard-links li {
+    margin: 0;
+    padding: 0;
+    border-bottom: 1px solid var(--apw-faq-separator-color); /* Separator line */
+}
+
+.woocommerce-MyAccount-content ul.dashboard-links li:last-child {
+    border-bottom: none; /* Remove border from last item */
+}
+
+.woocommerce-MyAccount-content ul.dashboard-links li a {
+    display: block;
+    padding: 1em 1.5em; /* Padding inside each link */
+    font-size: 1.1rem; /* Slightly larger font for links */
+    color: var(--apw-woo-text-color);
+    font-weight: var(--apw-font-medium);
+    text-decoration: none;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.woocommerce-MyAccount-content ul.dashboard-links li a:hover {
+    background-color: var(--apw-woo-dropdown-bg); /* Light background on hover */
+    color: var(--apw-woo-text-color);
+}
+
+/* Style the active link */
+.woocommerce-MyAccount-content ul.dashboard-links li.is-active a,
+.woocommerce-MyAccount-content ul.dashboard-links li.active a { /* Include .active for potential theme variations */
+    font-weight: var(--apw-font-bold);
+    color: var(--apw-woo-notice-highlight); /* Highlight active link */
+    background-color: rgba(23, 128, 147, 0.1); /* Subtle background for active */
+}
+
+/* --- END: My Account Dashboard Links List --- */
+
+
+/* --- START: Style Buttons within My Account Notices/Messages (JS Override Method) --- */
+
+/* Target the button using the custom class added by apw-woo-public.js */
+/* Use #main for extra specificity against theme defaults */
+#main .woocommerce-account .woocommerce-MyAccount-content .apw-styled-message-button {
+    /* Re-apply the desired styles, using !important liberally to beat theme's JS/CSS */
+    background: var(--apw-woo-button-background) !important;
+    color: #ffffff !important;
+    border-radius: 58px !important;
+    font-family: var(--apw-font-family) !important;
+    font-weight: var(--apw-font-bold) !important;
+    font-size: 1.1rem !important;
+    text-transform: uppercase !important;
+    padding: 12px 30px !important;
+    border: none !important;
+    text-decoration: none !important;
+    transition: opacity 0.3s ease !important;
+    cursor: pointer !important;
+    line-height: normal !important;
+    height: auto !important;
+    display: inline-block !important;
+    margin-left: 10px !important;
+    vertical-align: middle !important;
+    box-shadow: none !important;
+    margin-bottom: 0 !important;
+}
+
+/* Hover state */
+#main .woocommerce-account .woocommerce-MyAccount-content .apw-styled-message-button:hover {
+    opacity: 0.85 !important;
+    color: #ffffff !important;
+    background: var(--apw-woo-button-background) !important; /* Ensure background doesn't change */
+    border: none !important; /* Ensure border doesn't reappear */
+}
+
+/* --- END: Style Buttons within My Account Notices/Messages --- */
+
+
+/* Add more specific styles for Orders, Addresses, etc. below as needed */
+
+
+/* --- End My Account Styles --- */
+
