@@ -49,10 +49,46 @@ function apw_woo_add_cart_count_to_body() {
         $cart_count = WC()->cart->get_cart_contents_count();
         echo '<script type="text/javascript">
             document.body.setAttribute("data-cart-count", "' . esc_js($cart_count) . '");
+            // Initialize all cart indicators with the current count
+            if (typeof jQuery !== "undefined") {
+                jQuery(function($) {
+                    $(".cart-quantity-indicator").attr("data-cart-count", "' . esc_js($cart_count) . '");
+                });
+            }
         </script>';
     }
 }
 add_action('wp_footer', 'apw_woo_add_cart_count_to_body', 10);
+
+/**
+ * Add cart update event listener to ensure indicators update when cart changes
+ */
+function apw_woo_add_cart_update_listener() {
+    if (is_cart() || is_checkout()) {
+        echo '<script type="text/javascript">
+            if (typeof jQuery !== "undefined") {
+                jQuery(function($) {
+                    // Listen for cart form submissions
+                    $("body").on("submit", ".woocommerce-cart-form", function() {
+                        setTimeout(function() {
+                            // Trigger our custom event that the cart indicators listen for
+                            $(document.body).trigger("updated_cart_totals");
+                        }, 500);
+                    });
+                    
+                    // Listen for quantity changes
+                    $("body").on("change", ".woocommerce-cart-form input.qty", function() {
+                        // Add a small delay to allow WooCommerce to update
+                        setTimeout(function() {
+                            $(document.body).trigger("updated_cart_totals");
+                        }, 500);
+                    });
+                });
+            }
+        </script>';
+    }
+}
+add_action('wp_footer', 'apw_woo_add_cart_update_listener', 20);
 
 /**
  * Add AJAX action to get the current cart count

@@ -26,3 +26,19 @@
 .cart-quantity-indicator[data-cart-count="0"]::after {
     display: none;
 }
+
+/* Ensure the indicator updates with transitions */
+.cart-quantity-indicator::after {
+    transition: content 0.2s ease;
+}
+
+/* Add animation when count changes */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.cart-quantity-indicator[data-cart-count]:not([data-cart-count="0"])::after {
+    animation: pulse 0.3s ease-in-out;
+}

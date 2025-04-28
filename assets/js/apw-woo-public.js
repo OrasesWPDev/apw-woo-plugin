@@ -149,12 +149,16 @@
             
             // Try to get count from WC fragments first
             if (typeof wc_cart_fragments_params !== 'undefined') {
-                const fragments = JSON.parse(sessionStorage.getItem(wc_cart_fragments_params.fragment_name));
-                if (fragments && fragments['div.widget_shopping_cart_content']) {
-                    const $content = $(fragments['div.widget_shopping_cart_content']);
-                    const $cartItems = $content.find('.cart_list li:not(.empty)');
-                    cartCount = $cartItems.length;
-                    apwWooLog('Cart count from fragments: ' + cartCount);
+                try {
+                    const fragments = JSON.parse(sessionStorage.getItem(wc_cart_fragments_params.fragment_name));
+                    if (fragments && fragments['div.widget_shopping_cart_content']) {
+                        const $content = $(fragments['div.widget_shopping_cart_content']);
+                        const $cartItems = $content.find('.cart_list li:not(.empty)');
+                        cartCount = $cartItems.length;
+                        apwWooLog('Cart count from fragments: ' + cartCount);
+                    }
+                } catch (e) {
+                    apwWooLog('Error parsing fragments: ' + e.message);
                 }
             }
             
@@ -181,6 +185,40 @@
                 }
             }
             
+            // Try to get count from cart page if we're on it
+            if (cartCount === 0 && $('.woocommerce-cart-form').length) {
+                let itemCount = 0;
+                $('.woocommerce-cart-form .cart_item').each(function() {
+                    const qty = parseInt($(this).find('input.qty').val()) || 0;
+                    itemCount += qty;
+                });
+                if (itemCount > 0) {
+                    cartCount = itemCount;
+                    apwWooLog('Cart count from cart form: ' + cartCount);
+                }
+            }
+            
+            // Last resort - try to get from WC AJAX endpoint
+            if (cartCount === 0 && typeof wc_cart_fragments_params !== 'undefined') {
+                $.ajax({
+                    type: 'GET',
+                    url: wc_cart_fragments_params.wc_ajax_url.toString().replace('%%endpoint%%', 'get_refreshed_fragments'),
+                    success: function(data) {
+                        if (data && data.fragments) {
+                            try {
+                                const $content = $(data.fragments['div.widget_shopping_cart_content']);
+                                const $cartItems = $content.find('.cart_list li:not(.empty)');
+                                cartCount = $cartItems.length;
+                                apwWooLog('Cart count from AJAX: ' + cartCount);
+                                $('.cart-quantity-indicator').attr('data-cart-count', cartCount);
+                            } catch (e) {
+                                apwWooLog('Error processing AJAX fragments: ' + e.message);
+                            }
+                        }
+                    }
+                });
+            }
+            
             // Update all cart quantity indicators with the count
             $('.cart-quantity-indicator').attr('data-cart-count', cartCount);
             apwWooLog('Updated cart quantity indicators with count: ' + cartCount);
@@ -190,9 +228,17 @@
         updateCartQuantityIndicators();
         
         // Update when cart fragments are refreshed
-        $(document.body).on('wc_fragments_refreshed wc_fragments_loaded added_to_cart removed_from_cart', function() {
+        $(document.body).on('wc_fragments_refreshed wc_fragments_loaded added_to_cart removed_from_cart updated_cart_totals', function() {
             apwWooLog('Cart updated, refreshing quantity indicators');
             updateCartQuantityIndicators();
+        });
+        
+        // Additional listener for cart quantity changes
+        $(document).on('change', '.woocommerce-cart-form input.qty', function() {
+            setTimeout(function() {
+                apwWooLog('Cart quantity changed, refreshing indicators');
+                updateCartQuantityIndicators();
+            }, 300);
         });
 
         // --- Notice Handling Initialization ---
