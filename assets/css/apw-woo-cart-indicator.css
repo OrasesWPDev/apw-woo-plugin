@@ -1,0 +1,28 @@
+/* Cart Quantity Indicator Styles */
+.cart-quantity-indicator {
+    position: relative;
+}
+
+/* Display the cart count using the ::after pseudo-element */
+.cart-quantity-indicator[data-cart-count]:not([data-cart-count="0"])::after {
+    content: attr(data-cart-count);
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background-color: #e94b35;
+    color: white;
+    font-size: 11px;
+    font-weight: bold;
+    min-width: 16px;
+    height: 16px;
+    line-height: 16px;
+    text-align: center;
+    border-radius: 50%;
+    padding: 0 4px;
+    box-sizing: border-box;
+}
+
+/* Hide the indicator when cart is empty */
+.cart-quantity-indicator[data-cart-count="0"]::after {
+    display: none;
+}
