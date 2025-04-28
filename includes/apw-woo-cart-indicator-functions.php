@@ -53,6 +53,8 @@ function apw_woo_add_cart_count_to_body() {
             if (typeof jQuery !== "undefined") {
                 jQuery(function($) {
                     $(".cart-quantity-indicator").attr("data-cart-count", "' . esc_js($cart_count) . '");
+                    // Store the WC cart count in a global variable for JS to access
+                    window.apwWooCartCount = ' . esc_js($cart_count) . ';
                 });
             }
         </script>';

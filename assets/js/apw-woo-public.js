@@ -153,9 +153,26 @@
                     const fragments = JSON.parse(sessionStorage.getItem(wc_cart_fragments_params.fragment_name));
                     if (fragments && fragments['div.widget_shopping_cart_content']) {
                         const $content = $(fragments['div.widget_shopping_cart_content']);
+                        
+                        // IMPORTANT: Count total quantity, not just number of items
+                        let totalQuantity = 0;
+                        
+                        // First try to get quantities from cart fragments
                         const $cartItems = $content.find('.cart_list li:not(.empty)');
-                        cartCount = $cartItems.length;
-                        apwWooLog('Cart count from fragments: ' + cartCount);
+                        $cartItems.each(function() {
+                            // Look for quantity in the item
+                            const qtyText = $(this).find('.quantity').text();
+                            const qtyMatch = qtyText.match(/(\d+)\s*×/); // Match "2 ×" format
+                            if (qtyMatch && qtyMatch[1]) {
+                                totalQuantity += parseInt(qtyMatch[1], 10);
+                            } else {
+                                // If no quantity found, count as 1
+                                totalQuantity += 1;
+                            }
+                        });
+                        
+                        cartCount = totalQuantity;
+                        apwWooLog('Cart count from fragments (total quantity): ' + cartCount);
                     }
                 } catch (e) {
                     apwWooLog('Error parsing fragments: ' + e.message);
@@ -186,7 +203,7 @@
             }
             
             // Try to get count from cart page if we're on it
-            if (cartCount === 0 && $('.woocommerce-cart-form').length) {
+            if ($('.woocommerce-cart-form').length) {
                 let itemCount = 0;
                 $('.woocommerce-cart-form .cart_item').each(function() {
                     const qty = parseInt($(this).find('input.qty').val()) || 0;
@@ -207,16 +224,41 @@
                         if (data && data.fragments) {
                             try {
                                 const $content = $(data.fragments['div.widget_shopping_cart_content']);
+                                
+                                // Count total quantity, not just number of items
+                                let totalQuantity = 0;
+                                
+                                // First try to get quantities from cart fragments
                                 const $cartItems = $content.find('.cart_list li:not(.empty)');
-                                cartCount = $cartItems.length;
-                                apwWooLog('Cart count from AJAX: ' + cartCount);
-                                $('.cart-quantity-indicator').attr('data-cart-count', cartCount);
+                                $cartItems.each(function() {
+                                    // Look for quantity in the item
+                                    const qtyText = $(this).find('.quantity').text();
+                                    const qtyMatch = qtyText.match(/(\d+)\s*×/); // Match "2 ×" format
+                                    if (qtyMatch && qtyMatch[1]) {
+                                        totalQuantity += parseInt(qtyMatch[1], 10);
+                                    } else {
+                                        // If no quantity found, count as 1
+                                        totalQuantity += 1;
+                                    }
+                                });
+                                
+                                if (totalQuantity > 0) {
+                                    cartCount = totalQuantity;
+                                    apwWooLog('Cart count from AJAX (total quantity): ' + cartCount);
+                                    $('.cart-quantity-indicator').attr('data-cart-count', cartCount);
+                                }
                             } catch (e) {
                                 apwWooLog('Error processing AJAX fragments: ' + e.message);
                             }
                         }
                     }
                 });
+            }
+            
+            // Check if we have a WC cart count from PHP
+            if (typeof window.apwWooCartCount !== 'undefined' && window.apwWooCartCount > 0 && cartCount === 0) {
+                cartCount = window.apwWooCartCount;
+                apwWooLog('Using WC cart count from PHP: ' + cartCount);
             }
             
             // Update all cart quantity indicators with the count
