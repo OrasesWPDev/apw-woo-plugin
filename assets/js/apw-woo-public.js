@@ -2,6 +2,7 @@
  * APW WooCommerce Plugin Public Scripts
  * - Handles moving WooCommerce notices to a custom container.
  * - Hides duplicate elements added by Avalara on the checkout page.
+ * - Updates cart quantity indicators.
  */
 (function ($) {
     'use strict';
@@ -140,6 +141,59 @@
     $(document).ready(function () {
 
         apwWooLog('APW Woo Plugin: Document Ready.');
+        
+        // --- Cart Quantity Indicator ---
+        function updateCartQuantityIndicators() {
+            // Get cart count from WooCommerce fragments or data attribute
+            let cartCount = 0;
+            
+            // Try to get count from WC fragments first
+            if (typeof wc_cart_fragments_params !== 'undefined') {
+                const fragments = JSON.parse(sessionStorage.getItem(wc_cart_fragments_params.fragment_name));
+                if (fragments && fragments['div.widget_shopping_cart_content']) {
+                    const $content = $(fragments['div.widget_shopping_cart_content']);
+                    const $cartItems = $content.find('.cart_list li:not(.empty)');
+                    cartCount = $cartItems.length;
+                    apwWooLog('Cart count from fragments: ' + cartCount);
+                }
+            }
+            
+            // If fragments didn't work, try the cart counter in the DOM
+            if (cartCount === 0) {
+                const $miniCart = $('.widget_shopping_cart_content');
+                if ($miniCart.length) {
+                    const $cartItems = $miniCart.find('.cart_list li:not(.empty)');
+                    cartCount = $cartItems.length;
+                    apwWooLog('Cart count from DOM: ' + cartCount);
+                }
+            }
+            
+            // If we still don't have a count, check for WC data
+            if (cartCount === 0 && typeof window.wc_cart_fragments_params !== 'undefined') {
+                // Try to get from any visible counter
+                const $visibleCounter = $('.cart-contents-count, .cart-count');
+                if ($visibleCounter.length) {
+                    const textCount = $visibleCounter.first().text().trim();
+                    if (textCount && !isNaN(parseInt(textCount))) {
+                        cartCount = parseInt(textCount);
+                        apwWooLog('Cart count from visible counter: ' + cartCount);
+                    }
+                }
+            }
+            
+            // Update all cart quantity indicators with the count
+            $('.cart-quantity-indicator').attr('data-cart-count', cartCount);
+            apwWooLog('Updated cart quantity indicators with count: ' + cartCount);
+        }
+        
+        // Initial update
+        updateCartQuantityIndicators();
+        
+        // Update when cart fragments are refreshed
+        $(document.body).on('wc_fragments_refreshed wc_fragments_loaded added_to_cart removed_from_cart', function() {
+            apwWooLog('Cart updated, refreshing quantity indicators');
+            updateCartQuantityIndicators();
+        });
 
         // --- Notice Handling Initialization ---
         apwWooLog('Initializing Notice Handler.');
