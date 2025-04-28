@@ -15,6 +15,7 @@
     margin-right: auto;
     float: none; /* Ensure it doesn't float */
 }
+
 /* --- END: Reduce content wrapper width --- */
 
 :root {
@@ -919,19 +920,20 @@ select.wc-pao-addon-field:focus {
 
 /* Fix PAO validation notice AND Style Flatsome validation in our container */
 .wc-pao-validation-notice, /* Original selector */
-.apw-woo-notices-below-cart .message-container.container.alert-color /* Added selector for Flatsome */ {
+.apw-woo-notices-below-cart .message-container.container.alert-color /* Added selector for Flatsome */
+{
     display: block !important;
-    color: #e2401c !important;                      /* Apply desired color */
+    color: #e2401c !important; /* Apply desired color */
     font-family: var(--apw-font-family) !important; /* Apply desired font */
-    font-size: 1.5rem !important;                   /* Apply desired font size */
-    margin-top: 5px !important;                     /* Apply desired margin */
+    font-size: 1.5rem !important; /* Apply desired font size */
+    margin-top: 5px !important; /* Apply desired margin */
     /* --- Resets needed for the Flatsome selector --- */
-    background-color: transparent !important;       /* Remove Flatsome background */
-    border: none !important;                        /* Remove Flatsome border */
-    padding: 0 !important;                          /* Remove Flatsome padding */
-    text-align: left !important;                    /* Override Flatsome text-align */
+    background-color: transparent !important; /* Remove Flatsome background */
+    border: none !important; /* Remove Flatsome border */
+    padding: 0 !important; /* Remove Flatsome padding */
+    text-align: left !important; /* Override Flatsome text-align */
     font-weight: var(--apw-font-medium) !important; /* Standardize font weight */
-    line-height: 1.4 !important;                    /* Standardize line height */
+    line-height: 1.4 !important; /* Standardize line height */
 }
 
 /* Hide the Flatsome icon separately */
@@ -1018,7 +1020,6 @@ select.wc-pao-addon-field option {
 }
 
 
-
 /* --- Custom Styling for Flatsome Success Notice Below Cart --- */
 
 /* Hide the checkmark icon in the success notice */
@@ -1035,8 +1036,8 @@ select.wc-pao-addon-field option {
     /* Keep Flatsome's success color unless overridden */
     /* background-color: transparent; /* Optional: Override Flatsome bg if needed */
     /* color: var(--apw-woo-text-color); /* Optional: Override Flatsome text color if needed */
-    /*     padding: 1em 1.5em !important; /* Adjust padding if needed */ */
-border-radius: 5px !important; /* Consistent radius */
+    /* padding: 1em 1.5em !important; /* Adjust padding if needed */
+    border-radius: 5px !important; /* Consistent radius */
     /*border-left: 5px solid var(--apw-woo-notice-highlight) !important; !* Use existing highlight color *!*/
 }
 
@@ -1740,7 +1741,7 @@ border-radius: 5px !important; /* Consistent radius */
 /* Overall Form Styling (if needed) */
 .woocommerce-checkout.apw-woo-checkout-form {
     font-family: var(--apw-font-family); /* Example: Use base font */
-    color: var(--apw-woo-text-color);   /* Example: Use base text color */
+    color: var(--apw-woo-text-color); /* Example: Use base text color */
 }
 
 /* --- START: Reduce content wrapper width --- */
@@ -1751,6 +1752,7 @@ border-radius: 5px !important; /* Consistent radius */
     margin-right: auto;
     float: none; /* Ensure it doesn't float */
 }
+
 /* --- END: Reduce content wrapper width --- */
 
 /* Section Headings (Billing details, Shipping details, Your order) */
@@ -1826,14 +1828,14 @@ border-radius: 5px !important; /* Consistent radius */
 
     /* --- User Requirements --- */
     height: 55px !important; /* Applied height, using !important for specificity */
-    padding: 0 !important;   /* Removed padding from container, using !important */
+    padding: 0 !important; /* Removed padding from container, using !important */
     line-height: 55px; /* Vertically align text inside */
 }
 
 /* Adjust position of rendered text within Select2 */
 .woocommerce-checkout .select2-container--default .select2-selection--single .select2-selection__rendered {
     line-height: 55px; /* Match container height */
-    padding-left: 20px !important;  /* Re-add left padding for text */
+    padding-left: 20px !important; /* Re-add left padding for text */
     padding-right: 40px !important; /* Re-add right padding for text (space for arrow) */
     color: var(--apw-woo-text-color); /* Ensure text color is inherited */
 }
@@ -1900,6 +1902,7 @@ border-radius: 5px !important; /* Consistent radius */
 .woocommerce-checkout #order_review table .product-total {
     text-align: right;
 }
+
 /* --- End Order Review Table --- */
 
 /* --- START: Hide Exemption Section Elements --- */
@@ -1911,14 +1914,17 @@ border-radius: 5px !important; /* Consistent radius */
 .woocommerce-checkout #order_review table.woocommerce-checkout-review-order-table ~ div.field hr {
     display: none !important;
 }
+
 /* Hide the exemption zone selection row and proceed button row */
 .woocommerce-checkout #order_review table.woocommerce-checkout-review-order-table ~ div.field.form-row {
     display: none !important;
 }
+
 /* Hide the second HR */
 .woocommerce-checkout #order_review table.woocommerce-checkout-review-order-table ~ hr {
     display: none !important;
 }
+
 /* Hide the form container and related buttons/labels */
 .woocommerce-checkout #order_review table.woocommerce-checkout-review-order-table ~ div#form_container,
 .woocommerce-checkout #order_review table.woocommerce-checkout-review-order-table ~ label, /* Hide labels potentially associated with hidden buttons */
@@ -1926,10 +1932,12 @@ border-radius: 5px !important; /* Consistent radius */
 .woocommerce-checkout #order_review table.woocommerce-checkout-review-order-table ~ button#btnWcClose {
     display: none !important;
 }
+
 /* Hide the invalidation message */
 .woocommerce-checkout #order_review table.woocommerce-checkout-review-order-table ~ div.field > p#invalidateMsg {
     display: none !important;
 }
+
 /* Hide the "Add Certificates" / "Manage existing certificates" links (using general selectors - JS is more reliable for text content) */
 .woocommerce-checkout #order_review table.woocommerce-checkout-review-order-table ~ p,
 .woocommerce-checkout #order_review table.woocommerce-checkout-review-order-table ~ a {
@@ -1937,6 +1945,7 @@ border-radius: 5px !important; /* Consistent radius */
        Adjust if necessary to be more specific if this hides desired content. */
     display: none !important;
 }
+
 /* --- END: Hide Exemption Section Elements --- */
 
 /* --- Payment Methods Section --- */
@@ -1958,6 +1967,7 @@ border-radius: 5px !important; /* Consistent radius */
     border-bottom: 1px solid var(--apw-faq-separator-color); /* Separator */
     margin: 0;
 }
+
 .woocommerce-checkout #payment ul.payment_methods li:last-child {
     border-bottom: none;
 }
@@ -1976,15 +1986,17 @@ border-radius: 5px !important; /* Consistent radius */
     padding: 1em;
     margin-top: 1em;
     border-radius: 4px;
-    box-shadow: inset 0 1px 1px rgba(0,0,0,.05);
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .05);
     color: var(--apw-woo-text-color);
 }
+
 /* --- End Payment Methods Section --- */
 
 /* --- START: Hide Privacy Policy Text --- */
 .woocommerce-checkout .woocommerce-privacy-policy-text {
     display: none !important;
 }
+
 /* --- END: Hide Privacy Policy Text --- */
 
 
@@ -2046,6 +2058,7 @@ border-radius: 5px !important; /* Consistent radius */
     font-weight: var(--apw-font-bold); /* Use the existing bold variable (700) */
     /* You could also use font-weight: bold; or font-weight: 700; directly */
 }
+
 /* --- END: Style Check Payment Instructions --- */
 
 /* --- End Checkout Styles --- */
@@ -2167,7 +2180,8 @@ border-radius: 5px !important; /* Consistent radius */
 /* Targets .button, common WC buttons, and potentially form submit buttons */
 .woocommerce-account .woocommerce-MyAccount-content .button,
 .woocommerce-account .woocommerce-MyAccount-content button[type="submit"],
-.woocommerce-account .woocommerce-MyAccount-content a.button { /* Include links styled as buttons */
+.woocommerce-account .woocommerce-MyAccount-content a.button,
+.apw-woo-myaccount-main .woocommerce-Button { /* Include links styled as buttons */
     background: var(--apw-woo-button-background) !important; /* Use button gradient */
     color: #ffffff !important;
     border-radius: 58px !important;
