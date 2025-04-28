@@ -82,23 +82,34 @@ $correct_account_title = $account_page_id ? get_the_title($account_page_id) : __
                  */
                 do_action('apw_woo_before_myaccount_content');
 
-                /**
-                 * My Account navigation.
-                 * @since 2.6.0
-                 */
-                do_action('woocommerce_account_navigation'); ?>
-
-                <div class="woocommerce-MyAccount-content">
-                    <?php
+                // Check if user is logged in
+                if (is_user_logged_in()) {
                     /**
-                     * My Account content.
+                     * My Account navigation.
                      * @since 2.6.0
                      */
-                    do_action('woocommerce_account_content');
-                    ?>
-                </div>
+                    do_action('woocommerce_account_navigation'); ?>
 
-                <?php
+                    <div class="woocommerce-MyAccount-content">
+                        <?php
+                        /**
+                         * My Account content.
+                         * @since 2.6.0
+                         */
+                        do_action('woocommerce_account_content');
+                        ?>
+                    </div>
+
+                <?php } else {
+                    // If user is not logged in, display the login form
+                    do_action('woocommerce_before_customer_login_form');
+                    
+                    // Use the shortcode which is more reliable:
+                    echo do_shortcode('[woocommerce_my_account]');
+                    
+                    do_action('woocommerce_after_customer_login_form');
+                }
+
                 /**
                  * Hook: apw_woo_after_myaccount_content
                  */
