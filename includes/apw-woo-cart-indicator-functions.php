@@ -47,17 +47,33 @@ add_action('wp_enqueue_scripts', 'apw_woo_enqueue_cart_indicator_assets');
 function apw_woo_add_cart_count_to_body() {
     if (function_exists('WC') && isset(WC()->cart)) {
         $cart_count = WC()->cart->get_cart_contents_count();
-        echo '<script type="text/javascript">
-            document.body.setAttribute("data-cart-count", "' . esc_js($cart_count) . '");
-            // Initialize all cart indicators with the current count
-            if (typeof jQuery !== "undefined") {
-                jQuery(function($) {
-                    $(".cart-quantity-indicator").attr("data-cart-count", "' . esc_js($cart_count) . '");
-                    // Store the WC cart count in a global variable for JS to access
-                    window.apwWooCartCount = ' . esc_js($cart_count) . ';
-                });
-            }
-        </script>';
+        
+        // Check if user is logged in
+        if (is_user_logged_in()) {
+            // For logged-in users, always show the count (even if it's 0)
+            echo '<script type="text/javascript">
+                document.body.setAttribute("data-cart-count", "' . esc_js($cart_count) . '");
+                // Initialize all cart indicators with the current count
+                if (typeof jQuery !== "undefined") {
+                    jQuery(function($) {
+                        $(".cart-quantity-indicator").attr("data-cart-count", "' . esc_js($cart_count) . '");
+                        // Store the WC cart count in a global variable for JS to access
+                        window.apwWooCartCount = ' . esc_js($cart_count) . ';
+                    });
+                }
+            </script>';
+        } else {
+            // For logged-out users, set cart count to empty string to hide the bubble but keep the link visible
+            echo '<script type="text/javascript">
+                document.body.setAttribute("data-cart-count", "");
+                if (typeof jQuery !== "undefined") {
+                    jQuery(function($) {
+                        $(".cart-quantity-indicator").attr("data-cart-count", "");
+                        window.apwWooCartCount = "";
+                    });
+                }
+            </script>';
+        }
     }
 }
 add_action('wp_footer', 'apw_woo_add_cart_count_to_body', 10);
@@ -97,10 +113,23 @@ add_action('wp_footer', 'apw_woo_add_cart_update_listener', 20);
  */
 function apw_woo_get_cart_count() {
     $count = 0;
+    $is_logged_in = is_user_logged_in();
+    
     if (function_exists('WC') && isset(WC()->cart)) {
+        // Get actual cart count
         $count = WC()->cart->get_cart_contents_count();
+        
+        // For logged-out users, return empty string to hide bubble but keep link visible
+        if (!$is_logged_in) {
+            $count = '';
+        }
+        // For logged-in users, we return the actual count (even if it's 0)
     }
-    wp_send_json_success(array('count' => $count));
+    
+    wp_send_json_success(array(
+        'count' => $count,
+        'is_logged_in' => $is_logged_in
+    ));
 }
 add_action('wp_ajax_apw_woo_get_cart_count', 'apw_woo_get_cart_count');
 add_action('wp_ajax_nopriv_apw_woo_get_cart_count', 'apw_woo_get_cart_count');

@@ -147,6 +147,18 @@
             // Get cart count from WooCommerce fragments or data attribute
             let cartCount = 0;
             
+            // Check if user is logged in (using WordPress body class)
+            const isLoggedIn = $('body').hasClass('logged-in');
+            
+            // If user is not logged in, set empty data attribute to hide bubble but keep link visible
+            if (!isLoggedIn) {
+                $('.cart-quantity-indicator').attr('data-cart-count', '');
+                window.apwWooCartCount = '';
+                apwWooLog('User not logged in, hiding cart count bubble but keeping link visible');
+                return;
+            }
+            
+            // For logged-in users, proceed with normal count retrieval
             // Try to get count from WC fragments first
             if (typeof wc_cart_fragments_params !== 'undefined') {
                 try {

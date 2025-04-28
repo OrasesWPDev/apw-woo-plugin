@@ -22,9 +22,14 @@
     box-sizing: border-box;
 }
 
-/* Hide the indicator when cart is empty */
+/* Show the indicator with "0" when cart is empty but user is logged in */
 .cart-quantity-indicator[data-cart-count="0"]::after {
-    display: none;
+    display: inline-block; /* Always show for logged-in users with empty cart */
+}
+
+/* Hide the indicator when data-cart-count is empty (for logged-out users) */
+.cart-quantity-indicator[data-cart-count=""]::after {
+    display: none; /* Hide bubble for logged-out users */
 }
 
 /* Ensure the indicator updates with transitions */
