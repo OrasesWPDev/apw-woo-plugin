@@ -2,10 +2,11 @@
 /**
  * Template for displaying products within a specific category.
  *
- * Includes a theme-managed header block (whose title is modified via PHP preg_replace),
- * a category introduction (H2 title + description), the product grid, and an FAQ section.
+ * REVISED: Uses the standard WordPress loop to respect default sorting settings, including menu_order.
+ * Includes a theme-managed header block, a category introduction, the product grid, and an FAQ section.
  *
  * @package APW_Woo_Plugin
+ * @version 1.0.0-apw.2 // Increment version for loop change
  */
 
 // Exit if accessed directly.
@@ -17,8 +18,8 @@ if (!defined('ABSPATH')) {
 $pre_header_category = get_queried_object();
 $is_valid_category_page = ($pre_header_category instanceof WP_Term && $pre_header_category->taxonomy === 'product_cat');
 
-if (APW_WOO_DEBUG_MODE) {
-    apw_woo_log('Loading category products display template (category-products-display.php)');
+if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+    apw_woo_log('Loading REVISED category products display template (category-products-display.php - using standard WP loop)');
     if (!$is_valid_category_page) {
         $object_type = is_object($pre_header_category) ? get_class($pre_header_category) : gettype($pre_header_category);
         apw_woo_log('Category template WARNING: Initial check indicates this might not be a valid product category page. Queried object type: ' . $object_type, 'warning');
@@ -31,7 +32,7 @@ if (APW_WOO_DEBUG_MODE) {
 get_header();
 ?>
     <main id="main" class="apw-woo-category-products-main">
-        <!-- APW-WOO-TEMPLATE: category-products-display.php is loaded -->
+        <!-- APW-WOO-TEMPLATE: REVISED category-products-display.php (using standard WP loop) is loaded -->
 
         <!-- Header Block -->
         <!-- Outputs the reusable block and attempts to override its title(s) on category pages using preg_replace. -->
@@ -43,7 +44,7 @@ get_header();
              */
             do_action('apw_woo_before_category_header', $pre_header_category);
 
-            if (APW_WOO_DEBUG_MODE) {
+            if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
                 apw_woo_log('Rendering category page header section using Block ID: third-level-woo-page-header and modifying title with preg_replace');
             }
 
@@ -55,7 +56,7 @@ get_header();
             if (is_product_category() && shortcode_exists('block')) {
 
                 // --- Capture and Modify Block Output ---
-                if (APW_WOO_DEBUG_MODE) {
+                if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
                     apw_woo_log('Attempting to capture and modify block output for ID: ' . $target_block_id);
                 }
 
@@ -79,7 +80,7 @@ get_header();
                     $modified_block_html = preg_replace($pattern, '$1' . esc_html($correct_title) . '$3', $block_html);
 
                     // Log replacement status.
-                    if (APW_WOO_DEBUG_MODE) {
+                    if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
                         // Check how many replacements were made
                         preg_match_all($pattern, $block_html, $original_matches);
                         $original_count = isset($original_matches[0]) ? count($original_matches[0]) : 0;
@@ -112,7 +113,7 @@ get_header();
 
                 } else {
                     // Fallback if the queried object isn't the expected category term.
-                    if (APW_WOO_DEBUG_MODE) {
+                    if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
                         $header_object_type = is_object($header_category_object) ? get_class($header_category_object) : gettype($header_category_object);
                         apw_woo_log('ERROR: Cannot override block title because get_queried_object() returned invalid type (' . $header_object_type . ') within header block section. Outputting original block.', 'error');
                     }
@@ -122,13 +123,13 @@ get_header();
 
             } elseif (shortcode_exists('block')) {
                 // If not a product category, output the block unmodified.
-                if (APW_WOO_DEBUG_MODE) {
+                if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
                     apw_woo_log('Not a product category page. Outputting block ID ' . $target_block_id . ' without title modification.');
                 }
                 echo do_shortcode('[block id="' . esc_attr($target_block_id) . '"]');
             } else {
                 // Fallback if '[block]' shortcode doesn't exist.
-                if (APW_WOO_DEBUG_MODE) {
+                if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
                     apw_woo_log('WARNING: Shortcode [block] does not exist. Falling back to standard title.', 'warning');
                 }
                 // Output a fallback title structure if block shortcode fails
@@ -160,7 +161,7 @@ get_header();
                     // --- Fetch and Validate Category Object for Content Area ---
                     $current_category = get_queried_object(); // Re-fetch or use $header_category_object if needed
                     if (!is_a($current_category, 'WP_Term') || !isset($current_category->taxonomy) || $current_category->taxonomy !== 'product_cat') {
-                        if (APW_WOO_DEBUG_MODE) {
+                        if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
                             $object_type = is_object($current_category) ? get_class($current_category) : gettype($current_category);
                             apw_woo_log('Category template CONTENT ERROR: Expected WP_Term for product_cat, but got ' . $object_type . '. Aborting content rendering.', 'error');
                         }
@@ -169,7 +170,7 @@ get_header();
                         get_footer();
                         exit;
                     }
-                    if (APW_WOO_DEBUG_MODE) {
+                    if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
                         $category_name_for_log = isset($current_category->name) ? $current_category->name : '[Name property missing]';
                         $category_id_for_log = isset($current_category->term_id) ? $current_category->term_id : '[ID property missing]';
                         apw_woo_log('Validated current category for content area: ' . $category_name_for_log . ' (ID: ' . $category_id_for_log . ')');
@@ -189,7 +190,7 @@ get_header();
                         <div class="col apw-woo-intro-section">
                             <?php
                             do_action('apw_woo_before_category_intro', $current_category);
-                            if (APW_WOO_DEBUG_MODE && isset($current_category->name)) {
+                            if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log') && isset($current_category->name)) {
                                 apw_woo_log('Rendering category introduction section for: ' . $current_category->name);
                             }
                             ?>
@@ -233,36 +234,43 @@ get_header();
                             <?php
                             do_action('apw_woo_before_products_grid', $current_category);
 
-                            // Fetch products.
-                            if (APW_WOO_DEBUG_MODE && isset($current_category->slug)) {
-                                apw_woo_log('Fetching products for category slug: ' . $current_category->slug);
-                            }
-                            $product_args = [
-                                'status' => 'publish', 'limit' => -1,
-                                'category' => isset($current_category->slug) ? [$current_category->slug] : [],
-                            ];
-                            $products = apply_filters('apw_woo_category_products', wc_get_products($product_args), $current_category);
-
-                            // Product Loop.
-                            if (!empty($products)) {
-                                if (APW_WOO_DEBUG_MODE && isset($current_category->name)) {
-                                    apw_woo_log('Found ' . count($products) . ' products to display in category: ' . $current_category->name);
+                            // *** START REPLACEMENT: Use WordPress Loop ***
+                            if (have_posts()) :
+                                if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                                    apw_woo_log('Starting standard WordPress loop for category products.');
                                 }
                                 ?>
                                 <div class="apw-woo-products-grid">
                                     <?php
-                                    foreach ($products as $product) {
+                                    while (have_posts()) :
+                                        the_post();
+                                        global $product; // Make product object available
+
+                                        // --- Get your product data here ---
+                                        if (!is_a($product, 'WC_Product')) {
+                                            // Attempt to get product if global isn't set correctly
+                                            $product = wc_get_product(get_the_ID());
+                                        }
+                                        // Skip if product is invalid after trying to fetch it
+                                        if (!is_a($product, 'WC_Product')) {
+                                            if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                                                apw_woo_log('WARNING: Invalid product object encountered in loop for post ID: ' . get_the_ID(), 'warning');
+                                            }
+                                            continue; // Skip to next post
+                                        }
+
                                         $product_id = $product->get_id();
                                         $product_title = $product->get_name();
                                         $product_link = get_permalink($product_id);
                                         $product_image_id = $product->get_image_id();
                                         $product_image_url = $product_image_id ? wp_get_attachment_url($product_image_id) : wc_placeholder_img_src();
 
-                                        if (APW_WOO_DEBUG_MODE) {
-                                            apw_woo_log('Rendering product item: ' . $product_title . ' (ID: ' . $product_id . ')');
+                                        if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                                            apw_woo_log('Rendering product item (via loop): ' . $product_title . ' (ID: ' . $product_id . ')');
                                         }
                                         do_action('apw_woo_before_product_item', $product, $current_category);
                                         ?>
+                                        <!-- Your existing product item HTML structure -->
                                         <div class="apw-woo-product-item">
                                             <a href="<?php echo esc_url($product_link); ?>"
                                                class="apw-woo-product-card-link">
@@ -287,21 +295,25 @@ get_header();
                                         </div>
                                         <?php
                                         do_action('apw_woo_after_product_item', $product, $current_category);
-                                    } // End foreach
+
+                                    endwhile; // end of the loop.
                                     ?>
                                 </div> <!-- /.apw-woo-products-grid -->
-                                <?php
-                            } else { // No products found
-                                if (APW_WOO_DEBUG_MODE && isset($current_category->slug)) {
-                                    apw_woo_log('No products found in category slug: ' . $current_category->slug);
+                            <?php
+
+                            else : // No products found in the standard loop
+                                if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                                    apw_woo_log('Standard WordPress loop found no products for category slug: ' . (isset($current_category->slug) ? $current_category->slug : 'N/A'));
                                 }
                                 do_action('apw_woo_no_products_found', $current_category);
                                 ?>
                                 <div class="apw-woo-no-products">
                                     <p><?php echo esc_html(apply_filters('apw_woo_no_products_text', __('No products were found matching your selection.', 'woocommerce'), $current_category)); ?></p>
                                 </div>
-                                <?php
-                            } // End if/else (!empty($products))
+                            <?php
+                            endif; // End if/else ( have_posts() )
+                            wp_reset_postdata(); // Reset post data after the loop
+                            // *** END REPLACEMENT ***
 
                             do_action('apw_woo_after_products_grid', $current_category);
                             ?>
@@ -320,18 +332,18 @@ get_header();
                         <div class="col apw-woo-faq-section-container">
                             <?php
                             do_action('apw_woo_before_category_faqs', $current_category);
-                            if (APW_WOO_DEBUG_MODE && isset($current_category->name)) {
+                            if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log') && isset($current_category->name)) {
                                 apw_woo_log('Attempting to load FAQ display partial for category: ' . $current_category->name);
                             }
                             $faq_partial_path = APW_WOO_PLUGIN_DIR . 'templates/partials/faq-display.php';
                             if (file_exists($faq_partial_path)) {
                                 $faq_category = apply_filters('apw_woo_faq_category', $current_category);
-                                if (APW_WOO_DEBUG_MODE) {
+                                if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
                                     apw_woo_log('Passing category object to faq-display.php: ' . ($faq_category && isset($faq_category->name) ? $faq_category->name : 'NULL or Name Missing'));
                                 }
-                                include($faq_partial_path);
+                                include($faq_partial_path); // Pass $faq_category implicitly
                             } else {
-                                if (APW_WOO_DEBUG_MODE) {
+                                if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
                                     apw_woo_log('FAQ display partial not found at: ' . $faq_partial_path, 'error');
                                 }
                             }
@@ -356,9 +368,9 @@ get_header();
 <?php
 
 // Log template completion.
-if (APW_WOO_DEBUG_MODE) {
+if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
     $category_name_for_log = (isset($current_category) && is_a($current_category, 'WP_Term') && isset($current_category->name)) ? $current_category->name : '[Unknown Category - Check Validation Log]';
-    apw_woo_log('Completed rendering category products template for: ' . $category_name_for_log);
+    apw_woo_log('Completed rendering REVISED category products template for: ' . $category_name_for_log);
 }
 
 get_footer();
