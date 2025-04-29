@@ -71,15 +71,18 @@ class APW_Woo_Template_Resolver
             // Simple path-based detection for restricted pages
             $current_path = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
             
+            // Don't skip if we're on a login page with our notice parameter
+            $is_login_page = strpos($current_path, 'apw_login_notice') !== false;
+            
             // Check for cart, checkout, or account pages
-            if (strpos($current_path, '/cart') !== false || 
+            if (!$is_login_page && (
+                strpos($current_path, '/cart') !== false || 
                 strpos($current_path, '/checkout') !== false || 
-                strpos($current_path, '/account') !== false || 
-                strpos($current_path, '/my-account') !== false ||
+                strpos($current_path, '/account') !== false ||
                 (function_exists('is_cart') && is_cart()) || 
                 (function_exists('is_checkout') && is_checkout()) || 
-                (function_exists('is_account_page') && is_account_page())) {
-                
+                (function_exists('is_account_page') && is_account_page())
+            )) {
                 if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
                     apw_woo_log("RESOLVER: EARLY EXIT - Skipping template resolution for restricted page - user not logged in");
                     apw_woo_log("RESOLVER: Current path: " . $current_path);
@@ -209,7 +212,8 @@ class APW_Woo_Template_Resolver
                 'condition' => 'is_account_page', // WooCommerce conditional
                 'template' => self::MY_ACCOUNT_TEMPLATE,
                 'page_type' => 'myaccount', // For context setup ('myaccount' is key for wc_get_page_id)
-                'description' => 'account'
+                'description' => 'account',
+                'login_aware' => true // Add this flag to indicate it should work for login pages too
             ],
             // Now check archives (order matters if URLs overlap, e.g., /shop/category/)
             'category' => [
@@ -241,6 +245,15 @@ class APW_Woo_Template_Resolver
             if ($condition_callable && call_user_func($condition_callable)) {
                 if ($apw_debug_mode && $apw_log_exists) {
                     apw_woo_log("RESOLVER: Condition met for '{$settings['description']}'. Checking for custom template.");
+                }
+
+                // Special handling for account pages when user is not logged in (login form)
+                if ($type === 'account' && !is_user_logged_in() && isset($_GET['apw_login_notice'])) {
+                    if ($apw_debug_mode && $apw_log_exists) {
+                        apw_woo_log("RESOLVER: Account page with login form detected. Using custom account template.");
+                    }
+                    // Don't skip template resolution for login pages
+                    // This overrides the early exit in the resolver
                 }
 
                 // --- Context Setup for Standard Pages (Cart, Checkout, Account) ---

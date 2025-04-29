@@ -245,6 +245,7 @@ add_action('template_redirect', 'apw_woo_anti_loop_login_redirect', 5);
 
 /**
  * Display a notice on the login form based on which page the user was trying to access
+ * Uses standard WooCommerce hooks instead of custom templates
  */
 function apw_woo_display_login_notice() {
     // Check if our query parameter is set
@@ -268,18 +269,47 @@ function apw_woo_display_login_notice() {
                 break;
         }
         
+        if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+            apw_woo_log('Displaying login notice for page type: ' . $page_type . ' with message: ' . $message);
+        }
+        
         // Display the notice with a custom class for styling
         if (function_exists('wc_print_notice')) {
-            wc_print_notice($message, 'notice apw-login-required-notice');
+            // Remove the notice if it's already been added (prevent duplicates)
+            wc_clear_notices();
+            
+            // Add our notice
+            wc_add_notice($message, 'notice', array('apw-login-required-notice' => true));
+            
+            if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                apw_woo_log('Added notice using wc_add_notice()');
+            }
         } else {
+            // Fallback if wc_print_notice isn't available
             echo '<div class="woocommerce-info apw-login-required-notice">' . esc_html($message) . '</div>';
+            
+            if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                apw_woo_log('Used fallback notice display method');
+            }
         }
     }
 }
-add_action('woocommerce_before_customer_login_form', 'apw_woo_display_login_notice', 10);
-// Also add to notices hook for themes that might not use the standard login form
+
+// Remove existing hooks
+remove_action('woocommerce_before_customer_login_form', 'apw_woo_display_login_notice', 10);
+remove_action('woocommerce_before_checkout_form', 'apw_woo_display_login_notice', 5);
+remove_action('woocommerce_before_cart', 'apw_woo_display_login_notice', 5);
+
+// Add to the correct hooks with high priority to ensure it displays
+add_action('woocommerce_before_customer_login_form', 'apw_woo_display_login_notice', 5);
 add_action('woocommerce_before_checkout_form', 'apw_woo_display_login_notice', 5);
 add_action('woocommerce_before_cart', 'apw_woo_display_login_notice', 5);
+
+// Also add to the notices hook to ensure it's displayed
+add_action('woocommerce_before_main_content', 'apw_woo_display_login_notice', 5);
+
+// Add to the WooCommerce notices hook
+add_action('woocommerce_notices', 'apw_woo_display_login_notice', 5);
 
 // JavaScript fallback redirect has been removed to prevent redirect loops
 
