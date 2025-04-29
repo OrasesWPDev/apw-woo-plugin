@@ -11,7 +11,7 @@
  * Plugin Name:       APW WooCommerce Plugin
  * Plugin URI:        https://github.com/OrasesWPDev/apw-woo-plugin
  * Description:       Custom WooCommerce enhancements for displaying products across shop, category, and product pages.
- * Version:           1.7.0
+ * Version:           1.7.1
  * Requires at least: 5.3
  * Requires PHP:      7.2
  * Author:            Orases
