@@ -156,13 +156,18 @@ function apw_woo_redirect_restricted_pages() {
     // Check if user is logged out and trying to access a restricted page
     if (!is_user_logged_in() && (is_cart() || is_checkout() || is_account_page())) {
 
-        // Determine the page the user was trying to access
+        // Determine which page the user was trying to access
+        $page_type = '';
         $redirect_page_url = '';
+        
         if (is_cart()) {
+            $page_type = 'cart';
             $redirect_page_url = wc_get_cart_url();
         } elseif (is_checkout()) {
+            $page_type = 'checkout';
             $redirect_page_url = wc_get_checkout_url();
         } elseif (is_account_page()) {
+            $page_type = 'account';
             // For account page, redirect back to the specific endpoint if possible, otherwise account base
             $redirect_page_url = wc_get_account_endpoint_url(get_query_var('pagename')); // Handles endpoints like /orders/, /edit-address/ etc.
             if (!$redirect_page_url) {
@@ -178,8 +183,8 @@ function apw_woo_redirect_restricted_pages() {
             $login_url = add_query_arg('redirect_to', urlencode($redirect_page_url), $login_url);
         }
 
-        // Add our custom notice parameter
-        $login_url = add_query_arg('apw_login_notice', 'restricted_page', $login_url);
+        // Add our custom notice parameter with the page type
+        $login_url = add_query_arg('apw_login_notice', $page_type, $login_url);
 
         // Redirect to login page
         wp_safe_redirect($login_url);
@@ -193,9 +198,28 @@ add_action('template_redirect', 'apw_woo_redirect_restricted_pages', 10);
  */
 function apw_woo_display_login_notice() {
     // Check if our query parameter is set
-    if (isset($_GET['apw_login_notice']) && $_GET['apw_login_notice'] === 'restricted_page') {
-        // Display the notice
-        wc_print_notice(__('Please log in or create an account to see the shopping cart, checkout, or your account details.', 'apw-woo-plugin'), 'notice');
+    if (isset($_GET['apw_login_notice'])) {
+        $page_type = sanitize_text_field($_GET['apw_login_notice']);
+        $message = '';
+        
+        // Set message based on page type
+        switch ($page_type) {
+            case 'cart':
+                $message = __('Please log in to view your cart.', 'apw-woo-plugin');
+                break;
+            case 'checkout':
+                $message = __('Please log in to proceed to checkout.', 'apw-woo-plugin');
+                break;
+            case 'account':
+                $message = __('Please log in to view your account details.', 'apw-woo-plugin');
+                break;
+            default:
+                $message = __('Please log in to continue.', 'apw-woo-plugin');
+                break;
+        }
+        
+        // Display the notice with a custom class for styling
+        wc_print_notice($message, 'notice apw-login-required-notice');
     }
 }
 add_action('woocommerce_before_customer_login_form', 'apw_woo_display_login_notice');
