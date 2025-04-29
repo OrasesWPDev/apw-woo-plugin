@@ -142,6 +142,23 @@
 
         apwWooLog('APW Woo Plugin: Document Ready.');
         
+        // Force refresh cart indicator on page load
+        setTimeout(function() {
+            // Use WooCommerce's built-in AJAX endpoint to get fresh cart data
+            if (typeof wc_cart_fragments_params !== 'undefined') {
+                $.ajax({
+                    type: 'GET',
+                    url: wc_cart_fragments_params.wc_ajax_url.toString().replace('%%endpoint%%', 'get_refreshed_fragments'),
+                    success: function(response) {
+                        if (response && response.fragments) {
+                            apwWooLog('Forced cart refresh on page load');
+                            $(document.body).trigger('wc_fragments_refreshed');
+                        }
+                    }
+                });
+            }
+        }, 500);
+        
         // --- Cart Quantity Indicator ---
         function updateCartQuantityIndicators() {
             // Get cart count from WooCommerce fragments or data attribute
@@ -293,6 +310,28 @@
                 apwWooLog('Cart quantity changed, refreshing indicators');
                 updateCartQuantityIndicators();
             }, 300);
+        });
+        
+        // Listen for clicks on remove buttons in cart
+        $(document).on('click', '.woocommerce-cart-form .product-remove a.remove, .cart_item .remove', function() {
+            apwWooLog('Remove button clicked, scheduling indicator refresh');
+            // Multiple timeouts to catch the update at different stages
+            setTimeout(updateCartQuantityIndicators, 100);
+            setTimeout(updateCartQuantityIndicators, 500);
+            setTimeout(updateCartQuantityIndicators, 1000);
+        });
+        
+        // Listen for AJAX requests that might be cart updates
+        $(document).ajaxComplete(function(event, xhr, settings) {
+            // Check if the AJAX call is related to cart updates
+            if (settings.url && (
+                settings.url.indexOf('wc-ajax=remove_from_cart') > -1 ||
+                settings.url.indexOf('wc-ajax=cart') > -1 ||
+                settings.url.indexOf('remove_item') > -1
+            )) {
+                apwWooLog('Cart-related AJAX completed, refreshing indicators');
+                setTimeout(updateCartQuantityIndicators, 100);
+            }
         });
 
         // --- Notice Handling Initialization ---
