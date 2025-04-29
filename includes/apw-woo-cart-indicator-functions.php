@@ -159,7 +159,7 @@ add_action('wp_enqueue_scripts', 'apw_woo_add_inline_button_css', 999); // Very 
 
 /**
  * Anti-loop login redirect for WooCommerce restricted pages
- * Designed to prevent infinite redirect loops by checking for existing redirect parameters
+ * Prevents redirect loops by properly detecting login pages vs. account pages
  */
 function apw_woo_anti_loop_login_redirect() {
     // Skip for logged-in users, admin, AJAX, or cron
@@ -167,31 +167,59 @@ function apw_woo_anti_loop_login_redirect() {
         return;
     }
     
-    // Simple path-based detection for restricted pages
+    // Get current path and query string
     $current_path = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+    $query_string = parse_url($current_path, PHP_URL_QUERY);
+    parse_str($query_string ?: '', $query_params);
     
-    // CRITICAL: Check if we're already in a redirect loop
-    // If the URL already contains 'redirect=' or multiple 'apw_login_notice' parameters, don't redirect again
-    if (strpos($current_path, 'redirect=') !== false || substr_count($current_path, 'apw_login_notice') > 1) {
+    // CRITICAL: Don't redirect if we're already on a login form
+    // Check for login-specific query parameters or the login form
+    if (
+        // If we already have our login notice parameter, don't redirect again
+        isset($query_params['apw_login_notice']) ||
+        // If WooCommerce is showing the login form
+        (function_exists('is_account_page') && is_account_page() && !is_user_logged_in()) ||
+        // If we're on a specific login-related endpoint
+        (isset($query_params['action']) && in_array($query_params['action'], ['login', 'register', 'lostpassword'])) ||
+        // Check for WooCommerce login form in the DOM (more reliable)
+        (did_action('woocommerce_before_customer_login_form') || has_action('woocommerce_before_customer_login_form'))
+    ) {
         if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
-            apw_woo_log('ANTI-LOOP: Detected potential redirect loop, aborting redirect');
+            apw_woo_log('ANTI-LOOP: Login form detected, skipping redirect');
         }
         return;
     }
     
     // Check for cart, checkout, or account pages in the URL path
-    if (strpos($current_path, '/cart') !== false || 
+    if (
+        // URL path-based detection
+        strpos($current_path, '/cart') !== false || 
         strpos($current_path, '/checkout') !== false || 
         strpos($current_path, '/my-account') !== false ||
-        strpos($current_path, '/account') !== false) {
-        
-        // Get a simple login URL - avoid complex parameter handling
+        strpos($current_path, '/account') !== false ||
+        // Function-based detection (more reliable but runs later)
+        (function_exists('is_cart') && is_cart()) || 
+        (function_exists('is_checkout') && is_checkout()) || 
+        (function_exists('is_account_page') && is_account_page())
+    ) {
+        // Get the login URL (WooCommerce account page)
         $login_url = function_exists('wc_get_page_permalink') ? 
             wc_get_page_permalink('myaccount') : 
             wp_login_url(home_url());
         
-        // Add a simple notice parameter without any redirect parameter
-        $login_url = add_query_arg('apw_login_notice', 'required', $login_url);
+        // Determine which page type for the notice
+        $page_type = 'required';
+        if (strpos($current_path, '/cart') !== false || (function_exists('is_cart') && is_cart())) {
+            $page_type = 'cart';
+        } elseif (strpos($current_path, '/checkout') !== false || (function_exists('is_checkout') && is_checkout())) {
+            $page_type = 'checkout';
+        } elseif (strpos($current_path, '/account') !== false || strpos($current_path, '/my-account') !== false || 
+                 (function_exists('is_account_page') && is_account_page())) {
+            $page_type = 'account';
+        }
+        
+        // Add our notice parameter
+        $login_url = add_query_arg('apw_login_notice', $page_type, $login_url);
         
         if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
             apw_woo_log('ANTI-LOOP: Redirecting to login: ' . $login_url);
@@ -209,18 +237,36 @@ remove_action('template_redirect', 'apw_woo_redirect_restricted_pages', 5);
 remove_action('template_redirect', 'apw_woo_force_login_for_woocommerce_pages', 1);
 remove_action('wp_footer', 'apw_woo_add_js_redirect_check', 99);
 remove_action('init', 'apw_woo_simple_login_redirect', 1);
+remove_action('init', 'apw_woo_anti_loop_login_redirect', 1);
 
-// Add our anti-loop hook at the earliest possible point
-add_action('init', 'apw_woo_anti_loop_login_redirect', 1);
+// Add our anti-loop hook at a later point in the WordPress lifecycle
+// Using template_redirect instead of init to have access to WooCommerce conditional functions
+add_action('template_redirect', 'apw_woo_anti_loop_login_redirect', 5);
 
 /**
- * Display a simplified notice on the login form
+ * Display a notice on the login form based on which page the user was trying to access
  */
 function apw_woo_display_login_notice() {
     // Check if our query parameter is set
     if (isset($_GET['apw_login_notice'])) {
-        // Use a generic message regardless of the parameter value
-        $message = __('Please log in to access this page.', 'apw-woo-plugin');
+        $page_type = sanitize_text_field($_GET['apw_login_notice']);
+        $message = '';
+        
+        // Set message based on page type
+        switch ($page_type) {
+            case 'cart':
+                $message = __('Please log in to view your cart.', 'apw-woo-plugin');
+                break;
+            case 'checkout':
+                $message = __('Please log in to proceed to checkout.', 'apw-woo-plugin');
+                break;
+            case 'account':
+                $message = __('Please log in to view your account details.', 'apw-woo-plugin');
+                break;
+            default:
+                $message = __('Please log in to access this page.', 'apw-woo-plugin');
+                break;
+        }
         
         // Display the notice with a custom class for styling
         if (function_exists('wc_print_notice')) {
