@@ -142,6 +142,40 @@
 
         apwWooLog('APW Woo Plugin: Document Ready.');
         
+        // Handle cart link clicks for non-logged in users
+        $(document).on('click', '.cart-quantity-indicator, a[href*="cart"], a.cart-link', function(e) {
+            // Check if user is logged in by checking body class
+            if (!$('body').hasClass('logged-in')) {
+                e.preventDefault();
+                apwWooLog('User not logged in, redirecting to login page');
+                
+                // Get the account page URL
+                let accountUrl = '';
+                
+                // Try to get from WooCommerce data
+                if (typeof wc_add_to_cart_params !== 'undefined' && wc_add_to_cart_params.myaccount_url) {
+                    accountUrl = wc_add_to_cart_params.myaccount_url;
+                } else {
+                    // Fallback to looking for my-account link
+                    const $accountLink = $('a[href*="my-account"]').first();
+                    if ($accountLink.length) {
+                        accountUrl = $accountLink.attr('href');
+                    } else {
+                        // Last resort - hardcode the URL pattern
+                        accountUrl = '/my-account/';
+                    }
+                }
+                
+                // Add redirect parameter to return to cart after login
+                const cartUrl = $(this).attr('href') || '/cart/';
+                const redirectUrl = accountUrl + (accountUrl.indexOf('?') > -1 ? '&' : '?') + 
+                                   'redirect_to=' + encodeURIComponent(cartUrl);
+                
+                // Redirect to login page
+                window.location.href = redirectUrl;
+            }
+        });
+        
         // Force refresh cart indicator on page load
         setTimeout(function() {
             // Use WooCommerce's built-in AJAX endpoint to get fresh cart data
@@ -313,12 +347,64 @@
         });
         
         // Listen for clicks on remove buttons in cart
-        $(document).on('click', '.woocommerce-cart-form .product-remove a.remove, .cart_item .remove', function() {
+        $(document).on('click', '.woocommerce-cart-form .product-remove a.remove, .cart_item .remove, .apw-woo-product-remove a.apw-woo-remove', function(e) {
             apwWooLog('Remove button clicked, scheduling indicator refresh');
-            // Multiple timeouts to catch the update at different stages
-            setTimeout(updateCartQuantityIndicators, 100);
-            setTimeout(updateCartQuantityIndicators, 500);
-            setTimeout(updateCartQuantityIndicators, 1000);
+            
+            // Store the clicked button to check if it's our custom remove button
+            const $removeButton = $(this);
+            const isCustomRemove = $removeButton.hasClass('apw-woo-remove');
+            
+            if (isCustomRemove) {
+                // For our custom remove buttons, we need to handle the AJAX update manually
+                e.preventDefault();
+                
+                // Get the cart item key from the data attribute or href
+                const cartItemKey = $removeButton.data('product_id') || 
+                                   $removeButton.attr('href').split('remove_item=')[1].split('&')[0];
+                
+                if (cartItemKey) {
+                    apwWooLog('Removing item with key: ' + cartItemKey);
+                    
+                    // Show loading state
+                    $removeButton.closest('tr').addClass('processing').block({
+                        message: null,
+                        overlayCSS: { opacity: 0.6 }
+                    });
+                    
+                    // Make AJAX request to remove the item
+                    $.ajax({
+                        type: 'POST',
+                        url: wc_add_to_cart_params.wc_ajax_url.toString().replace('%%endpoint%%', 'remove_from_cart'),
+                        data: {
+                            cart_item_key: cartItemKey
+                        },
+                        success: function(response) {
+                            // Force refresh cart fragments to update the cart count
+                            $(document.body).trigger('wc_fragment_refresh');
+                            
+                            // Reload the page after a short delay to show the updated cart
+                            setTimeout(function() {
+                                window.location.reload();
+                            }, 500);
+                        },
+                        error: function() {
+                            // On error, still try to reload the page
+                            window.location.reload();
+                        }
+                    });
+                }
+            } else {
+                // For standard WooCommerce remove buttons, use multiple timeouts
+                // Multiple timeouts to catch the update at different stages
+                setTimeout(updateCartQuantityIndicators, 100);
+                setTimeout(updateCartQuantityIndicators, 500);
+                setTimeout(updateCartQuantityIndicators, 1000);
+                
+                // Also force a fragment refresh to ensure the cart count updates
+                setTimeout(function() {
+                    $(document.body).trigger('wc_fragment_refresh');
+                }, 300);
+            }
         });
         
         // Listen for AJAX requests that might be cart updates
@@ -327,10 +413,17 @@
             if (settings.url && (
                 settings.url.indexOf('wc-ajax=remove_from_cart') > -1 ||
                 settings.url.indexOf('wc-ajax=cart') > -1 ||
-                settings.url.indexOf('remove_item') > -1
+                settings.url.indexOf('remove_item') > -1 ||
+                settings.url.indexOf('add_to_cart') > -1 ||
+                settings.url.indexOf('update_item_quantity') > -1
             )) {
                 apwWooLog('Cart-related AJAX completed, refreshing indicators');
                 setTimeout(updateCartQuantityIndicators, 100);
+                
+                // Force a fragment refresh to ensure the cart count updates properly
+                setTimeout(function() {
+                    $(document.body).trigger('wc_fragment_refresh');
+                }, 200);
             }
         });
 

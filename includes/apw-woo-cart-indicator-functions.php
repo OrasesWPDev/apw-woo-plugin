@@ -109,6 +109,26 @@ function apw_woo_add_cart_update_listener() {
 add_action('wp_footer', 'apw_woo_add_cart_update_listener', 20);
 
 /**
+ * Redirect non-logged-in users to the login page when trying to access the cart
+ */
+function apw_woo_redirect_cart_to_login() {
+    // Only run on the cart page
+    if (is_cart() && !is_user_logged_in()) {
+        // Get the login page URL (WooCommerce account page with redirect back to cart)
+        $login_url = add_query_arg(
+            'redirect_to', 
+            urlencode(wc_get_cart_url()),
+            wc_get_page_permalink('myaccount')
+        );
+        
+        // Redirect to login page
+        wp_redirect($login_url);
+        exit;
+    }
+}
+add_action('template_redirect', 'apw_woo_redirect_cart_to_login', 10);
+
+/**
  * Add AJAX action to get the current cart count
  */
 function apw_woo_get_cart_count() {

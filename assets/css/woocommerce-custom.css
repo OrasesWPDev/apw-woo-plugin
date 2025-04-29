@@ -2347,3 +2347,244 @@ select.wc-pao-addon-field option {
 
 /* --- End My Account Styles --- */
 
+/* ========================================
+   11. LOGIN/REGISTER PAGE STYLES
+   Styles for the WooCommerce login and registration forms
+   ======================================== */
+
+/* --- Start Login/Register Styles --- */
+
+/* Overall container styling */
+#customer_login {
+    font-family: var(--apw-font-family);
+    color: var(--apw-woo-text-color);
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+}
+
+/* Section headings (Login and Register) */
+#customer_login h3.uppercase {
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold);
+    font-size: 1.8rem;
+    color: var(--apw-woo-text-color);
+    margin-bottom: 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Form row styling */
+#customer_login .form-row {
+    margin-bottom: 1.5rem;
+}
+
+/* Form labels */
+#customer_login label {
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-medium);
+    font-size: var(--apw-woo-content-font-size);
+    color: var(--apw-woo-text-color);
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+/* Required field indicator */
+#customer_login label .required {
+    color: red;
+    font-weight: var(--apw-font-bold);
+    margin-left: 0.25rem;
+}
+
+/* Input fields styling */
+#customer_login input[type="text"],
+#customer_login input[type="email"],
+#customer_login input[type="password"] {
+    font-family: var(--apw-font-family);
+    font-size: var(--apw-woo-content-font-size);
+    color: var(--apw-woo-text-color);
+    background-color: var(--apw-woo-dropdown-bg);
+    border: 1px solid var(--apw-woo-dropdown-border);
+    border-radius: 20px;
+    padding: 12px 20px;
+    min-height: 50px;
+    width: 100%;
+    box-shadow: none;
+    box-sizing: border-box;
+}
+
+/* Password input container */
+#customer_login .password-input {
+    width: 100%;
+    display: block;
+    position: relative;
+}
+
+/* Show password button */
+#customer_login .show-password-input {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--apw-woo-text-color);
+    cursor: pointer;
+    padding: 0;
+    font-size: 1.2rem;
+}
+
+/* Remember me checkbox container */
+#customer_login .woocommerce-form__label-for-checkbox {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    cursor: pointer;
+}
+
+/* Remember me checkbox */
+#customer_login .woocommerce-form__input-checkbox {
+    margin-right: 0.5rem;
+    cursor: pointer;
+}
+
+/* Remember me text */
+#customer_login .woocommerce-form__label-for-checkbox span {
+    font-family: var(--apw-font-family);
+    font-size: 1rem;
+    color: var(--apw-woo-text-color);
+}
+
+/* Login button styling */
+#customer_login .woocommerce-form-login__submit {
+    background: var(--apw-woo-button-background) !important;
+    color: #ffffff !important;
+    border-radius: 58px !important;
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold);
+    font-size: 1.1rem !important;
+    text-transform: uppercase !important;
+    padding: 12px 30px !important;
+    border: none !important;
+    text-align: center;
+    text-decoration: none;
+    transition: opacity 0.3s ease;
+    cursor: pointer;
+    line-height: normal;
+    height: auto;
+    display: inline-block;
+    margin-right: 10px;
+    vertical-align: middle;
+    box-shadow: none;
+}
+
+/* Button hover state */
+#customer_login .woocommerce-form-login__submit:hover,
+#customer_login .woocommerce-form-register__submit:hover {
+    opacity: 0.85;
+    color: #ffffff !important;
+}
+
+/* Lost password link */
+#customer_login .lost_password {
+    margin-top: 1rem;
+}
+
+#customer_login .lost_password a {
+    font-family: var(--apw-font-family);
+    font-size: 1rem;
+    color: var(--apw-woo-notice-highlight);
+    text-decoration: underline;
+    transition: color 0.3s ease;
+}
+
+#customer_login .lost_password a:hover {
+    color: var(--apw-woo-text-color);
+    text-decoration: none;
+}
+
+/* Privacy policy text */
+.woocommerce-privacy-policy-text {
+    font-family: var(--apw-font-family);
+    font-size: 0.9rem;
+    color: var(--apw-woo-text-color);
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+}
+
+.woocommerce-privacy-policy-text a {
+    color: var(--apw-woo-notice-highlight);
+    text-decoration: underline;
+}
+
+.woocommerce-privacy-policy-text a:hover {
+    text-decoration: none;
+}
+
+/* --- Responsive Styles for Login/Register --- */
+
+/* Tablet Styles (849px and below) */
+@media (max-width: 849px) {
+    #customer_login .col-1,
+    #customer_login .col-2 {
+        max-width: 100%;
+        flex-basis: 100%;
+    }
+    
+    #customer_login .col-1 {
+        margin-bottom: 2rem;
+    }
+    
+    #customer_login h3.uppercase {
+        font-size: 1.5rem;
+    }
+    
+    #customer_login label {
+        font-size: 1.1rem;
+    }
+    
+    #customer_login input[type="text"],
+    #customer_login input[type="email"],
+    #customer_login input[type="password"] {
+        font-size: 1.1rem;
+        padding: 10px 15px;
+        min-height: 45px;
+    }
+}
+
+/* Mobile Styles (549px and below) */
+@media (max-width: 549px) {
+    #customer_login {
+        margin-top: 1rem;
+    }
+    
+    #customer_login h3.uppercase {
+        font-size: 1.3rem;
+    }
+    
+    #customer_login .form-row {
+        margin-bottom: 1rem;
+    }
+    
+    #customer_login label {
+        font-size: 1rem;
+    }
+    
+    #customer_login input[type="text"],
+    #customer_login input[type="email"],
+    #customer_login input[type="password"] {
+        font-size: 1rem;
+        padding: 8px 12px;
+        min-height: 40px;
+    }
+    
+    #customer_login .woocommerce-form-login__submit,
+    #customer_login .woocommerce-form-register__submit {
+        width: 100%;
+        margin-right: 0;
+        padding: 10px 20px !important;
+        font-size: 1rem !important;
+    }
+}
+
+/* --- End Login/Register Styles --- */
+
