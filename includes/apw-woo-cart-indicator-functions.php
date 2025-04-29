@@ -109,6 +109,59 @@ function apw_woo_add_cart_update_listener() {
 add_action('wp_footer', 'apw_woo_add_cart_update_listener', 20);
 
 /**
+ * Add inline CSS for My Account buttons
+ * This ensures our button styles take precedence over theme styles
+ */
+function apw_woo_add_inline_button_css() {
+    if (is_account_page()) {
+        // Add inline CSS with !important rules for the specific buttons
+        $inline_css = "
+            /* Target both button types in message containers */
+            .woocommerce-account .woocommerce-MyAccount-content .message-container .woocommerce-Button,
+            .woocommerce-account .woocommerce-MyAccount-content .message-container .button.wc-forward,
+            .woocommerce-account .woocommerce-MyAccount-content .message-container a.wc-forward {
+                background: linear-gradient(204deg, #244B5A, #178093) !important;
+                background-color: #244B5A !important;
+                color: #ffffff !important;
+                font-family: var(--apw-font-family) !important;
+                font-weight: var(--apw-font-bold) !important;
+                font-size: 1.1rem !important;
+                text-transform: uppercase !important;
+                padding: 12px 30px !important;
+                border-radius: 58px !important;
+                display: block !important;
+                margin-top: 1.5rem !important;
+                width: fit-content !important;
+                border: none !important;
+                text-decoration: none !important;
+                box-shadow: none !important;
+            }
+            
+            /* Ensure text content has proper styling */
+            .woocommerce-account .woocommerce-MyAccount-content .message-container,
+            .woocommerce-account .woocommerce-MyAccount-content .message-container > *:not(a),
+            .woocommerce-account .woocommerce-MyAccount-content .message-container::before {
+                font-family: var(--apw-font-family) !important;
+                font-size: var(--apw-woo-content-font-size) !important;
+                color: var(--apw-woo-text-color) !important;
+                line-height: 1.5 !important;
+            }
+            
+            /* Container styling */
+            .woocommerce-account .woocommerce-MyAccount-content .message-container {
+                background-color: rgba(182, 198, 204, 0.1) !important;
+                border-radius: 8px !important;
+                border-left: 4px solid #178093 !important;
+                padding: 1.5rem !important;
+                margin: 2rem 0 !important;
+            }
+        ";
+        wp_add_inline_style('apw-woo-style', $inline_css);
+    }
+}
+add_action('wp_enqueue_scripts', 'apw_woo_add_inline_button_css', 999); // Very high priority
+
+/**
  * Redirect non-logged-in users to the login page when trying to access the cart
  */
 function apw_woo_redirect_cart_to_login() {

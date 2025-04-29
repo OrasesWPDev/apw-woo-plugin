@@ -193,6 +193,95 @@
             }
         }, 500);
         
+        // Apply styling to My Account message buttons
+        function fixMyAccountMessageButtons() {
+            // Target the specific buttons in the orders and downloads pages
+            $('.woocommerce-MyAccount-content .message-container .woocommerce-Button, ' +
+              '.woocommerce-MyAccount-content .message-container .button.wc-forward').each(function() {
+                var $button = $(this);
+                
+                // Force the correct styling
+                $button.css({
+                    'display': 'block',
+                    'margin-top': '1.5rem',
+                    'width': 'fit-content',
+                    'background': 'linear-gradient(204deg, #244B5A, #178093)',
+                    'background-color': '#244B5A',
+                    'color': '#ffffff',
+                    'border-radius': '58px',
+                    'font-family': 'Montserrat, sans-serif',
+                    'font-weight': '700',
+                    'font-size': '1.1rem',
+                    'text-transform': 'uppercase',
+                    'padding': '12px 30px',
+                    'border': 'none',
+                    'text-align': 'center',
+                    'text-decoration': 'none',
+                    'transition': 'opacity 0.3s ease',
+                    'box-shadow': 'none',
+                    'line-height': 'normal',
+                    'height': 'auto',
+                    'min-height': 'unset',
+                    'max-height': 'unset'
+                });
+                
+                // Add hover event
+                $button.off('mouseenter mouseleave').hover(
+                    function() {
+                        $(this).css({
+                            'opacity': '0.85',
+                            'color': '#ffffff',
+                            'background': 'linear-gradient(204deg, #244B5A, #178093)',
+                            'background-color': '#244B5A'
+                        });
+                    },
+                    function() {
+                        $(this).css({
+                            'opacity': '1',
+                            'color': '#ffffff',
+                            'background': 'linear-gradient(204deg, #244B5A, #178093)',
+                            'background-color': '#244B5A'
+                        });
+                    }
+                );
+                
+                // Add a class to mark as processed
+                $button.addClass('apw-styled-button-processed');
+            });
+            
+            // Also ensure the text in the message container has proper styling
+            $('.woocommerce-MyAccount-content .message-container').each(function() {
+                // Set text color and font for all text nodes
+                $(this).contents().filter(function() {
+                    return this.nodeType === 3; // Text nodes only
+                }).wrap('<span style="font-family: Montserrat, sans-serif !important; font-size: 1.3125rem !important; color: #0D252C !important; line-height: 1.5 !important;"></span>');
+                
+                // Make sure the container itself has the right styling
+                $(this).css({
+                    'font-family': 'Montserrat, sans-serif',
+                    'font-size': '1.3125rem',
+                    'color': '#0D252C',
+                    'line-height': '1.5',
+                    'background-color': 'rgba(182, 198, 204, 0.1)',
+                    'border-left': '4px solid #178093',
+                    'border-radius': '8px'
+                });
+            });
+        }
+        
+        // Run on page load
+        fixMyAccountMessageButtons();
+        
+        // Run after AJAX completions
+        $(document).ajaxComplete(function() {
+            setTimeout(fixMyAccountMessageButtons, 100);
+        });
+        
+        // Run when fragments are refreshed
+        $(document.body).on('wc_fragments_refreshed wc_fragments_loaded', function() {
+            setTimeout(fixMyAccountMessageButtons, 100);
+        });
+        
         // --- Cart Quantity Indicator ---
         function updateCartQuantityIndicators() {
             // Get cart count from WooCommerce fragments or data attribute

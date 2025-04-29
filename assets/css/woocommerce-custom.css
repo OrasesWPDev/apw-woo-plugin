@@ -2220,23 +2220,25 @@ select.wc-pao-addon-field option {
     background: var(--apw-woo-button-background) !important; /* Use button gradient */
     color: #ffffff !important;
     border-radius: 58px !important;
-    font-family: var(--apw-font-family);
-    font-weight: var(--apw-font-bold);
+    font-family: var(--apw-font-family) !important;
+    font-weight: var(--apw-font-bold) !important;
     font-size: 1.1rem !important; /* Match Place Order button size */
     text-transform: uppercase !important;
     padding: 12px 30px !important; /* Match Place Order padding */
     border: none !important;
-    text-align: center;
+    text-align: center !important;
     text-decoration: none !important; /* Remove underline from <a> tags */
-    transition: opacity 0.3s ease;
-    cursor: pointer;
-    line-height: normal; /* Ensure consistent line height */
-    height: auto; /* Let padding determine height */
-    display: inline-block; /* Default display */
-    margin-top: 0.5em; /* Add some top margin */
-    margin-right: 10px; /* Add space between adjacent buttons */
-    vertical-align: middle;
-    box-shadow: none; /* Remove potential theme shadows */
+    transition: opacity 0.3s ease !important;
+    cursor: pointer !important;
+    line-height: normal !important; /* Ensure consistent line height */
+    height: auto !important; /* Let padding determine height */
+    display: inline-block !important; /* Default display */
+    margin-top: 0.5em !important; /* Add some top margin */
+    margin-right: 10px !important; /* Add space between adjacent buttons */
+    vertical-align: middle !important;
+    box-shadow: none !important; /* Remove potential theme shadows */
+    min-height: unset !important;
+    max-height: unset !important;
 }
 
 /* Style specific buttons like 'Save changes' to ensure they are caught */
@@ -2250,12 +2252,98 @@ select.wc-pao-addon-field option {
 /* Hover Styles for My Account buttons */
 .woocommerce-account .woocommerce-MyAccount-content .button:hover,
 .woocommerce-account .woocommerce-MyAccount-content button[type="submit"]:hover,
-.woocommerce-account .woocommerce-MyAccount-content a.button:hover {
-    opacity: 0.85;
+.woocommerce-account .woocommerce-MyAccount-content a.button:hover,
+.apw-woo-myaccount-main .woocommerce-Button:hover {
+    opacity: 0.85 !important;
     color: #ffffff !important;
+    background: var(--apw-woo-button-background) !important; /* Ensure gradient stays on hover */
 }
 
 /* --- END: My Account Button Styles --- */
+
+/* --- START: Global Fix for WooCommerce Buttons in My Account --- */
+/* This is a catch-all fix to ensure all WooCommerce buttons in My Account maintain styling */
+body.woocommerce-account .woocommerce-Button,
+body.woocommerce-account .woocommerce-button,
+body.woocommerce-account .button.wc-forward,
+body.woocommerce-account a.button {
+    background: var(--apw-woo-button-background) !important;
+    background-image: linear-gradient(204deg, #244B5A, #178093) !important; /* Explicit gradient */
+    background-color: #244B5A !important; /* Fallback solid color */
+    color: #ffffff !important;
+    border-radius: 58px !important;
+    font-family: var(--apw-font-family) !important;
+    font-weight: var(--apw-font-bold) !important;
+    font-size: 1.1rem !important;
+    text-transform: uppercase !important;
+    padding: 12px 30px !important;
+    border: none !important;
+    text-align: center !important;
+    text-decoration: none !important;
+    transition: opacity 0.3s ease !important;
+    box-shadow: none !important;
+    line-height: normal !important;
+    height: auto !important;
+    min-height: unset !important;
+    max-height: unset !important;
+}
+
+body.woocommerce-account .woocommerce-Button:hover,
+body.woocommerce-account .woocommerce-button:hover,
+body.woocommerce-account .button.wc-forward:hover,
+body.woocommerce-account a.button:hover {
+    opacity: 0.85 !important;
+    color: #ffffff !important;
+    background: var(--apw-woo-button-background) !important;
+    background-image: linear-gradient(204deg, #244B5A, #178093) !important; /* Explicit gradient */
+    background-color: #244B5A !important; /* Fallback solid color */
+    border: none !important;
+}
+
+/* Special case for message container buttons that need to be block elements */
+body.woocommerce-account .message-container .woocommerce-Button,
+body.woocommerce-account .message-container .button.wc-forward,
+body.woocommerce-account .message-container a.woocommerce-Button,
+body.woocommerce-account .message-container a.button.wc-forward {
+    display: block !important;
+    margin-top: 1.5rem !important;
+    width: fit-content !important;
+    background: var(--apw-woo-button-background) !important;
+    background-image: linear-gradient(204deg, #244B5A, #178093) !important;
+    background-color: #244B5A !important;
+    color: #ffffff !important;
+}
+
+/* Additional !important styles to override any theme JS that might be changing these */
+body.woocommerce-account .message-container .woocommerce-Button,
+body.woocommerce-account .message-container .button.wc-forward,
+body.woocommerce-account .message-container a.woocommerce-Button,
+body.woocommerce-account .message-container a.button.wc-forward {
+    background-color: #244B5A !important;
+    background-image: linear-gradient(204deg, #244B5A, #178093) !important;
+    color: #ffffff !important;
+    border: none !important;
+    text-decoration: none !important;
+    font-family: var(--apw-font-family) !important;
+    font-weight: var(--apw-font-bold) !important;
+    font-size: 1.1rem !important;
+    text-transform: uppercase !important;
+    padding: 12px 30px !important;
+    border-radius: 58px !important;
+}
+
+/* Add a style that will be applied via JavaScript */
+.apw-styled-button-processed {
+    background: var(--apw-woo-button-background) !important;
+    background-image: linear-gradient(204deg, #244B5A, #178093) !important;
+    background-color: #244B5A !important;
+    color: #ffffff !important;
+    font-family: var(--apw-font-family) !important;
+    font-weight: var(--apw-font-bold) !important;
+    font-size: 1.1rem !important;
+    text-transform: uppercase !important;
+}
+/* --- END: Global Fix for WooCommerce Buttons in My Account --- */
 
 
 /* --- START: My Account Dashboard Links List --- */
@@ -2345,41 +2433,90 @@ select.wc-pao-addon-field option {
 
 /* Style the "No orders yet" message container */
 .woocommerce-account .woocommerce-MyAccount-content .message-container {
-    font-family: var(--apw-font-family);
+    font-family: var(--apw-font-family) !important;
     font-size: var(--apw-woo-content-font-size) !important; /* Match content font size (21px) */
     color: var(--apw-woo-text-color) !important; /* Match standard text color */
-    line-height: 1.5;
-    margin: 2rem 0; /* Add significant space above and below */
-    padding: 1.5rem; /* Add padding inside the message */
-    background-color: rgba(182, 198, 204, 0.1); /* Light background with opacity */
-    border-radius: 8px; /* Rounded corners */
-    border-left: 4px solid var(--apw-woo-notice-highlight); /* Left accent border */
+    line-height: 1.5 !important;
+    margin: 2rem 0 !important; /* Add significant space above and below */
+    padding: 1.5rem !important; /* Add padding inside the message */
+    background-color: rgba(182, 198, 204, 0.1) !important; /* Light background with opacity */
+    border-radius: 8px !important; /* Rounded corners */
+    border-left: 4px solid var(--apw-woo-notice-highlight) !important; /* Left accent border */
 }
 
-/* Style the "Browse products" button within the message */
-.woocommerce-account .woocommerce-MyAccount-content .message-container .woocommerce-Button {
+/* Ensure the text inside message container has proper styling - CRITICAL FOR TEXT CONTENT */
+.woocommerce-account .woocommerce-MyAccount-content .message-container,
+.woocommerce-account .woocommerce-MyAccount-content .message-container > *:not(a),
+.woocommerce-account .woocommerce-MyAccount-content .message-container::before {
+    font-family: var(--apw-font-family) !important;
+    font-size: var(--apw-woo-content-font-size) !important;
+    color: var(--apw-woo-text-color) !important;
+    line-height: 1.5 !important;
+}
+
+/* Style the "Browse products" button within the message - ORDERS PAGE SPECIFIC */
+/* Simplified selector targeting both button types */
+.woocommerce-account .woocommerce-MyAccount-content .message-container a.woocommerce-Button,
+.woocommerce-account .woocommerce-MyAccount-content .message-container a.button.wc-forward,
+.woocommerce-account .woocommerce-MyAccount-content .message-container a.wc-forward {
     display: block !important; /* Make button appear on its own line */
     margin-top: 1.5rem !important; /* Add space between text and button */
     width: fit-content !important; /* Make button only as wide as needed */
     background: var(--apw-woo-button-background) !important; /* Use button gradient */
+    background-image: linear-gradient(204deg, #244B5A, #178093) !important; /* Explicit gradient */
+    background-color: #244B5A !important; /* Fallback solid color */
     color: #ffffff !important;
     border-radius: 58px !important;
-    font-family: var(--apw-font-family);
-    font-weight: var(--apw-font-bold);
+    font-family: var(--apw-font-family) !important;
+    font-weight: var(--apw-font-bold) !important;
     font-size: 1.1rem !important;
     text-transform: uppercase !important;
     padding: 12px 30px !important;
     border: none !important;
-    text-align: center;
+    text-align: center !important;
     text-decoration: none !important;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.3s ease !important;
     box-shadow: none !important;
+    line-height: normal !important;
+    height: auto !important;
+    min-height: unset !important;
+    max-height: unset !important;
+    opacity: 1 !important;
+    position: static !important;
+    float: none !important;
+    clear: both !important;
+    vertical-align: baseline !important;
 }
 
 /* Hover effect for the button */
-.woocommerce-account .woocommerce-MyAccount-content .message-container .woocommerce-Button:hover {
-    opacity: 0.85;
+.woocommerce-account .woocommerce-orders-table__empty-message .woocommerce-Button:hover,
+.woocommerce-account .woocommerce-MyAccount-content .message-container .woocommerce-Button:hover,
+.woocommerce-account .woocommerce-MyAccount-orders-table + .message-container .woocommerce-Button:hover,
+.woocommerce-account .woocommerce-MyAccount-content .message-container a.woocommerce-Button:hover {
+    opacity: 0.85 !important;
     color: #ffffff !important;
+    background: var(--apw-woo-button-background) !important; /* Ensure gradient stays on hover */
+    background-image: linear-gradient(204deg, #244B5A, #178093) !important; /* Explicit gradient */
+    border: none !important;
+    text-decoration: none !important;
+}
+
+/* Force button styles with additional specificity */
+.woocommerce-account .woocommerce-MyAccount-content .message-container .woocommerce-Button.wc-forward,
+.woocommerce-account .woocommerce-MyAccount-content .message-container a.woocommerce-Button.wc-forward {
+    display: block !important;
+    margin-top: 1.5rem !important;
+    width: fit-content !important;
+    background: var(--apw-woo-button-background) !important;
+    background-image: linear-gradient(204deg, #244B5A, #178093) !important;
+    color: #ffffff !important;
+    border-radius: 58px !important;
+    font-family: var(--apw-font-family) !important;
+    font-weight: var(--apw-font-bold) !important;
+    font-size: 1.1rem !important;
+    text-transform: uppercase !important;
+    padding: 12px 30px !important;
+    border: none !important;
 }
 
 /* Style the orders table if it exists */
@@ -2392,42 +2529,70 @@ select.wc-pao-addon-field option {
 /* --- START: My Account Downloads Page Styling --- */
 
 /* Style the "No downloads available yet" message container */
-.woocommerce-account .woocommerce-MyAccount-content .message-container {
-    font-family: var(--apw-font-family);
-    font-size: var(--apw-woo-content-font-size) !important; /* Match content font size (21px) */
-    color: var(--apw-woo-text-color) !important; /* Match standard text color */
-    line-height: 1.5;
-    margin: 2rem 0; /* Add significant space above and below */
-    padding: 1.5rem; /* Add padding inside the message */
-    background-color: rgba(182, 198, 204, 0.1); /* Light background with opacity */
-    border-radius: 8px; /* Rounded corners */
-    border-left: 4px solid var(--apw-woo-notice-highlight); /* Left accent border */
-}
+/* Note: Base message container styling is inherited from Orders section */
 
-/* Style the "Browse products" button within the message */
-.woocommerce-account .woocommerce-MyAccount-content .message-container .button.wc-forward {
+/* Style the "Browse products" button within the message - DOWNLOADS PAGE SPECIFIC */
+.woocommerce-account .woocommerce-MyAccount-downloads-table__empty-message .button.wc-forward,
+.woocommerce-account .woocommerce-MyAccount-content .message-container .button.wc-forward,
+.woocommerce-account .woocommerce-MyAccount-downloads + .message-container .button.wc-forward,
+.woocommerce-account .woocommerce-MyAccount-content .message-container a.button.wc-forward {
     display: block !important; /* Make button appear on its own line */
     margin-top: 1.5rem !important; /* Add space between text and button */
     width: fit-content !important; /* Make button only as wide as needed */
     background: var(--apw-woo-button-background) !important; /* Use button gradient */
+    background-image: linear-gradient(204deg, #244B5A, #178093) !important; /* Explicit gradient */
     color: #ffffff !important;
     border-radius: 58px !important;
-    font-family: var(--apw-font-family);
-    font-weight: var(--apw-font-bold);
+    font-family: var(--apw-font-family) !important;
+    font-weight: var(--apw-font-bold) !important;
     font-size: 1.1rem !important;
     text-transform: uppercase !important;
     padding: 12px 30px !important;
     border: none !important;
-    text-align: center;
+    text-align: center !important;
     text-decoration: none !important;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.3s ease !important;
     box-shadow: none !important;
+    line-height: normal !important;
+    height: auto !important;
+    min-height: unset !important;
+    max-height: unset !important;
+    opacity: 1 !important;
+    position: static !important;
+    float: none !important;
+    clear: both !important;
+    vertical-align: baseline !important;
 }
 
 /* Hover effect for the button */
-.woocommerce-account .woocommerce-MyAccount-content .message-container .button.wc-forward:hover {
-    opacity: 0.85;
+.woocommerce-account .woocommerce-MyAccount-downloads-table__empty-message .button.wc-forward:hover,
+.woocommerce-account .woocommerce-MyAccount-content .message-container .button.wc-forward:hover,
+.woocommerce-account .woocommerce-MyAccount-downloads + .message-container .button.wc-forward:hover,
+.woocommerce-account .woocommerce-MyAccount-content .message-container a.button.wc-forward:hover {
+    opacity: 0.85 !important;
     color: #ffffff !important;
+    background: var(--apw-woo-button-background) !important; /* Ensure gradient stays on hover */
+    background-image: linear-gradient(204deg, #244B5A, #178093) !important; /* Explicit gradient */
+    border: none !important;
+    text-decoration: none !important;
+}
+
+/* Force button styles with additional specificity */
+body.woocommerce-account .woocommerce-MyAccount-content .message-container .button.wc-forward,
+body.woocommerce-account .woocommerce-MyAccount-content .message-container a.button.wc-forward {
+    display: block !important;
+    margin-top: 1.5rem !important;
+    width: fit-content !important;
+    background: var(--apw-woo-button-background) !important;
+    background-image: linear-gradient(204deg, #244B5A, #178093) !important;
+    color: #ffffff !important;
+    border-radius: 58px !important;
+    font-family: var(--apw-font-family) !important;
+    font-weight: var(--apw-font-bold) !important;
+    font-size: 1.1rem !important;
+    text-transform: uppercase !important;
+    padding: 12px 30px !important;
+    border: none !important;
 }
 
 /* Style the downloads table if it exists */
