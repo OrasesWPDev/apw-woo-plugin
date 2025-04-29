@@ -1,26 +1,26 @@
-/* Cart Quantity Indicator Styles */
-.cart-quantity-indicator {
-    position: relative;
-}
+/*!* Cart Quantity Indicator Styles *!*/
+/*.cart-quantity-indicator {*/
+/*    position: relative;*/
+/*}*/
 
-/* Display the cart count using the ::after pseudo-element */
-.cart-quantity-indicator[data-cart-count]::after {
-    content: attr(data-cart-count);
-    background: #0F6789;
-    color: #92DDC6;
-    border-radius: 50%;
-    padding: 0.25em 0.5em;
-    margin-left: 0.3em;
-    font-size: 0.8em;
-    vertical-align: middle;
-}
+/*!* Display the cart count using the ::after pseudo-element *!*/
+/*.cart-quantity-indicator[data-cart-count]::after {*/
+/*    content: attr(data-cart-count);*/
+/*    background: #0F6789;*/
+/*    color: #92DDC6;*/
+/*    border-radius: 50%;*/
+/*    padding: 0.25em 0.5em;*/
+/*    margin-left: 0.3em;*/
+/*    font-size: 0.8em;*/
+/*    vertical-align: middle;*/
+/*}*/
 
-/* Show the indicator with "0" when cart is empty but user is logged in */
-.cart-quantity-indicator[data-cart-count="0"]::after {
-    display: inline-block; /* Always show for logged-in users with empty cart */
-}
+/*!* Show the indicator with "0" when cart is empty but user is logged in *!*/
+/*.cart-quantity-indicator[data-cart-count="0"]::after {*/
+/*    display: inline-block; !* Always show for logged-in users with empty cart *!*/
+/*}*/
 
-/* Hide the indicator when data-cart-count is empty (for logged-out users) */
-.cart-quantity-indicator[data-cart-count=""]::after {
-    display: none; /* Hide bubble for logged-out users */
-}
+/*!* Hide the indicator when data-cart-count is empty (for logged-out users) *!*/
+/*.cart-quantity-indicator[data-cart-count=""]::after {*/
+/*    display: none; !* Hide bubble for logged-out users *!*/
+/*}*/

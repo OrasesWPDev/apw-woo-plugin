@@ -3,6 +3,41 @@
    Base styles primarily for Shop (Top Level), Category (Middle Level),
    and Single Product (Last Level) templates. Specific overrides may apply.
    ---------------------------------------- */
+
+/* ----------------------------------------
+   CART QUANTITY INDICATOR STYLES
+   Styles for the cart quantity indicator bubble that appears next to cart links
+   ---------------------------------------- */
+/* Cart Quantity Indicator container */
+.cart-quantity-indicator {
+    position: relative;
+}
+
+/* Display the cart count using the ::after pseudo-element */
+.cart-quantity-indicator[data-cart-count]::after {
+    content: attr(data-cart-count);
+    background: #0F6789;
+    color: #92DDC6;
+    border-radius: 50%;
+    padding: 0.25em 0.5em;
+    margin-left: 0.3em;
+    font-size: 0.8em;
+    vertical-align: middle;
+}
+
+/* Show the indicator with "0" when cart is empty but user is logged in */
+.cart-quantity-indicator[data-cart-count="0"]::after {
+    display: inline-block; /* Always show for logged-in users with empty cart */
+}
+
+/* Hide the indicator when data-cart-count is empty (for logged-out users) */
+.cart-quantity-indicator[data-cart-count=""]::after {
+    display: none; /* Hide bubble for logged-out users */
+}
+/* ----------------------------------------
+   END CART QUANTITY INDICATOR STYLES
+   ---------------------------------------- */
+
 /* ----------------------------------------
    GLOBAL CSS VARIABLES (CUSTOM PROPERTIES)
       Used across Shop, Category, and Product templates unless overridden.
@@ -952,7 +987,7 @@ select.wc-pao-addon-field option {
 }
 
 /* Firefox specific dropdown styling - product agnostic */
-@-moz-document url-prefix() {
+@supports (-moz-appearance:none) {
     .wc-pao-addon-select,
     select.wc-pao-addon-field {
         background-color: var(--apw-woo-dropdown-bg) !important; /* Includes opacity */
@@ -1009,7 +1044,7 @@ select.wc-pao-addon-field option {
 }
 
 /* Optional: Firefox specific adjustments if needed (usually background color helps) */
-@-moz-document url-prefix() {
+@supports (-moz-appearance:none) {
     .variations_form .variations select {
         background-color: var(--apw-woo-dropdown-bg) !important; /* Explicitly set for Firefox */
     }
