@@ -65,6 +65,18 @@ class APW_Woo_Template_Resolver
      */
     public function resolve_template($default_template)
     {
+        // --- Skip for pages that should redirect non-logged in users ---
+        if (!is_user_logged_in() && (
+            (function_exists('is_cart') && is_cart()) || 
+            (function_exists('is_checkout') && is_checkout()) || 
+            (function_exists('is_account_page') && is_account_page())
+        )) {
+            if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                apw_woo_log("RESOLVER: Skipping template resolution for restricted page - user not logged in");
+            }
+            return $default_template;
+        }
+        
         // --- Early Exit for Static Resources ---
         $request_uri = $_SERVER['REQUEST_URI'] ?? '';
         // Fixed Regex - Ensure dot is escaped and query string part is correct
