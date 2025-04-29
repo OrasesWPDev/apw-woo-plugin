@@ -142,40 +142,6 @@
 
         apwWooLog('APW Woo Plugin: Document Ready.');
         
-        // Handle cart link clicks for non-logged in users
-        $(document).on('click', '.cart-quantity-indicator, a[href*="cart"], a.cart-link', function(e) {
-            // Check if user is logged in by checking body class
-            if (!$('body').hasClass('logged-in')) {
-                e.preventDefault();
-                apwWooLog('User not logged in, redirecting to login page');
-                
-                // Get the account page URL
-                let accountUrl = '';
-                
-                // Try to get from WooCommerce data
-                if (typeof wc_add_to_cart_params !== 'undefined' && wc_add_to_cart_params.myaccount_url) {
-                    accountUrl = wc_add_to_cart_params.myaccount_url;
-                } else {
-                    // Fallback to looking for my-account link
-                    const $accountLink = $('a[href*="my-account"]').first();
-                    if ($accountLink.length) {
-                        accountUrl = $accountLink.attr('href');
-                    } else {
-                        // Last resort - hardcode the URL pattern
-                        accountUrl = '/my-account/';
-                    }
-                }
-                
-                // Add redirect parameter to return to cart after login
-                const cartUrl = $(this).attr('href') || '/cart/';
-                const redirectUrl = accountUrl + (accountUrl.indexOf('?') > -1 ? '&' : '?') + 
-                                   'redirect_to=' + encodeURIComponent(cartUrl);
-                
-                // Redirect to login page
-                window.location.href = redirectUrl;
-            }
-        });
-        
         // Force refresh cart indicator on page load
         setTimeout(function() {
             // Use WooCommerce's built-in AJAX endpoint to get fresh cart data
@@ -288,17 +254,6 @@
             let cartCount = 0;
             
             // Check if user is logged in (using WordPress body class)
-            const isLoggedIn = $('body').hasClass('logged-in');
-            
-            // If user is not logged in, set empty data attribute to hide bubble but keep link visible
-            if (!isLoggedIn) {
-                $('.cart-quantity-indicator').attr('data-cart-count', '');
-                window.apwWooCartCount = '';
-                apwWooLog('User not logged in, hiding cart count bubble but keeping link visible');
-                return;
-            }
-            
-            // For logged-in users, proceed with normal count retrieval
             // Try to get count from WC fragments first
             if (typeof wc_cart_fragments_params !== 'undefined') {
                 try {

@@ -46,34 +46,21 @@ add_action('wp_enqueue_scripts', 'apw_woo_enqueue_cart_indicator_assets');
  */
 function apw_woo_add_cart_count_to_body() {
     if (function_exists('WC') && isset(WC()->cart)) {
+        // Get cart count - works for both logged-in and guest users with sessions
         $cart_count = WC()->cart->get_cart_contents_count();
-        
-        // Check if user is logged in
-        if (is_user_logged_in()) {
-            // For logged-in users, always show the count (even if it's 0)
-            echo '<script type="text/javascript">
-                document.body.setAttribute("data-cart-count", "' . esc_js($cart_count) . '");
-                // Initialize all cart indicators with the current count
-                if (typeof jQuery !== "undefined") {
-                    jQuery(function($) {
-                        $(".cart-quantity-indicator").attr("data-cart-count", "' . esc_js($cart_count) . '");
-                        // Store the WC cart count in a global variable for JS to access
-                        window.apwWooCartCount = ' . esc_js($cart_count) . ';
-                    });
-                }
-            </script>';
-        } else {
-            // For logged-out users, set cart count to empty string to hide the bubble but keep the link visible
-            echo '<script type="text/javascript">
-                document.body.setAttribute("data-cart-count", "");
-                if (typeof jQuery !== "undefined") {
-                    jQuery(function($) {
-                        $(".cart-quantity-indicator").attr("data-cart-count", "");
-                        window.apwWooCartCount = "";
-                    });
-                }
-            </script>';
-        }
+
+        // Always output the count (or 0) - JS/CSS will handle display based on value
+        echo '<script type="text/javascript">
+            document.body.setAttribute("data-cart-count", "' . esc_js($cart_count) . '");
+            // Initialize all cart indicators with the current count
+            if (typeof jQuery !== "undefined") {
+                jQuery(function($) {
+                    $(".cart-quantity-indicator").attr("data-cart-count", "' . esc_js($cart_count) . '");
+                    // Store the WC cart count in a global variable for JS to access
+                    window.apwWooCartCount = ' . esc_js($cart_count) . ';
+                });
+            }
+        </script>';
     }
 }
 add_action('wp_footer', 'apw_woo_add_cart_count_to_body', 10);
@@ -162,24 +149,56 @@ function apw_woo_add_inline_button_css() {
 add_action('wp_enqueue_scripts', 'apw_woo_add_inline_button_css', 999); // Very high priority
 
 /**
- * Redirect non-logged-in users to the login page when trying to access the cart
+ * Redirect non-logged-in users to the login page when trying to access restricted pages (Cart, Checkout, My Account).
+ * Adds a query parameter to show a specific notice on the login page.
  */
-function apw_woo_redirect_cart_to_login() {
-    // Only run on the cart page
-    if (is_cart() && !is_user_logged_in()) {
-        // Get the login page URL (WooCommerce account page with redirect back to cart)
-        $login_url = add_query_arg(
-            'redirect_to', 
-            urlencode(wc_get_cart_url()),
-            wc_get_page_permalink('myaccount')
-        );
-        
+function apw_woo_redirect_restricted_pages() {
+    // Check if user is logged out and trying to access a restricted page
+    if (!is_user_logged_in() && (is_cart() || is_checkout() || is_account_page())) {
+
+        // Determine the page the user was trying to access
+        $redirect_page_url = '';
+        if (is_cart()) {
+            $redirect_page_url = wc_get_cart_url();
+        } elseif (is_checkout()) {
+            $redirect_page_url = wc_get_checkout_url();
+        } elseif (is_account_page()) {
+            // For account page, redirect back to the specific endpoint if possible, otherwise account base
+            $redirect_page_url = wc_get_account_endpoint_url(get_query_var('pagename')); // Handles endpoints like /orders/, /edit-address/ etc.
+            if (!$redirect_page_url) {
+                 $redirect_page_url = wc_get_page_permalink('myaccount');
+            }
+        }
+
+        // Get the login page URL (WooCommerce account page)
+        $login_url = wc_get_page_permalink('myaccount');
+
+        // Add the redirect_to parameter so WC redirects back after login
+        if ($redirect_page_url) {
+            $login_url = add_query_arg('redirect_to', urlencode($redirect_page_url), $login_url);
+        }
+
+        // Add our custom notice parameter
+        $login_url = add_query_arg('apw_login_notice', 'restricted_page', $login_url);
+
         // Redirect to login page
-        wp_redirect($login_url);
+        wp_safe_redirect($login_url);
         exit;
     }
 }
-add_action('template_redirect', 'apw_woo_redirect_cart_to_login', 10);
+add_action('template_redirect', 'apw_woo_redirect_restricted_pages', 10);
+
+/**
+ * Display a notice on the login form if the user was redirected from a restricted page.
+ */
+function apw_woo_display_login_notice() {
+    // Check if our query parameter is set
+    if (isset($_GET['apw_login_notice']) && $_GET['apw_login_notice'] === 'restricted_page') {
+        // Display the notice
+        wc_print_notice(__('Please log in or create an account to see the shopping cart, checkout, or your account details.', 'apw-woo-plugin'), 'notice');
+    }
+}
+add_action('woocommerce_before_customer_login_form', 'apw_woo_display_login_notice');
 
 /**
  * Add AJAX action to get the current cart count
