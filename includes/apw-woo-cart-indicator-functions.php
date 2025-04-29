@@ -66,6 +66,15 @@ function apw_woo_add_cart_count_to_body() {
 add_action('wp_footer', 'apw_woo_add_cart_count_to_body', 10);
 
 /**
+ * Check if WooCommerce functions are available
+ * 
+ * @return bool True if WooCommerce functions are available
+ */
+function apw_woo_wc_functions_available() {
+    return function_exists('WC') && function_exists('wc_get_page_permalink');
+}
+
+/**
  * Add cart update event listener to ensure indicators update when cart changes
  */
 function apw_woo_add_cart_update_listener() {
@@ -153,8 +162,17 @@ add_action('wp_enqueue_scripts', 'apw_woo_add_inline_button_css', 999); // Very 
  * Adds a query parameter to show a specific notice on the login page.
  */
 function apw_woo_redirect_restricted_pages() {
+    // Make sure WooCommerce functions are available
+    if (!apw_woo_wc_functions_available()) {
+        return;
+    }
+    
     // Check if user is logged out and trying to access a restricted page
-    if (!is_user_logged_in() && (is_cart() || is_checkout() || is_account_page())) {
+    if (!is_user_logged_in() && (function_exists('is_cart') && is_cart() || function_exists('is_checkout') && is_checkout() || function_exists('is_account_page') && is_account_page())) {
+        // Log the redirection attempt if debug mode is on
+        if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+            apw_woo_log('Redirecting non-logged in user from restricted page to login page');
+        }
 
         // Determine which page the user was trying to access
         $page_type = '';
@@ -169,10 +187,7 @@ function apw_woo_redirect_restricted_pages() {
         } elseif (is_account_page()) {
             $page_type = 'account';
             // For account page, redirect back to the specific endpoint if possible, otherwise account base
-            $redirect_page_url = wc_get_account_endpoint_url(get_query_var('pagename')); // Handles endpoints like /orders/, /edit-address/ etc.
-            if (!$redirect_page_url) {
-                 $redirect_page_url = wc_get_page_permalink('myaccount');
-            }
+            $redirect_page_url = wc_get_page_permalink('myaccount');
         }
 
         // Get the login page URL (WooCommerce account page)
@@ -186,12 +201,19 @@ function apw_woo_redirect_restricted_pages() {
         // Add our custom notice parameter with the page type
         $login_url = add_query_arg('apw_login_notice', $page_type, $login_url);
 
-        // Redirect to login page
-        wp_safe_redirect($login_url);
-        exit;
+        // Make sure we have a valid login URL before redirecting
+        if (!empty($login_url)) {
+            // Redirect to login page
+            wp_safe_redirect($login_url);
+            exit;
+        } else {
+            // Fallback if login URL is empty
+            wp_safe_redirect(home_url());
+            exit;
+        }
     }
 }
-add_action('template_redirect', 'apw_woo_redirect_restricted_pages', 10);
+add_action('template_redirect', 'apw_woo_redirect_restricted_pages', 5); // Higher priority (lower number)
 
 /**
  * Display a notice on the login form if the user was redirected from a restricted page.
@@ -218,11 +240,19 @@ function apw_woo_display_login_notice() {
                 break;
         }
         
+        // Log the notice display if debug mode is on
+        if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+            apw_woo_log('Displaying login notice for page type: ' . $page_type);
+        }
+        
         // Display the notice with a custom class for styling
         wc_print_notice($message, 'notice apw-login-required-notice');
     }
 }
-add_action('woocommerce_before_customer_login_form', 'apw_woo_display_login_notice');
+add_action('woocommerce_before_customer_login_form', 'apw_woo_display_login_notice', 10);
+// Also add to notices hook for themes that might not use the standard login form
+add_action('woocommerce_before_checkout_form', 'apw_woo_display_login_notice', 5);
+add_action('woocommerce_before_cart', 'apw_woo_display_login_notice', 5);
 
 /**
  * Add AJAX action to get the current cart count
