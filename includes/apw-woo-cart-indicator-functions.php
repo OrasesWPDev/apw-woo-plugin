@@ -158,145 +158,74 @@ function apw_woo_add_inline_button_css() {
 add_action('wp_enqueue_scripts', 'apw_woo_add_inline_button_css', 999); // Very high priority
 
 /**
- * Early detection of restricted pages for non-logged in users
- * This function runs on 'init' to catch requests as early as possible
+ * Force login for WooCommerce restricted pages using WordPress core auth functions
+ * This is a simpler, more reliable approach than custom redirects
  */
-function apw_woo_early_restricted_page_check() {
+function apw_woo_force_login_for_woocommerce_pages() {
     // Only run on frontend
     if (is_admin() || wp_doing_ajax() || wp_doing_cron()) {
         return;
     }
     
-    // Skip if user is logged in
-    if (is_user_logged_in()) {
-        return;
-    }
-    
-    // Get current URL path
-    $current_path = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
-    
-    if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
-        apw_woo_log('EARLY REDIRECT CHECK: Checking URL: ' . $current_path);
-    }
-    
-    // Simple path-based detection for restricted pages
-    $is_restricted = false;
-    $page_type = '';
-    
-    // Check for cart page
-    if (strpos($current_path, '/cart') !== false || strpos($current_path, '/basket') !== false) {
-        $is_restricted = true;
-        $page_type = 'cart';
-    }
-    // Check for checkout page
-    elseif (strpos($current_path, '/checkout') !== false) {
-        $is_restricted = true;
-        $page_type = 'checkout';
-    }
-    // Check for account page
-    elseif (strpos($current_path, '/account') !== false || strpos($current_path, '/my-account') !== false) {
-        $is_restricted = true;
-        $page_type = 'account';
-    }
-    
-    // If this is a restricted page, redirect immediately
-    if ($is_restricted) {
-        if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
-            apw_woo_log('EARLY REDIRECT: Restricted page detected: ' . $page_type);
-        }
-        
-        // Get the login URL
-        $login_url = '';
-        if (function_exists('wc_get_page_permalink')) {
-            $login_url = wc_get_page_permalink('myaccount');
-        }
-        
-        // Fallback if WC function isn't available
-        if (empty($login_url)) {
-            $login_url = wp_login_url(home_url());
-        }
-        
-        // Add notice parameter
-        if (!empty($login_url)) {
-            $login_url = add_query_arg('apw_login_notice', $page_type, $login_url);
-            
-            if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
-                apw_woo_log('EARLY REDIRECT: Redirecting to: ' . $login_url);
-            }
-            
-            // Perform the redirect - no buffer cleaning needed this early
-            wp_redirect($login_url);
-            exit;
-        }
-    }
-}
-
-/**
- * Backup redirect function for non-logged-in users
- * This runs later in the WordPress lifecycle as a fallback
- */
-function apw_woo_redirect_restricted_pages() {
-    // Only run on frontend
-    if (is_admin() || wp_doing_ajax() || wp_doing_cron()) {
-        return;
-    }
-    
-    // Skip if user is logged in
+    // Skip if user is already logged in
     if (is_user_logged_in()) {
         return;
     }
     
     // Check if user is trying to access a restricted page
-    $is_restricted = false;
-    $page_type = '';
-    
-    if (function_exists('is_cart') && is_cart()) {
-        $is_restricted = true;
-        $page_type = 'cart';
-    } 
-    elseif (function_exists('is_checkout') && is_checkout()) {
-        $is_restricted = true;
-        $page_type = 'checkout';
-    } 
-    elseif (function_exists('is_account_page') && is_account_page()) {
-        $is_restricted = true;
-        $page_type = 'account';
-    }
-    
-    if ($is_restricted) {
+    if ((function_exists('is_cart') && is_cart()) || 
+        (function_exists('is_checkout') && is_checkout()) || 
+        (function_exists('is_account_page') && is_account_page())) {
+        
         if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
-            apw_woo_log('BACKUP REDIRECT: Restricted page detected: ' . $page_type);
+            apw_woo_log('AUTH REDIRECT: Restricted page detected, redirecting to login');
         }
         
-        // Get the login URL
+        // Store the current page for redirect after login
+        $redirect_url = '';
+        if (isset($_SERVER['REQUEST_URI'])) {
+            $redirect_url = home_url($_SERVER['REQUEST_URI']);
+        }
+        
+        // Get the login URL (WooCommerce account page)
         $login_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('myaccount') : '';
         
         // Fallback if WC function isn't available
         if (empty($login_url)) {
-            $login_url = wp_login_url(home_url());
-        }
-        
-        // Add notice parameter
-        if (!empty($login_url)) {
-            $login_url = add_query_arg('apw_login_notice', $page_type, $login_url);
+            $login_url = wp_login_url($redirect_url);
+        } else {
+            // Add redirect parameter
+            $login_url = add_query_arg('redirect', urlencode($redirect_url), $login_url);
             
-            if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
-                apw_woo_log('BACKUP REDIRECT: Redirecting to: ' . $login_url);
+            // Add our custom notice parameter
+            $page_type = '';
+            if (function_exists('is_cart') && is_cart()) {
+                $page_type = 'cart';
+            } elseif (function_exists('is_checkout') && is_checkout()) {
+                $page_type = 'checkout';
+            } elseif (function_exists('is_account_page') && is_account_page()) {
+                $page_type = 'account';
             }
             
-            // Use JavaScript redirect as a last resort
-            echo '<script type="text/javascript">window.location.href="' . esc_url($login_url) . '";</script>';
-            echo '<noscript><meta http-equiv="refresh" content="0;url=' . esc_url($login_url) . '"></noscript>';
-            echo '<p>You must be logged in to view this page. <a href="' . esc_url($login_url) . '">Click here to log in</a>.</p>';
-            exit;
+            $login_url = add_query_arg('apw_login_notice', $page_type, $login_url);
         }
+        
+        if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+            apw_woo_log('AUTH REDIRECT: Redirecting to: ' . $login_url);
+        }
+        
+        // Perform the redirect
+        wp_redirect($login_url);
+        exit;
     }
 }
-// Add the early check on init with high priority
-add_action('init', 'apw_woo_early_restricted_page_check', 1);
 
-// Add the backup check on template_redirect
-add_action('template_redirect', 'apw_woo_redirect_restricted_pages', 5);
+// Remove old redirect functions
+remove_action('init', 'apw_woo_early_restricted_page_check', 1);
+remove_action('template_redirect', 'apw_woo_redirect_restricted_pages', 5);
+
+// Add our new, simpler hook
+add_action('template_redirect', 'apw_woo_force_login_for_woocommerce_pages', 1);
 
 /**
  * Display a notice on the login form if the user was redirected from a restricted page.
@@ -342,64 +271,61 @@ add_action('woocommerce_before_checkout_form', 'apw_woo_display_login_notice', 5
 add_action('woocommerce_before_cart', 'apw_woo_display_login_notice', 5);
 
 /**
- * Add JavaScript redirect check to footer
- * This is a last-resort fallback if all PHP redirects fail
+ * Add JavaScript fallback redirect as a last resort
+ * This is a safety net in case the server-side redirects fail
  */
 function apw_woo_add_js_redirect_check() {
     // Only for non-logged in users
-    if (is_user_logged_in()) {
+    if (is_user_logged_in() || is_admin()) {
         return;
     }
     
-    // Only on frontend
-    if (is_admin()) {
+    // Only add this script on pages that might need protection
+    $current_url = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+    if (strpos($current_url, '/cart') === false && 
+        strpos($current_url, '/checkout') === false && 
+        strpos($current_url, '/account') === false && 
+        strpos($current_url, '/my-account') === false) {
         return;
     }
     
+    // Get login URL
+    $login_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('myaccount') : wp_login_url(home_url());
+    
+    // Add notice parameter based on current page
+    $page_type = '';
+    if (strpos($current_url, '/cart') !== false) {
+        $page_type = 'cart';
+    } elseif (strpos($current_url, '/checkout') !== false) {
+        $page_type = 'checkout';
+    } elseif (strpos($current_url, '/account') !== false || strpos($current_url, '/my-account') !== false) {
+        $page_type = 'account';
+    }
+    
+    // Add parameters to URL
+    $login_url = add_query_arg(array(
+        'redirect' => urlencode(home_url($_SERVER['REQUEST_URI'])),
+        'apw_login_notice' => $page_type
+    ), $login_url);
+    
+    // Output the JavaScript redirect as a fallback
     ?>
     <script type="text/javascript">
     (function() {
-        // Simple path-based detection
-        var path = window.location.pathname;
-        var isRestricted = false;
-        var pageType = '';
-        
-        // Check if this is a restricted page
-        if (path.indexOf('/cart') !== -1 || path.indexOf('/basket') !== -1) {
-            isRestricted = true;
-            pageType = 'cart';
-        } else if (path.indexOf('/checkout') !== -1) {
-            isRestricted = true;
-            pageType = 'checkout';
-        } else if (path.indexOf('/account') !== -1 || path.indexOf('/my-account') !== -1) {
-            isRestricted = true;
-            pageType = 'account';
-        }
-        
-        // If restricted and we're not already on the login page
-        if (isRestricted && path.indexOf('/login') === -1) {
-            // Get login URL
-            var loginUrl = '<?php echo esc_js(function_exists('wc_get_page_permalink') ? wc_get_page_permalink('myaccount') : wp_login_url(home_url())); ?>';
-            
-            // Add notice parameter
-            if (loginUrl.indexOf('?') !== -1) {
-                loginUrl += '&apw_login_notice=' + pageType;
-            } else {
-                loginUrl += '?apw_login_notice=' + pageType;
-            }
-            
-            // Log to console
-            if (window.console && window.console.log) {
-                console.log('APW JS Redirect: Redirecting to ' + loginUrl);
-            }
-            
-            // Redirect
-            window.location.href = loginUrl;
+        if (window.location.pathname.indexOf('/my-account') === -1 || 
+            window.location.pathname === '/my-account/customer-logout/') {
+            console.log('APW JS Redirect: Redirecting to login page');
+            window.location.href = "<?php echo esc_js($login_url); ?>";
         }
     })();
     </script>
+    <noscript>
+        <meta http-equiv="refresh" content="0;url=<?php echo esc_url($login_url); ?>">
+        <p>You must be logged in to view this page. <a href="<?php echo esc_url($login_url); ?>">Click here to log in</a>.</p>
+    </noscript>
     <?php
 }
+// Add as a fallback with lower priority than the main redirect
 add_action('wp_footer', 'apw_woo_add_js_redirect_check', 99);
 
 /**
