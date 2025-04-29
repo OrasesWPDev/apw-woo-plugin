@@ -172,6 +172,12 @@ function apw_woo_anti_loop_login_redirect() {
     $query_string = parse_url($current_path, PHP_URL_QUERY);
     parse_str($query_string ?: '', $query_params);
     
+    // Log the current path for debugging
+    if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+        apw_woo_log('ANTI-LOOP: Checking path: ' . $current_path);
+        apw_woo_log('ANTI-LOOP: Query params: ' . print_r($query_params, true));
+    }
+    
     // CRITICAL: Don't redirect if we're already on a login form
     // Check for login-specific query parameters or the login form
     if (
@@ -182,7 +188,11 @@ function apw_woo_anti_loop_login_redirect() {
         // If we're on a specific login-related endpoint
         (isset($query_params['action']) && in_array($query_params['action'], ['login', 'register', 'lostpassword'])) ||
         // Check for WooCommerce login form in the DOM (more reliable)
-        (did_action('woocommerce_before_customer_login_form') || has_action('woocommerce_before_customer_login_form'))
+        (did_action('woocommerce_before_customer_login_form') || has_action('woocommerce_before_customer_login_form')) ||
+        // Check for my-account in the URL with customer-login endpoint
+        (strpos($current_path, '/my-account/customer-login') !== false) ||
+        // Check for specific login-related strings in the URL
+        (strpos($current_path, 'login') !== false)
     ) {
         if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
             apw_woo_log('ANTI-LOOP: Login form detected, skipping redirect');

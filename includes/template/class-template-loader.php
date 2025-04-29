@@ -387,6 +387,31 @@ class APW_Woo_Template_Loader
             return $template;
         }
 
+        // Special handling for login pages with our notice parameter
+        $current_path = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+        $is_login_with_notice = strpos($current_path, 'apw_login_notice') !== false;
+        
+        // If this is a login page with our notice and it's the my-account template
+        if ($is_login_with_notice && 
+            (strpos($template_name, 'myaccount') !== false || 
+             strpos($template_name, 'my-account') !== false)) {
+            
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log("LOGIN PAGE TEMPLATE: Detected login page with notice parameter");
+                apw_woo_log("LOGIN PAGE TEMPLATE: Looking for my-account.php template");
+            }
+            
+            // Directly check for our custom my-account template
+            $my_account_template = $this->template_path . self::WOOCOMMERCE_DIRECTORY . 'myaccount/my-account.php';
+            
+            if (file_exists($my_account_template)) {
+                if (APW_WOO_DEBUG_MODE) {
+                    apw_woo_log("LOGIN PAGE TEMPLATE: Using custom my-account.php template: {$my_account_template}");
+                }
+                return $my_account_template;
+            }
+        }
+
         // Look for template in our plugin
         $custom_template = $this->find_template_in_plugin($template_name);
 
