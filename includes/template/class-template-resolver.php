@@ -65,16 +65,28 @@ class APW_Woo_Template_Resolver
      */
     public function resolve_template($default_template)
     {
-        // --- Skip for pages that should redirect non-logged in users ---
-        if (!is_user_logged_in() && (
-            (function_exists('is_cart') && is_cart()) || 
-            (function_exists('is_checkout') && is_checkout()) || 
-            (function_exists('is_account_page') && is_account_page())
-        )) {
-            if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
-                apw_woo_log("RESOLVER: Skipping template resolution for restricted page - user not logged in");
+        // --- EARLY EXIT: Skip for pages that should redirect non-logged in users ---
+        // Check for restricted pages first, before any other processing
+        if (!is_user_logged_in()) {
+            // Simple path-based detection for restricted pages
+            $current_path = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+            
+            // Check for cart, checkout, or account pages
+            if (strpos($current_path, '/cart') !== false || 
+                strpos($current_path, '/checkout') !== false || 
+                strpos($current_path, '/account') !== false || 
+                strpos($current_path, '/my-account') !== false ||
+                (function_exists('is_cart') && is_cart()) || 
+                (function_exists('is_checkout') && is_checkout()) || 
+                (function_exists('is_account_page') && is_account_page())) {
+                
+                if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                    apw_woo_log("RESOLVER: EARLY EXIT - Skipping template resolution for restricted page - user not logged in");
+                    apw_woo_log("RESOLVER: Current path: " . $current_path);
+                }
+                
+                return $default_template;
             }
-            return $default_template;
         }
         
         // --- Early Exit for Static Resources ---
