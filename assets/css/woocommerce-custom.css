@@ -34,9 +34,65 @@
 .cart-quantity-indicator[data-cart-count=""]::after {
     display: none; /* Hide bubble for logged-out users */
 }
+
 /* ----------------------------------------
    END CART QUANTITY INDICATOR STYLES
    ---------------------------------------- */
+
+/* APW Woo Plugin - Checkout Redirect Notice Styling */
+
+/* Style the main notice container */
+/* Inherits basic styles from .woocommerce-info, add overrides/specifics here */
+.apw-woo-checkout-redirect-notice {
+    font-family: var(--apw-font-family, 'Montserrat', sans-serif); /* Use plugin font */
+    font-size: var(--apw-woo-content-font-size, 1.3125rem); /* Use standard content font size */
+    color: var(--apw-woo-text-color, #0D252C); /* Use standard text color */
+    line-height: 1.6;
+    border-left-color: var(--apw-woo-notice-highlight, #178093); /* Example: use highlight color for border */
+    padding: 1em 1.5em; /* Standard notice padding */
+    margin-bottom: 2em; /* Space below notice */
+    background-color: rgba(215, 224, 226, 0.3); /* Optional: Use light background like dropdowns */
+    border-radius: 5px; /* Consistent radius */
+}
+
+/* Style paragraphs within the notice */
+.apw-woo-checkout-redirect-notice p {
+    margin-bottom: 0.75em; /* Spacing between paragraphs */
+    font-size: inherit; /* Inherit font size from container */
+    color: inherit; /* Inherit text color */
+}
+
+.apw-woo-checkout-redirect-notice p:last-child {
+    margin-bottom: 0;
+}
+
+/* Style the manual redirect link/button */
+.apw-woo-checkout-redirect-notice .apw-woo-account-redirect-link {
+    /* Inherit styles from main action buttons (e.g., Place Order) */
+    background: var(--apw-woo-button-background) !important; /* Use defined button gradient */
+    color: #ffffff !important; /* White text */
+    border-radius: 58px !important; /* Match standard button radius */
+    font-family: var(--apw-font-family, 'Montserrat', sans-serif) !important; /* Use plugin font */
+    font-weight: var(--apw-font-bold, 700) !important; /* Bold font weight */
+    font-size: 1.1rem !important; /* Match Place Order button size */
+    text-transform: uppercase !important; /* Uppercase text */
+    padding: 12px 30px !important; /* Match Place Order padding */
+    border: none !important; /* No border */
+    text-decoration: none !important; /* Remove underline */
+    display: inline-block; /* Allow inline display */
+    text-align: center;
+    cursor: pointer;
+    transition: opacity 0.3s ease;
+    margin-top: 0.5em; /* Add some space above the button */
+}
+
+/* Hover state for the button */
+.apw-woo-checkout-redirect-notice .apw-woo-account-redirect-link:hover {
+    opacity: 0.85;
+    color: #ffffff !important; /* Ensure text stays white */
+    background: var(--apw-woo-button-background) !important; /* Ensure gradient remains */
+}
+
 
 /* ----------------------------------------
    GLOBAL CSS VARIABLES (CUSTOM PROPERTIES)
@@ -994,6 +1050,7 @@ select.wc-pao-addon-field option {
         color: var(--apw-woo-text-color) !important;
         border-radius: 20px !important;
     }
+
     .wc-pao-addon-select option,
     select.wc-pao-addon-field option {
         background-color: var(--apw-woo-dropdown-bg) !important; /* Includes opacity */
@@ -1048,6 +1105,7 @@ select.wc-pao-addon-field option {
     .variations_form .variations select {
         background-color: var(--apw-woo-dropdown-bg) !important; /* Explicitly set for Firefox */
     }
+
     .variations_form .variations select option {
         background-color: #ffffff !important; /* Firefox often needs a solid option background */
         color: var(--apw-woo-text-color) !important;
@@ -2343,6 +2401,7 @@ body.woocommerce-account .message-container a.button.wc-forward {
     font-size: 1.1rem !important;
     text-transform: uppercase !important;
 }
+
 /* --- END: Global Fix for WooCommerce Buttons in My Account --- */
 
 
@@ -2788,12 +2847,12 @@ body.woocommerce-account .woocommerce-MyAccount-content .message-container a.but
         width: 90%;
         padding: 15px;
     }
-    
+
     .woocommerce-account .woocommerce-MyAccount-content .messagepop select {
         padding: 10px 15px;
         min-height: 45px;
     }
-    
+
     .woocommerce-account .woocommerce-MyAccount-content .messagepop button {
         padding: 10px 20px !important;
         font-size: 1rem !important;
@@ -2801,7 +2860,7 @@ body.woocommerce-account .woocommerce-MyAccount-content .message-container a.but
         width: 100%;
         margin-top: 0.5rem;
     }
-    
+
     .woocommerce-account .woocommerce-MyAccount-content .field.form-row-first,
     .woocommerce-account .woocommerce-MyAccount-content .field.form-row-last {
         float: none !important;
@@ -2999,19 +3058,19 @@ body.woocommerce-account .woocommerce-MyAccount-content .message-container a.but
         max-width: 100%;
         flex-basis: 100%;
     }
-    
+
     #customer_login .col-1 {
         margin-bottom: 2rem;
     }
-    
+
     #customer_login h3.uppercase {
         font-size: 1.5rem;
     }
-    
+
     #customer_login label {
         font-size: 1.1rem;
     }
-    
+
     #customer_login input[type="text"],
     #customer_login input[type="email"],
     #customer_login input[type="password"] {
@@ -3026,19 +3085,19 @@ body.woocommerce-account .woocommerce-MyAccount-content .message-container a.but
     #customer_login {
         margin-top: 1rem;
     }
-    
+
     #customer_login h3.uppercase {
         font-size: 1.3rem;
     }
-    
+
     #customer_login .form-row {
         margin-bottom: 1rem;
     }
-    
+
     #customer_login label {
         font-size: 1rem;
     }
-    
+
     #customer_login input[type="text"],
     #customer_login input[type="email"],
     #customer_login input[type="password"] {
@@ -3046,7 +3105,7 @@ body.woocommerce-account .woocommerce-MyAccount-content .message-container a.but
         padding: 8px 12px;
         min-height: 40px;
     }
-    
+
     #customer_login .woocommerce-form-login__submit,
     #customer_login .woocommerce-form-register__submit {
         width: 100%;
