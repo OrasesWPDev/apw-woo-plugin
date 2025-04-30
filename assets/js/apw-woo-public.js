@@ -141,15 +141,15 @@
     $(document).ready(function () {
 
         apwWooLog('APW Woo Plugin: Document Ready.');
-        
+
         // Force refresh cart indicator on page load
-        setTimeout(function() {
+        setTimeout(function () {
             // Use WooCommerce's built-in AJAX endpoint to get fresh cart data
             if (typeof wc_cart_fragments_params !== 'undefined') {
                 $.ajax({
                     type: 'GET',
                     url: wc_cart_fragments_params.wc_ajax_url.toString().replace('%%endpoint%%', 'get_refreshed_fragments'),
-                    success: function(response) {
+                    success: function (response) {
                         if (response && response.fragments) {
                             apwWooLog('Forced cart refresh on page load');
                             $(document.body).trigger('wc_fragments_refreshed');
@@ -158,23 +158,24 @@
                 });
             }
         }, 500);
-        
+
         // --- Cart Quantity Indicator ---
         function updateCartQuantityIndicators() {
             // Get cart count from WooCommerce fragments or data attribute
             let cartCount = 0;
-            
+
+            // *** MODIFICATION START: Removed login check block ***
             // Check if user is logged in (using WordPress body class)
-            const isLoggedIn = $('body').hasClass('logged-in');
-            
+            // const isLoggedIn = $('body').hasClass('logged-in');
             // If user is not logged in, set empty data attribute to hide bubble but keep link visible
-            if (!isLoggedIn) {
-                $('.cart-quantity-indicator').attr('data-cart-count', '');
-                window.apwWooCartCount = '';
-                apwWooLog('User not logged in, hiding cart count bubble but keeping link visible');
-                return;
-            }
-            
+            // if (!isLoggedIn) {
+            //     $('.cart-quantity-indicator').attr('data-cart-count', '');
+            //     window.apwWooCartCount = '';
+            //     apwWooLog('User not logged in, hiding cart count bubble but keeping link visible');
+            //     return;
+            // }
+            // *** MODIFICATION END ***
+
             // For logged-in users, proceed with normal count retrieval
             // Try to get count from WC fragments first
             if (typeof wc_cart_fragments_params !== 'undefined') {
@@ -182,13 +183,13 @@
                     const fragments = JSON.parse(sessionStorage.getItem(wc_cart_fragments_params.fragment_name));
                     if (fragments && fragments['div.widget_shopping_cart_content']) {
                         const $content = $(fragments['div.widget_shopping_cart_content']);
-                        
+
                         // IMPORTANT: Count total quantity, not just number of items
                         let totalQuantity = 0;
-                        
+
                         // First try to get quantities from cart fragments
                         const $cartItems = $content.find('.cart_list li:not(.empty)');
-                        $cartItems.each(function() {
+                        $cartItems.each(function () {
                             // Look for quantity in the item
                             const qtyText = $(this).find('.quantity').text();
                             const qtyMatch = qtyText.match(/(\d+)\s*×/); // Match "2 ×" format
@@ -199,7 +200,7 @@
                                 totalQuantity += 1;
                             }
                         });
-                        
+
                         cartCount = totalQuantity;
                         apwWooLog('Cart count from fragments (total quantity): ' + cartCount);
                     }
@@ -207,7 +208,7 @@
                     apwWooLog('Error parsing fragments: ' + e.message);
                 }
             }
-            
+
             // If fragments didn't work, try the cart counter in the DOM
             if (cartCount === 0) {
                 const $miniCart = $('.widget_shopping_cart_content');
@@ -217,7 +218,7 @@
                     apwWooLog('Cart count from DOM: ' + cartCount);
                 }
             }
-            
+
             // If we still don't have a count, check for WC data
             if (cartCount === 0 && typeof window.wc_cart_fragments_params !== 'undefined') {
                 // Try to get from any visible counter
@@ -230,11 +231,11 @@
                     }
                 }
             }
-            
+
             // Try to get count from cart page if we're on it
             if ($('.woocommerce-cart-form').length) {
                 let itemCount = 0;
-                $('.woocommerce-cart-form .cart_item').each(function() {
+                $('.woocommerce-cart-form .cart_item').each(function () {
                     const qty = parseInt($(this).find('input.qty').val()) || 0;
                     itemCount += qty;
                 });
@@ -243,23 +244,23 @@
                     apwWooLog('Cart count from cart form: ' + cartCount);
                 }
             }
-            
+
             // Last resort - try to get from WC AJAX endpoint
             if (cartCount === 0 && typeof wc_cart_fragments_params !== 'undefined') {
                 $.ajax({
                     type: 'GET',
                     url: wc_cart_fragments_params.wc_ajax_url.toString().replace('%%endpoint%%', 'get_refreshed_fragments'),
-                    success: function(data) {
+                    success: function (data) {
                         if (data && data.fragments) {
                             try {
                                 const $content = $(data.fragments['div.widget_shopping_cart_content']);
-                                
+
                                 // Count total quantity, not just number of items
                                 let totalQuantity = 0;
-                                
+
                                 // First try to get quantities from cart fragments
                                 const $cartItems = $content.find('.cart_list li:not(.empty)');
-                                $cartItems.each(function() {
+                                $cartItems.each(function () {
                                     // Look for quantity in the item
                                     const qtyText = $(this).find('.quantity').text();
                                     const qtyMatch = qtyText.match(/(\d+)\s*×/); // Match "2 ×" format
@@ -270,7 +271,7 @@
                                         totalQuantity += 1;
                                     }
                                 });
-                                
+
                                 if (totalQuantity > 0) {
                                     cartCount = totalQuantity;
                                     apwWooLog('Cart count from AJAX (total quantity): ' + cartCount);
@@ -283,46 +284,46 @@
                     }
                 });
             }
-            
+
             // Check if we have a WC cart count from PHP
             if (typeof window.apwWooCartCount !== 'undefined' && window.apwWooCartCount > 0 && cartCount === 0) {
                 cartCount = window.apwWooCartCount;
                 apwWooLog('Using WC cart count from PHP: ' + cartCount);
             }
-            
+
             // Update all cart quantity indicators with the count
             $('.cart-quantity-indicator').attr('data-cart-count', cartCount);
             apwWooLog('Updated cart quantity indicators with count: ' + cartCount);
         }
-        
+
         // Initial update
         updateCartQuantityIndicators();
-        
+
         // Update when cart fragments are refreshed
-        $(document.body).on('wc_fragments_refreshed wc_fragments_loaded added_to_cart removed_from_cart updated_cart_totals', function() {
+        $(document.body).on('wc_fragments_refreshed wc_fragments_loaded added_to_cart removed_from_cart updated_cart_totals', function () {
             apwWooLog('Cart updated, refreshing quantity indicators');
             updateCartQuantityIndicators();
         });
-        
+
         // Additional listener for cart quantity changes
-        $(document).on('change', '.woocommerce-cart-form input.qty', function() {
-            setTimeout(function() {
+        $(document).on('change', '.woocommerce-cart-form input.qty', function () {
+            setTimeout(function () {
                 apwWooLog('Cart quantity changed, refreshing indicators');
                 updateCartQuantityIndicators();
             }, 300);
         });
-        
+
         // Listen for clicks on remove buttons in cart
-        $(document).on('click', '.woocommerce-cart-form .product-remove a.remove, .cart_item .remove', function() {
+        $(document).on('click', '.woocommerce-cart-form .product-remove a.remove, .cart_item .remove', function () {
             apwWooLog('Remove button clicked, scheduling indicator refresh');
             // Multiple timeouts to catch the update at different stages
             setTimeout(updateCartQuantityIndicators, 100);
             setTimeout(updateCartQuantityIndicators, 500);
             setTimeout(updateCartQuantityIndicators, 1000);
         });
-        
+
         // Listen for AJAX requests that might be cart updates
-        $(document).ajaxComplete(function(event, xhr, settings) {
+        $(document).ajaxComplete(function (event, xhr, settings) {
             // Check if the AJAX call is related to cart updates
             if (settings.url && (
                 settings.url.indexOf('wc-ajax=remove_from_cart') > -1 ||
