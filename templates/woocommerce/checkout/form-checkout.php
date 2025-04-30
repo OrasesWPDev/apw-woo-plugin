@@ -8,10 +8,11 @@
  * It removes the default 2-column layout for billing/shipping and adds
  * custom apw-woo- prefixed classes for easier styling.
  * Includes temporary debug code for woocommerce_after_checkout_form hook.
+ * MODIFIED: Clarified guest checkout message and added debug log.
  *
  * @see https://woocommerce.com/document/template-structure/
  * @package APW_Woo_Plugin/Templates
- * @version 3.5.0-apw.4 // Increment version
+ * @version 3.5.0-apw.5 // Increment version
  *
  * Original WooCommerce template version: 3.5.0
  */
@@ -25,7 +26,7 @@ $apw_debug_mode = defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE;
 $apw_log_exists = function_exists('apw_woo_log');
 
 if ($apw_debug_mode && $apw_log_exists) {
-    apw_woo_log('CHECKOUT TEMPLATE: Loading custom checkout template: templates/woocommerce/checkout/form-checkout.php with theme structure, revised layout, custom classes, and TEMP DEBUG');
+    apw_woo_log('CHECKOUT TEMPLATE: Loading custom checkout template: templates/woocommerce/checkout/form-checkout.php with theme structure, revised layout, custom classes, and modified guest block');
 }
 
 get_header();
@@ -47,7 +48,7 @@ if (!is_a($checkout, 'WC_Checkout')) {
 
 ?>
 <main id="main" class="apw-woo-checkout-main">
-    <!-- APW-WOO-TEMPLATE: form-checkout.php (structured, single-column, custom classes, TEMP DEBUG) is loaded -->
+    <!-- APW-WOO-TEMPLATE: form-checkout.php (structured, single-column, custom classes, modified guest block) is loaded -->
 
     <!-- Header Block - Contains hero image, page title, and breadcrumbs -->
     <div class="apw-woo-section-wrapper apw-woo-header-block">
@@ -97,14 +98,24 @@ if (!is_a($checkout, 'WC_Checkout')) {
                  */
                 do_action('apw_woo_before_checkout_content');
 
+                // --- MODIFICATION START: Updated this block ---
                 // If checkout registration is disabled and not logged in, the user cannot checkout.
                 if (!$checkout->is_registration_enabled() && $checkout->is_registration_required() && !is_user_logged_in()) {
-                    echo esc_html(apply_filters('woocommerce_checkout_must_be_logged_in_message', __('You must be logged in to checkout.', 'woocommerce')));
+                    // Add debug log inside the block
+                    if ($apw_debug_mode && $apw_log_exists) {
+                        apw_woo_log('CHECKOUT TEMPLATE: Guest checkout is disabled and user is not logged in. Displaying block message and exiting template.');
+                    }
+                    // Display a clearer message
+                    echo '<p class="apw-woo-guest-checkout-message">'; // Added a class for potential styling
+                    echo esc_html(apply_filters('woocommerce_checkout_must_be_logged_in_message', __('Checkout is unavailable for guests. Please log in or register an account to proceed.', 'apw-woo-plugin')));
+                    echo '</p>';
+                    // Ensure standard hooks/footer run before exiting
                     do_action('apw_woo_after_checkout_content'); // Hook for consistency
                     echo '</div></div></div></main>'; // Close main structure
                     get_footer(); // Include footer
-                    return; // Exit template
+                    return; // Exit template processing here
                 }
+                // --- MODIFICATION END ---
 
                 /**
                  * Hook: woocommerce_before_checkout_form.
@@ -169,9 +180,9 @@ if (!is_a($checkout, 'WC_Checkout')) {
 
 // APW Woo Plugin: Log end of checkout template if debug mode is on
 if ($apw_debug_mode && $apw_log_exists) {
-    apw_woo_log('CHECKOUT TEMPLATE: Finished rendering custom checkout template with theme structure, revised layout, custom classes, and TEMP DEBUG.');
+    apw_woo_log('CHECKOUT TEMPLATE: Finished rendering custom checkout template with theme structure, revised layout, custom classes, and modified guest block.');
 }
 
 get_footer();
 ?>
-<!-- APW-WOO-TEMPLATE: Custom form-checkout.php (structured, single-column, custom classes, TEMP DEBUG) is loaded -->
+<!-- APW-WOO-TEMPLATE: Custom form-checkout.php (structured, single-column, custom classes, modified guest block) is loaded -->
