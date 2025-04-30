@@ -2400,7 +2400,6 @@ body.woocommerce-account .message-container a.button.wc-forward {
     font-size: 1.1rem !important;
     text-transform: uppercase !important;
 }
-
 /* --- END: Global Fix for WooCommerce Buttons in My Account --- */
 
 
@@ -3057,18 +3056,19 @@ body.woocommerce-account .woocommerce-MyAccount-content .message-container a.but
         max-width: 100%;
         flex-basis: 100%;
     }
-
+    
     #customer_login .col-1 {
         margin-bottom: 2rem;
     }
-
+    
     #customer_login h3.uppercase {
         font-size: 1.5rem;
     }
-
+    
     #customer_login label {
         font-size: 1.1rem;
     }
+    
 
     #customer_login input[type="text"],
     #customer_login input[type="email"],
@@ -3084,18 +3084,19 @@ body.woocommerce-account .woocommerce-MyAccount-content .message-container a.but
     #customer_login {
         margin-top: 1rem;
     }
-
+  
     #customer_login h3.uppercase {
         font-size: 1.3rem;
     }
-
+    
     #customer_login .form-row {
         margin-bottom: 1rem;
     }
-
+    
     #customer_login label {
         font-size: 1rem;
     }
+    
 
     #customer_login input[type="text"],
     #customer_login input[type="email"],

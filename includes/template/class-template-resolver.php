@@ -65,6 +65,41 @@ class APW_Woo_Template_Resolver
      */
     public function resolve_template($default_template)
     {
+        // --- EARLY EXIT: Skip for pages that should redirect non-logged in users ---
+        // Check for restricted pages first, before any other processing
+        if (!is_user_logged_in()) {
+            // Simple path-based detection for restricted pages
+            $current_path = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+            
+            // Don't skip if we're on a login page with our notice parameter
+            $is_login_page = strpos($current_path, 'apw_login_notice') !== false;
+            
+            // If this is a login page with our notice parameter, we want to continue processing
+            // to ensure our custom template is used
+            if ($is_login_page) {
+                if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                    apw_woo_log("RESOLVER: Login page with notice detected, continuing template resolution");
+                    apw_woo_log("RESOLVER: Current path: " . $current_path);
+                }
+            }
+            // Otherwise, check if this is a restricted page that should redirect
+            else if (
+                strpos($current_path, '/cart') !== false || 
+                strpos($current_path, '/checkout') !== false || 
+                strpos($current_path, '/account') !== false ||
+                (function_exists('is_cart') && is_cart()) || 
+                (function_exists('is_checkout') && is_checkout()) || 
+                (function_exists('is_account_page') && is_account_page())
+            ) {
+                if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                    apw_woo_log("RESOLVER: EARLY EXIT - Skipping template resolution for restricted page - user not logged in");
+                    apw_woo_log("RESOLVER: Current path: " . $current_path);
+                }
+                
+                return $default_template;
+            }
+        }
+        
         // --- Early Exit for Static Resources ---
         $request_uri = $_SERVER['REQUEST_URI'] ?? '';
         // Fixed Regex - Ensure dot is escaped and query string part is correct
@@ -182,10 +217,24 @@ class APW_Woo_Template_Resolver
                 'description' => 'checkout'
             ],
             'account' => [
-                'condition' => 'is_account_page', // WooCommerce conditional
+                'condition' => function() {
+                    // Check if this is an account page OR a login page with our notice parameter
+                    $is_account = function_exists('is_account_page') && is_account_page();
+                    $current_path = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+                    $is_login_with_notice = strpos($current_path, 'apw_login_notice') !== false;
+                    
+                    if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                        if ($is_login_with_notice) {
+                            apw_woo_log("RESOLVER: Detected login page with notice parameter");
+                        }
+                    }
+                    
+                    return $is_account || $is_login_with_notice;
+                },
                 'template' => self::MY_ACCOUNT_TEMPLATE,
                 'page_type' => 'myaccount', // For context setup ('myaccount' is key for wc_get_page_id)
-                'description' => 'account'
+                'description' => 'account or login page',
+                'login_aware' => true // Add this flag to indicate it should work for login pages too
             ],
             // Now check archives (order matters if URLs overlap, e.g., /shop/category/)
             'category' => [
@@ -217,6 +266,15 @@ class APW_Woo_Template_Resolver
             if ($condition_callable && call_user_func($condition_callable)) {
                 if ($apw_debug_mode && $apw_log_exists) {
                     apw_woo_log("RESOLVER: Condition met for '{$settings['description']}'. Checking for custom template.");
+                }
+
+                // Special handling for account pages when user is not logged in (login form)
+                if ($type === 'account' && !is_user_logged_in() && isset($_GET['apw_login_notice'])) {
+                    if ($apw_debug_mode && $apw_log_exists) {
+                        apw_woo_log("RESOLVER: Account page with login form detected. Using custom account template.");
+                    }
+                    // Don't skip template resolution for login pages
+                    // This overrides the early exit in the resolver
                 }
 
                 // --- Context Setup for Standard Pages (Cart, Checkout, Account) ---
@@ -297,6 +355,13 @@ class APW_Woo_Template_Resolver
         $apw_debug_mode = defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE;
         $apw_log_exists = function_exists('apw_woo_log');
 
+        // Check if this is a login page with our notice parameter
+        $current_path = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+        $is_login_with_notice = strpos($current_path, 'apw_login_notice') !== false;
+        
+        if ($is_login_with_notice && $apw_debug_mode && $apw_log_exists) {
+            apw_woo_log('RESOLVER SETUP: Setting up context for login page with notice parameter');
+        }
 
         if (empty($page_id) || !is_numeric($page_id)) {
             if ($apw_debug_mode && $apw_log_exists) {
@@ -608,6 +673,19 @@ class APW_Woo_Template_Resolver
     {
         $apw_debug_mode = defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE;
         $apw_log_exists = function_exists('apw_woo_log');
+
+        // Check if this is a login page with our notice parameter
+        $current_path = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+        $is_login_with_notice = strpos($current_path, 'apw_login_notice') !== false;
+        
+        if ($is_login_with_notice && $apw_debug_mode && $apw_log_exists) {
+            apw_woo_log("RESOLVER: Login page with notice detected, ensuring my-account template is used");
+            
+            // For login pages with notice, always use the my-account template
+            if (strpos($page_description, 'account') !== false) {
+                apw_woo_log("RESOLVER: Using my-account template for login page with notice");
+            }
+        }
 
         if ($apw_debug_mode && $apw_log_exists) {
             apw_woo_log("RESOLVER: Checking for custom template file for {$page_description}: " . basename($template_path));

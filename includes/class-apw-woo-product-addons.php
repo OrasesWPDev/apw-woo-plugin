@@ -45,10 +45,10 @@ class APW_Woo_Product_Addons {
      */
     private function init_hooks() {
         // Remove Product Add-ons from default location
-        add_action('init', array($this, 'remove_default_addons_location'));
+        add_action('init', array($this, 'remove_default_addons_location')); // RE-ENABLED
 
         // Add Product Add-ons at our custom location
-        add_action('woocommerce_single_product_summary', array($this, 'display_product_addons'), 45);
+        add_action('woocommerce_single_product_summary', array($this, 'display_product_addons'), 45); // RE-ENABLED
 
         // Register hooks for visualization if in debug mode
         if (APW_WOO_DEBUG_MODE && current_user_can('manage_options')) {
@@ -135,22 +135,18 @@ class APW_Woo_Product_Addons {
         // Custom action to mark the start of add-ons
         do_action('woocommerce_product_addons_start', $product);
 
-        // FIX: Set up a filter to ensure the product ID is used correctly by Product Add-ons
-        add_filter('product_addons_get_product_id', function($product_id, $passed_product) use ($product) {
-            // If we're passing a product object instead of an ID, return the ID
-            if (is_object($passed_product) && is_a($passed_product, 'WC_Product')) {
-                return $passed_product->get_id();
-            }
-            return $product_id;
-        }, 10, 2);
-
-        // IMPORTANT FIX: Use the action instead of trying to call the method directly
-        do_action('woocommerce_before_add_to_cart_button');
-
-        // Remove our filter after use
-        remove_filter('product_addons_get_product_id', function($product_id, $passed_product) {
-            return $product_id;
-        }, 10);
+        // Call the Product Add-ons display function directly
+        // Ensure the class and method exist before calling
+        if (class_exists('WC_Product_Addons_Display') && method_exists('WC_Product_Addons_Display', 'display')) {
+             WC_Product_Addons_Display::display();
+             if (APW_WOO_DEBUG_MODE) {
+                 apw_woo_log('Called WC_Product_Addons_Display::display() directly.');
+             }
+        } else {
+             if (APW_WOO_DEBUG_MODE) {
+                 apw_woo_log('WC_Product_Addons_Display::display() not found.', 'error');
+             }
+        }
 
         // Custom action to mark the end of add-ons
         do_action('woocommerce_product_addons_end', $product);

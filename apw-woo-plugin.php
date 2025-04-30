@@ -22,7 +22,7 @@
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
  * WC requires at least: 5.0
  * WC tested up to:   8.0
- * Update URI:        https://example.com/my-plugin/
+ * Update URI:        https://github.com/OrasesWPDev/apw-woo-plugin
  */
 
 // If this file is called directly, abort.
@@ -33,6 +33,7 @@ if (!defined('ABSPATH')) {
 /**
  * Plugin constants
  */
+
 define('APW_WOO_VERSION', '1.9.4');
 define('APW_WOO_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('APW_WOO_PLUGIN_URL', plugin_dir_url(__FILE__));

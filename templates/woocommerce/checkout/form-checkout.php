@@ -79,14 +79,6 @@ if (!is_a($checkout, 'WC_Checkout')) {
         ?>
     </div><!-- /.apw-woo-header-block -->
 
-    <!-- Notice Container - For WooCommerce messages -->
-    <div class="apw-woo-notices-container">
-        <?php
-        // This will print all queued notices
-        wc_print_notices();
-        ?>
-    </div>
-
     <!-- Main Content Container -->
     <div class="container">
         <div class="row">
@@ -192,6 +184,15 @@ if (!is_a($checkout, 'WC_Checkout')) {
                     <?php do_action('woocommerce_checkout_after_order_review'); ?>
 
                 </form>
+
+                <!-- Notice Container - For WooCommerce messages -->
+                <div class="apw-woo-notices-container">
+                    <?php
+                    // This will print all queued notices
+                    wc_print_notices();
+                    ?>
+                </div>
+
                 <?php
                 do_action('woocommerce_after_checkout_form', $checkout);
                 /**

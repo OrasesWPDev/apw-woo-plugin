@@ -142,12 +142,40 @@ if ($product) :
                                     </div>
                                     <!-- Add to Cart Form -->
                                     <div class="apw-woo-add-to-cart-wrapper">
-                                        <?php woocommerce_template_single_add_to_cart(); ?>
+                                        <?php 
+                                        // Debug logging for cart actions
+                                        if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                                            apw_woo_log('PRODUCT DEBUG: About to render add to cart form');
+                                            apw_woo_log('PRODUCT DEBUG: User logged in: ' . (is_user_logged_in() ? 'Yes' : 'No'));
+                                            apw_woo_log('PRODUCT DEBUG: Cart count: ' . (function_exists('WC') && isset(WC()->cart) ? WC()->cart->get_cart_contents_count() : 'N/A'));
+                                            
+                                            // Log information about the View Cart URL
+                                            if (function_exists('wc_get_cart_url')) {
+                                                apw_woo_log('PRODUCT DEBUG: Cart URL: ' . wc_get_cart_url());
+                                            }
+                                            
+                                            // Log information about the current page
+                                            global $wp;
+                                            apw_woo_log('PRODUCT DEBUG: Current URL: ' . home_url($wp->request));
+                                        }
+                                        
+                                        woocommerce_template_single_add_to_cart(); 
+                                        ?>
                                     </div>
 
                                     <!-- Notice Container - For WooCommerce messages - MOVED HERE -->
                                     <div class="apw-woo-notices-container apw-woo-notices-below-cart">
                                         <?php
+                                        // Debug logging for notices
+                                        if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                                            apw_woo_log('PRODUCT DEBUG: Checking for notices to display');
+                                            apw_woo_log('PRODUCT DEBUG: wc_print_notices function exists: ' . (function_exists('wc_print_notices') ? 'Yes' : 'No'));
+                                            apw_woo_log('PRODUCT DEBUG: wc_has_notices function exists: ' . (function_exists('wc_has_notices') ? 'Yes' : 'No'));
+                                            if (function_exists('wc_has_notices')) {
+                                                apw_woo_log('PRODUCT DEBUG: Has notices: ' . (wc_has_notices() ? 'Yes' : 'No'));
+                                            }
+                                        }
+                                        
                                         // Check if there are notices before printing
                                         if (function_exists('wc_print_notices') && function_exists('wc_has_notices') && wc_has_notices()) {
                                             wc_print_notices();
@@ -165,6 +193,27 @@ if ($product) :
                                         <?php endif; ?>
                                         <?php echo wc_get_product_category_list($product->get_id(), ', ', '<span class="posted_in">' . _n('Category:', 'Categories:', count($product->get_category_ids()), 'woocommerce') . ' ', '</span>'); ?>
                                     </div>
+                                    
+                                    <?php if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE): ?>
+                                    <!-- Debug Information for Administrators -->
+                                    <?php if (current_user_can('manage_options')): ?>
+                                    <div class="apw-woo-debug-info" style="margin-top: 20px; padding: 15px; background: #f5f5f5; border-left: 4px solid #007cba;">
+                                        <h4 style="margin-top: 0;">Debug Information</h4>
+                                        <ul style="margin-bottom: 0;">
+                                            <li><strong>User Status:</strong> <?php echo is_user_logged_in() ? 'Logged In (ID: ' . get_current_user_id() . ')' : 'Not Logged In'; ?></li>
+                                            <li><strong>Cart Items:</strong> <?php echo function_exists('WC') && isset(WC()->cart) ? WC()->cart->get_cart_contents_count() : 'N/A'; ?></li>
+                                            <li><strong>Cart URL:</strong> <?php echo function_exists('wc_get_cart_url') ? wc_get_cart_url() : 'N/A'; ?></li>
+                                            <li><strong>Current URL:</strong> <?php echo home_url(add_query_arg(array(), $wp->request)); ?></li>
+                                            <li><strong>WC Session Active:</strong> <?php echo function_exists('WC') && isset(WC()->session) && WC()->session->has_session() ? 'Yes' : 'No'; ?></li>
+                                            <li><strong>Template File:</strong> <?php echo __FILE__; ?></li>
+                                            <li><strong>Output Buffer Level:</strong> <?php echo ob_get_level(); ?></li>
+                                        </ul>
+                                        <p style="margin-top: 10px; margin-bottom: 0;">
+                                            <a href="<?php echo esc_url(wc_get_cart_url()); ?>" style="color: #007cba; text-decoration: underline;" onclick="console.log('View Cart clicked');">Test View Cart Link</a>
+                                        </p>
+                                    </div>
+                                    <?php endif; ?>
+                                    <?php endif; ?>
                                 </div>
                                 <?php do_action('apw_woo_after_product_summary', $product); ?>
                             </div>

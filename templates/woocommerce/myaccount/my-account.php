@@ -82,6 +82,19 @@ $correct_account_title = $account_page_id ? get_the_title($account_page_id) : __
                  */
                 do_action('apw_woo_before_myaccount_content');
 
+                // Check if this is a login page with our notice parameter
+                $current_path = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+                $is_login_with_notice = strpos($current_path, 'apw_login_notice') !== false;
+                $notice_type = '';
+                
+                if ($is_login_with_notice) {
+                    $notice_type = isset($_GET['apw_login_notice']) ? sanitize_text_field($_GET['apw_login_notice']) : '';
+                    
+                    if ($apw_debug_mode && $apw_log_exists) {
+                        apw_woo_log('MY ACCOUNT TEMPLATE: Login page with notice type: ' . $notice_type);
+                    }
+                }
+
                 // Check if user is logged in
                 if (is_user_logged_in()) {
                     /**
@@ -102,6 +115,16 @@ $correct_account_title = $account_page_id ? get_the_title($account_page_id) : __
 
                 <?php } else {
                     // If user is not logged in, display the login form
+                    
+                    // Display a custom notice based on the page they were trying to access
+                    if ($is_login_with_notice && !empty($notice_type)) {
+                        // The notice will be displayed by the apw_woo_display_login_notice function
+                        // which is hooked to woocommerce_before_customer_login_form
+                        if ($apw_debug_mode && $apw_log_exists) {
+                            apw_woo_log('MY ACCOUNT TEMPLATE: Displaying login notice for: ' . $notice_type);
+                        }
+                    }
+                    
                     do_action('woocommerce_before_customer_login_form');
                     
                     // Use the shortcode which is more reliable:
