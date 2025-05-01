@@ -77,10 +77,10 @@ class APW_Woo_Recurring_Billing
         add_action('woocommerce_checkout_process', array($this, 'validate_preferred_billing_field'));
 
         // Save the field value when the order is created
-        add_action('woocommerce_checkout_create_order', array($this, 'save_preferred_billing_field'), 10, 2); // Use priority 10 standard
+        add_action('woocommerce_checkout_create_order', array($this, 'save_preferred_billing_field'), 10, 2);
 
-        // Placeholder for future Admin Display hook
-        // add_action('woocommerce_admin_order_data_after_billing_address', array($this, 'display_preferred_billing_admin'));
+        // Display the saved value in the admin order view
+        add_action('woocommerce_admin_order_data_after_billing_address', array($this, 'display_preferred_billing_admin'), 10, 1); // Pass 1 arg ($order)
 
         if (function_exists('apw_woo_log')) {
             apw_woo_log('Recurring Billing hooks initialized.');
@@ -257,8 +257,55 @@ class APW_Woo_Recurring_Billing
         }
     }
 
-    // --- Placeholder for Admin Display Method ---
-    // public function display_preferred_billing_admin($order) { /* ... */ }
+    /**
+     * Display the saved preferred billing method in the admin order details.
+     *
+     * Hooked into 'woocommerce_admin_order_data_after_billing_address'.
+     *
+     * @param WC_Order $order The order object being viewed.
+     */
+    public function display_preferred_billing_admin($order)
+    {
+        // Get the saved meta data
+        $saved_value = $order->get_meta(self::META_KEY);
+
+        // Only display if a value was actually saved
+        if ($saved_value) {
+            $display_text = __('N/A', 'apw-woo-plugin'); // Default text
+
+            // Translate the saved key back to the descriptive text
+            switch ($saved_value) {
+                case 'YES-NEW':
+                    $display_text = __('New Customer - must provide new monthly billing method', 'apw-woo-plugin');
+                    break;
+                case 'NO-EXISTING':
+                    $display_text = __('Existing customer – use default monthly billing on file', 'apw-woo-plugin');
+                    break;
+                case 'YES-EXISTING':
+                    $display_text = __('Existing customer – use new monthly billing method', 'apw-woo-plugin');
+                    break;
+            }
+
+            if (function_exists('apw_woo_log')) {
+                apw_woo_log('Recurring Billing Admin Display: Displaying value for Order ID ' . $order->get_id() . ': ' . $display_text);
+            }
+
+            // Output the information in the admin
+            ?>
+            <div class="apw-preferred-billing-admin order_data_column"> <?php // Add custom class ?>
+                <h4><?php esc_html_e('Customer Billing Preference', 'apw-woo-plugin'); ?></h4>
+                <p>
+                    <strong><?php esc_html_e('Preferred Monthly Billing:', 'apw-woo-plugin'); ?></strong><br>
+                    <?php echo esc_html($display_text); ?>
+                </p>
+            </div>
+            <?php
+        } else {
+            if (function_exists('apw_woo_log')) {
+                apw_woo_log('Recurring Billing Admin Display: No saved value found for key ' . self::META_KEY . ' on Order ID ' . $order->get_id());
+            }
+        }
+    }
 
 
 } // End class APW_Woo_Recurring_Billing
