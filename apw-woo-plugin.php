@@ -743,9 +743,14 @@ function apw_woo_init()
     }
 
     // Initialize Product Add-ons integration
-    apw_woo_initialize_product_addons();
+    apw_woo_initialize_product_addons(); // Existing call
     // Initialize Dynamic Pricing integration
-    apw_woo_init_dynamic_pricing();
+    apw_woo_init_dynamic_pricing(); // Existing call
+
+    // Initialize Recurring Billing Field functionality
+    apw_woo_initialize_recurring_billing(); // <-- ADD THIS LINE
+
+    apw_woo_log('Plugin initialization complete.'); // Existing log message
 }
 
 /**

@@ -76,8 +76,10 @@ class APW_Woo_Recurring_Billing
         // Validate the field during checkout process
         add_action('woocommerce_checkout_process', array($this, 'validate_preferred_billing_field'));
 
-        // Placeholders for future hooks
-        // add_action('woocommerce_checkout_create_order', array($this, 'save_preferred_billing_field'), 10, 2);
+        // Save the field value when the order is created
+        add_action('woocommerce_checkout_create_order', array($this, 'save_preferred_billing_field'), 10, 2); // Use priority 10 standard
+
+        // Placeholder for future Admin Display hook
         // add_action('woocommerce_admin_order_data_after_billing_address', array($this, 'display_preferred_billing_admin'));
 
         if (function_exists('apw_woo_log')) {
@@ -127,19 +129,23 @@ class APW_Woo_Recurring_Billing
      * Hooked into 'woocommerce_checkout_after_customer_details'.
      * Only displays if a product with the recurring tag is in the cart.
      *
-     * @param WC_Checkout $checkout The checkout object (passed by the hook).
+     * @param mixed $checkout_arg The argument passed by the hook (potentially invalid).
      */
-    public function display_preferred_billing_field($checkout)
-    {
-        if (!is_a($checkout, 'WC_Checkout')) {
-            if (function_exists('apw_woo_log')) {
-                apw_woo_log('Recurring Billing Display: Invalid $checkout object received.', 'warning');
-            }
-            return; // Safety check
-        }
-
+    public function display_preferred_billing_field($checkout_arg)
+    { // Renamed arg to avoid confusion
         if (function_exists('apw_woo_log')) {
             apw_woo_log('Recurring Billing Display: display_preferred_billing_field hook triggered.');
+        }
+
+        // Get the checkout object reliably from the WC global instance
+        $checkout = WC()->checkout();
+
+        // Check if we successfully retrieved the checkout object
+        if (!is_a($checkout, 'WC_Checkout')) {
+            if (function_exists('apw_woo_log')) {
+                apw_woo_log('Recurring Billing Display: Failed to get valid WC_Checkout object from WC()->checkout.', 'error');
+            }
+            return; // Cannot proceed without a valid checkout object
         }
 
         // Check if a recurring product tag exists in the cart
@@ -151,6 +157,7 @@ class APW_Woo_Recurring_Billing
             echo '<div class="apw-woo-preferred-billing-wrapper">'; // Add a wrapper for styling/targeting
 
             // Get the previously selected value if validation failed and page reloaded
+            // Use the reliable $checkout object retrieved above
             $selected_value = $checkout->get_value(self::META_KEY);
 
             woocommerce_form_field(
@@ -221,8 +228,34 @@ class APW_Woo_Recurring_Billing
         }
     }
 
-    // --- Placeholder for Saving Method ---
-    // public function save_preferred_billing_field($order, $data) { /* ... */ }
+    /**
+     * Save the preferred billing field value to order meta.
+     *
+     * Hooked into 'woocommerce_checkout_create_order'.
+     *
+     * @param WC_Order $order The order object being created.
+     * @param array $data The data submitted via the checkout form.
+     */
+    public function save_preferred_billing_field($order, $data)
+    {
+        // Check if our field's value exists in the POST data (validation should have already run)
+        if (isset($_POST[self::META_KEY]) && !empty($_POST[self::META_KEY])) {
+            // Sanitize the value before saving
+            $selected_value = sanitize_text_field($_POST[self::META_KEY]);
+
+            // Save the sanitized value to the order meta
+            $order->update_meta_data(self::META_KEY, $selected_value);
+
+            if (function_exists('apw_woo_log')) {
+                apw_woo_log('Recurring Billing Saving: Saved value "' . $selected_value . '" to order ID ' . $order->get_id() . ' with meta key ' . self::META_KEY);
+            }
+        } elseif ($this->apw_check_cart_for_recurring_tag()) {
+            // Log if the field was required but somehow not present during saving (shouldn't happen if validation worked)
+            if (function_exists('apw_woo_log')) {
+                apw_woo_log('Recurring Billing Saving: WARNING - Recurring product in cart, but meta key ' . self::META_KEY . ' not found or empty in POST during saving.', 'warning');
+            }
+        }
+    }
 
     // --- Placeholder for Admin Display Method ---
     // public function display_preferred_billing_admin($order) { /* ... */ }
