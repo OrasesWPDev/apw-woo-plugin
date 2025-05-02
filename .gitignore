@@ -37,6 +37,7 @@ node_modules/
 # Aider files
 .aider*
 aider*
+.md
 
 # Output files
 *-output.txt

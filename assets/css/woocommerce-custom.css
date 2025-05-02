@@ -358,7 +358,7 @@ body.woocommerce-account .col.apw-woo-content-wrapper {
 .apw-woo-intro-section .apw-woo-section-title {
     font-family: var(--apw-font-family);
     font-weight: var(--apw-font-bold);
-    font-size: 6.25rem;
+    font-size: clamp(2.8rem, 5vw, 6.25rem);
     text-align: center;
     color: #244B5A; /* Or specific intro title color if needed */
     padding-top: 4.688rem;
@@ -2172,6 +2172,152 @@ select.wc-pao-addon-field option {
 /* --- END: Style Check Payment Instructions --- */
 
 /* --- End Checkout Styles --- */
+
+/* ========================================
+   12. RMA FORM STYLES
+   Styles for the RMA form on product pages
+   ======================================== */
+
+/* RMA Form Container */
+.apw-woo-rma-form {
+    margin-bottom: 30px;
+    padding: 20px;
+    background-color: rgba(215, 224, 226, 0.3);
+    border-radius: 8px;
+    border-left: 4px solid #178093;
+}
+
+/* RMA Form Title */
+.apw-woo-rma-form h3 {
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold);
+    font-size: 1.5rem;
+    color: var(--apw-woo-text-color);
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+/* Form Row */
+.apw-woo-rma-form .form-row {
+    margin-bottom: 20px;
+}
+
+/* Form Labels */
+.apw-woo-rma-form label {
+    display: block;
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold);
+    font-size: var(--apw-woo-content-font-size);
+    color: var(--apw-woo-text-color);
+    margin-bottom: 8px;
+}
+
+/* Required Field Indicator */
+.apw-woo-rma-form .required {
+    color: #C60307;
+    font-weight: var(--apw-font-bold);
+    margin-left: 4px;
+}
+
+/* Form Inputs */
+.apw-woo-rma-form select,
+.apw-woo-rma-form input[type="text"],
+.apw-woo-rma-form textarea {
+    width: 100%;
+    padding: 12px 20px;
+    border: 1px solid var(--apw-woo-dropdown-border);
+    border-radius: 20px;
+    background-color: var(--apw-woo-dropdown-bg);
+    font-family: var(--apw-font-family);
+    font-size: var(--apw-woo-content-font-size);
+    color: var(--apw-woo-text-color);
+    box-shadow: none;
+}
+
+/* Textarea Specific Styles */
+.apw-woo-rma-form textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+/* Select Dropdown Styling */
+.apw-woo-rma-form select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="6" viewBox="0 0 12 6"><path fill="%230D252C" d="M0 0l6 6 6-6z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    background-size: 12px;
+    padding-right: 40px;
+}
+
+/* Focus States */
+.apw-woo-rma-form select:focus,
+.apw-woo-rma-form input[type="text"]:focus,
+.apw-woo-rma-form textarea:focus {
+    outline: none;
+    border-color: #178093;
+    box-shadow: 0 0 0 1px #178093;
+}
+
+/* Error State */
+.apw-woo-rma-form select.error,
+.apw-woo-rma-form input[type="text"].error,
+.apw-woo-rma-form textarea.error {
+    border-color: #C60307;
+}
+
+/* Conditional Fields */
+.apw-woo-rma-form .conditional-field {
+    display: none;
+}
+
+/* Admin Order View RMA Data */
+.apw-rma-data-admin {
+    background-color: rgba(215, 224, 226, 0.2);
+    padding: 15px;
+    border-radius: 5px;
+    margin-top: 20px;
+}
+
+.apw-rma-data-admin h4 {
+    color: #178093;
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold);
+}
+
+.apw-rma-item-data {
+    margin-bottom: 20px;
+}
+
+.apw-rma-item-data p {
+    margin-bottom: 10px;
+}
+
+.apw-rma-item-data strong {
+    font-weight: var(--apw-font-bold);
+    color: var(--apw-woo-text-color);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .apw-woo-rma-form {
+        padding: 15px;
+    }
+    
+    .apw-woo-rma-form select,
+    .apw-woo-rma-form input[type="text"],
+    .apw-woo-rma-form textarea {
+        padding: 10px 15px;
+    }
+    
+    .apw-woo-rma-form h3 {
+        font-size: 1.3rem;
+    }
+}
 
 /* ========================================
    10. MY ACCOUNT PAGE STYLES (my-account.php)
