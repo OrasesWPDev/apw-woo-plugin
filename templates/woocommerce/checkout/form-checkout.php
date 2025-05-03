@@ -91,11 +91,11 @@ if (!is_a($checkout, 'WC_Checkout')) {
     // Check if we're on the order-received endpoint
     if (is_wc_endpoint_url('order-received')) {
         $order_id = absint(get_query_var('order-received'));
-    
+
         if ($order_id > 0) {
             // Get the order
             $order = wc_get_order($order_id);
-        
+
             if ($order) {
                 // Display the order received content
                 ?>
@@ -106,7 +106,7 @@ if (!is_a($checkout, 'WC_Checkout')) {
                     ?>
                 </div>
                 <?php
-            
+
                 // Don't display the checkout form if we're showing the thank you page
                 get_footer();
                 exit;
@@ -213,11 +213,11 @@ if (!is_a($checkout, 'WC_Checkout')) {
 
                     <?php // Added apw-woo-order-review class ?>
                     <div id="order_review" class="woocommerce-checkout-review-order apw-woo-order-review">
-                        <?php do_action('woocommerce_checkout_order_review'); ?>
-                        
+                        <!--                        --><?php //do_action('woocommerce_checkout_order_review'); ?>
+
                         <?php do_action('woocommerce_review_order_before_payment'); ?>
                         <div id="payment" class="woocommerce-checkout-payment apw-woo-payment-section">
-                            <?php if (WC()->cart && WC()->cart->needs_payment()) : ?>
+                            <?php /* if (WC()->cart && WC()->cart->needs_payment()) : ?>
                                 <ul class="wc_payment_methods payment_methods methods">
                                     <?php
                                     if (!empty($available_gateways)) {
@@ -229,14 +229,16 @@ if (!is_a($checkout, 'WC_Checkout')) {
                                     }
                                     ?>
                                 </ul>
-                            <?php endif; ?>
-                            <div class="form-row place-order">
+                            <?php endif; */ ?>
+                            <?php /* <div class="form-row place-order">
                                 <noscript>
                                     <?php
                                     /* translators: $1 and $2 opening and closing emphasis tags respectively */
                                     printf(esc_html__('Since your browser does not support JavaScript, or it is disabled, please ensure you click the %1$sUpdate Totals%2$s button before placing your order. You may be charged more than the amount stated above if you fail to do so.', 'woocommerce'), '<em>', '</em>');
                                     ?>
-                                    <br/><button type="submit" class="button alt" name="woocommerce_checkout_update_totals" value="<?php esc_attr_e('Update totals', 'woocommerce'); ?>"><?php esc_html_e('Update totals', 'woocommerce'); ?></button>
+                                    <br/>
+                                    <button type="submit" class="button alt" name="woocommerce_checkout_update_totals"
+                                            value="<?php esc_attr_e('Update totals', 'woocommerce'); ?>"><?php esc_html_e('Update totals', 'woocommerce'); ?></button>
                                 </noscript>
 
                                 <?php wc_get_template('checkout/terms.php'); ?>
@@ -248,7 +250,7 @@ if (!is_a($checkout, 'WC_Checkout')) {
                                 <?php do_action('woocommerce_review_order_after_submit'); ?>
 
                                 <?php wp_nonce_field('woocommerce-process-checkout', 'woocommerce-process-checkout-nonce'); ?>
-                            </div>
+                            </div> */ ?>
                         </div>
                         <?php do_action('woocommerce_review_order_after_payment'); ?>
                     </div>
