@@ -87,6 +87,34 @@ if (!is_a($checkout, 'WC_Checkout')) {
         ?>
     </div>
 
+    <?php
+    // Check if we're on the order-received endpoint
+    if (is_wc_endpoint_url('order-received')) {
+        $order_id = absint(get_query_var('order-received'));
+    
+        if ($order_id > 0) {
+            // Get the order
+            $order = wc_get_order($order_id);
+        
+            if ($order) {
+                // Display the order received content
+                ?>
+                <div class="apw-woo-order-received apw-woo-section-wrapper">
+                    <?php
+                    // This hook displays the order details and thank you message
+                    do_action('woocommerce_thankyou', $order_id);
+                    ?>
+                </div>
+                <?php
+            
+                // Don't display the checkout form if we're showing the thank you page
+                get_footer();
+                exit;
+            }
+        }
+    }
+    ?>
+
     <!-- Main Content Container -->
     <div class="container">
         <div class="row">
