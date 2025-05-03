@@ -1942,15 +1942,26 @@ select.wc-pao-addon-field option {
 }
 
 /* --- Content Wrapper Width (Checkout & Order Received) --- */
-/* Target the main content column specifically on checkout and order received */
-.woocommerce-checkout .col.apw-woo-content-wrapper,
-body.woocommerce-order-received .col.apw-woo-content-wrapper { /* Added order-received */
+/* Target the main content column specifically on checkout */
+.woocommerce-checkout .col.apw-woo-content-wrapper {
     max-width: 85%;
     margin-left: auto;
     margin-right: auto;
     float: none; /* Ensure it doesn't float */
-    padding-top: 2rem; /* Add some space below header */
-    padding-bottom: 2rem; /* Add some space above footer */
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+}
+/* Target the specific wrapper on the order received page */
+body.woocommerce-order-received .apw-woo-order-received.apw-woo-section-wrapper {
+    max-width: 85%;
+    margin-left: auto;
+    margin-right: auto;
+    float: none;
+    padding-top: 2rem; /* Add padding directly here */
+    padding-bottom: 2rem;
+    padding-left: 15px; /* Add side padding consistent with .col */
+    padding-right: 15px;/* Add side padding consistent with .col */
+    box-sizing: border-box;
 }
 /* --- END Content Wrapper Width --- */
 
@@ -2521,7 +2532,7 @@ body.woocommerce-order-received .col.apw-woo-content-wrapper { /* Added order-re
 @media (max-width: 849px) {
     /* Reduce content width slightly more */
     .woocommerce-checkout .col.apw-woo-content-wrapper,
-    body.woocommerce-order-received .col.apw-woo-content-wrapper {
+    body.woocommerce-order-received .apw-woo-order-received.apw-woo-section-wrapper { /* Corrected target */
         max-width: 90%;
     }
 
@@ -2571,15 +2582,17 @@ body.woocommerce-order-received .col.apw-woo-content-wrapper { /* Added order-re
     }
     .apw-woo-order-received .woocommerce-columns--addresses {
         gap: 0; /* Remove gap when stacked */
+        flex-direction: column; /* Explicitly stack */
     }
 
-}
+} /* End @media (max-width: 849px) */
+
 
 /* Mobile Styles (adjust breakpoint as needed) */
 @media (max-width: 549px) {
     /* Further reduce content width */
     .woocommerce-checkout .col.apw-woo-content-wrapper,
-    body.woocommerce-order-received .col.apw-woo-content-wrapper {
+    body.woocommerce-order-received .apw-woo-order-received.apw-woo-section-wrapper { /* Corrected target */
         max-width: 95%;
         padding-top: 1rem;
         padding-bottom: 1rem;
