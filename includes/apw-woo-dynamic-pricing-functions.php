@@ -484,84 +484,93 @@ function apw_woo_replace_price_display()
 }
 
 /**
- * Register and enqueue dynamic pricing JavaScript
+ * Register and enqueue dynamic pricing JavaScript.
+ * REVISED: Only enqueues on single product pages (standard or custom URLs).
  */
 function apw_woo_enqueue_dynamic_pricing_scripts()
 {
-    // We need a custom check instead of just is_product()
+    // --- Check if we are on a single product page ---
+
+    // Use WooCommerce's standard check first
+    $is_standard_product_page = is_product();
+
+    // Check for our custom product URL structure
     $is_custom_product_page = false;
-
-    // Get current request path
     global $wp;
-    $current_url = $wp->request;
-
-    // Check if URL matches our product pattern
-    if (preg_match('#^products/([^/]+)/([^/]+)$#', $current_url)) {
+    $current_url = $wp->request ?? ''; // Use null coalescing operator
+    // Use the more specific Page Detector class if available
+    if (class_exists('APW_Woo_Page_Detector') && method_exists('APW_Woo_Page_Detector', 'is_product_page')) {
+        // Use the detector which includes the URL check and other methods
+        $is_custom_product_page = APW_Woo_Page_Detector::is_product_page($wp);
+    } elseif (preg_match('#^products/([^/]+)/([^/]+)$#', $current_url)) {
+        // Fallback URL check if detector class isn't loaded yet (less reliable)
         $is_custom_product_page = true;
-    }
-
-    // Only enqueue on product pages (standard or custom), cart or checkout pages
-    if (!is_product() && !$is_custom_product_page && !is_cart() && !is_checkout()) {
         if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log('Not a product, cart, or checkout page - skipping dynamic pricing scripts');
+            apw_woo_log('Dynamic pricing enqueue: Page Detector class not found, using basic URL match for custom product page.');
         }
-        return;
     }
 
-    $js_dir = APW_WOO_PLUGIN_URL . 'assets/js/';
-    $js_file = 'apw-woo-dynamic-pricing.js';
-    $js_path = APW_WOO_PLUGIN_DIR . 'assets/js/' . $js_file;
+    // --- Enqueue Condition: Only load if it's a product page ---
+    if ($is_standard_product_page || $is_custom_product_page) {
 
-    if (APW_WOO_DEBUG_MODE) {
-        $page_type = is_product() ? 'product page' :
-            ($is_custom_product_page ? 'custom product page' :
-                (is_cart() ? 'cart page' :
-                    (is_checkout() ? 'checkout page' : 'unknown page')));
-        apw_woo_log('Loading dynamic pricing script on ' . $page_type);
-        apw_woo_log('Checking for JS file at: ' . $js_path);
-    }
-
-    // Check if the file exists
-    if (!file_exists($js_path)) {
         if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log('Dynamic pricing JS file not found: ' . $js_path);
+            $page_type = $is_standard_product_page ? 'standard product page' : 'custom URL product page';
+            apw_woo_log('Enqueuing dynamic pricing script on ' . $page_type);
         }
-        return;
-    }
 
-    if (APW_WOO_DEBUG_MODE) {
-        apw_woo_log('Enqueuing dynamic pricing script: ' . $js_dir . $js_file);
-    }
+        $js_dir = APW_WOO_PLUGIN_URL . 'assets/js/';
+        $js_file = 'apw-woo-dynamic-pricing.js';
+        $js_path = APW_WOO_PLUGIN_DIR . 'assets/js/' . $js_file;
 
-    // Enqueue the JavaScript file
-    wp_enqueue_script(
-        'apw-woo-dynamic-pricing',
-        $js_dir . $js_file,
-        array('jquery'),
-        filemtime($js_path),
-        true
-    );
+        // Check if the file exists
+        if (!file_exists($js_path)) {
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log('Dynamic pricing JS file not found: ' . $js_path, 'error');
+            }
+            return; // Stop if file is missing
+        }
 
-    // Localize script with data needed for AJAX
-    // Locate this section in the apw_woo_enqueue_dynamic_pricing_scripts() function
-    wp_localize_script(
-        'apw-woo-dynamic-pricing',
-        'apwWooDynamicPricing',
-        array(
-            'ajax_url' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('apw_woo_dynamic_pricing'),
-            // Replace this line:
-            // 'price_selector' => '.apw-woo-price-display',
-            // With these expanded selectors:
-            'price_selector' => '.apw-woo-price-display, .woocommerce-Price-amount, .price .amount',
-            'is_cart' => is_cart(),
-            'is_checkout' => is_checkout(),
-            'is_product' => (is_product() || $is_custom_product_page)
-        )
-    );
+        // Enqueue the JavaScript file
+        wp_enqueue_script(
+            'apw-woo-dynamic-pricing',
+            $js_dir . $js_file,
+            array('jquery'), // Dependency
+            filemtime($js_path), // Cache busting
+            true // Load in footer
+        );
 
-    if (APW_WOO_DEBUG_MODE) {
-        apw_woo_log('Dynamic pricing script successfully enqueued');
+        // Localize script with data needed for AJAX
+        wp_localize_script(
+            'apw-woo-dynamic-pricing',
+            'apwWooDynamicPricing',
+            array(
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('apw_woo_dynamic_pricing'),
+                'price_selector' => '.apw-woo-price-display, .woocommerce-Price-amount, .price .amount', // Expanded selectors
+                // Removed is_cart and is_checkout as they are irrelevant here
+                'is_product' => true, // Script only loads on product pages now
+                'debug_mode' => APW_WOO_DEBUG_MODE // Pass debug mode status
+            )
+        );
+
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('Dynamic pricing script successfully enqueued.');
+        }
+
+    } else {
+        // --- Not a product page, do not enqueue ---
+        if (APW_WOO_DEBUG_MODE) {
+            // Determine why it's not loading for more informative logs
+            $reason = '';
+            if (is_cart()) $reason = 'cart page';
+            elseif (is_checkout()) $reason = 'checkout page';
+            elseif (is_shop()) $reason = 'shop page';
+            elseif (is_product_category()) $reason = 'category page';
+            else $reason = 'non-product page (' . ($current_url ?: 'unknown URL') . ')';
+
+            apw_woo_log('Skipping dynamic pricing script enqueue: Currently on ' . $reason);
+        }
+        return; // Explicitly return to prevent further execution
     }
 }
 
