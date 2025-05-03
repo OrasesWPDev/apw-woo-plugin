@@ -1727,180 +1727,271 @@ select.wc-pao-addon-field option {
 }
 
 /* --- Responsive Adjustments for Cart --- */
-
 @media (max-width: 768px) {
     /* Example breakpoint for tablets/smaller desktops */
+
+    /* Hide table header on small screens */
     .apw-woo-cart-table thead.apw-woo-cart-thead {
-        display: none; /* Hide table header on small screens */
+        display: none;
     }
 
+    /* Stack rows */
     .apw-woo-cart-table tbody.apw-woo-cart-tbody tr.apw-woo-cart-item {
-        display: block; /* Stack rows */
+        display: block;
         margin-bottom: 20px;
         border-bottom: 2px solid var(--apw-faq-separator-color);
         padding-bottom: 15px;
     }
-
     .apw-woo-cart-table tbody.apw-woo-cart-tbody tr.apw-woo-cart-item:last-child {
         border-bottom: none;
         margin-bottom: 0;
     }
 
+    /* Stack cells */
     .apw-woo-cart-table tbody.apw-woo-cart-tbody td {
-        display: block; /* Stack cells */
+        display: block;
         width: 100%;
-        text-align: right !important; /* Align cell content right */
+        text-align: right !important; /* Default alignment for most cells */
         padding: 8px 10px;
         border-bottom: none; /* Remove inner borders */
         border-top: 1px solid #eee; /* Add light separator */
         position: relative; /* For label positioning */
+        min-height: 35px; /* Ensure cells have some minimum height */
     }
-
     .apw-woo-cart-table tbody.apw-woo-cart-tbody td:first-child {
         border-top: none; /* Remove top border on first cell */
     }
 
-    /* Add data labels using ::before pseudo-element */
-    .apw-woo-cart-table tbody.apw-woo-cart-tbody td::before {
+    /* --- START: APW Mobile Cart Fixes --- */
+
+    /* Hide the product thumbnail cell on mobile */
+    .apw-woo-cart-table td.apw-woo-product-thumbnail {
+        display: none !important; /* Hide the thumbnail cell */
+    }
+
+    /* Adjust product name cell alignment and label positioning */
+    .apw-woo-cart-table td.apw-woo-product-name {
+        padding-top: 25px !important; /* Add space above for the label */
+        padding-bottom: 15px !important; /* Add more space below name/meta */
+        text-align: left !important; /* Align product name left */
+        position: relative; /* Needed for absolute positioning of label */
+    }
+
+    /* Position the "Product" label at the top left */
+    .apw-woo-cart-table td.apw-woo-product-name::before {
         content: attr(data-title); /* Get title from data-title attribute */
         font-weight: var(--apw-font-bold);
         position: absolute;
+        top: 8px; /* Adjust spacing from top */
+        left: 10px; /* Align with cell padding */
+        width: auto; /* Allow label to take natural width */
+        text-align: left; /* Ensure label text is left-aligned */
+        white-space: nowrap;
+        padding-right: 0; /* Remove default padding-right */
+    }
+
+    /* Ensure the actual product name link flows below the label */
+    .apw-woo-cart-table td.apw-woo-product-name a.apw-woo-cart-item-name-link {
+        display: block; /* Make link take full width */
+        margin-top: 5px; /* Add slight space below the absolutely positioned label */
+        font-weight: var(--apw-font-medium); /* Ensure correct weight */
+        color: var(--apw-woo-text-color); /* Ensure correct color */
+    }
+
+    /* Adjust meta data display */
+    .apw-woo-cart-table .apw-woo-cart-item-meta {
+        text-align: left; /* Align meta text left */
+        margin-left: 0; /* Remove potential indentation */
+        margin-top: 10px; /* Add space above meta */
+        font-size: 0.9em; /* Keep meta slightly smaller */
+        width: 100%; /* Ensure meta takes full width */
+    }
+    .apw-woo-cart-table .apw-woo-cart-item-meta dt,
+    .apw-woo-cart-table .apw-woo-cart-item-meta dd {
+        text-align: left; /* Ensure meta details are left-aligned */
+        display: block;
+        margin-left: 0;
+        width: 100%; /* Ensure full width */
+    }
+    .apw-woo-cart-table .apw-woo-cart-item-meta dt {
+        font-weight: var(--apw-font-bold);
+        margin-bottom: 0.2em;
+        color: var(--apw-woo-text-color); /* Ensure label color */
+    }
+    .apw-woo-cart-table .apw-woo-cart-item-meta dd {
+        margin-bottom: 0.5em;
+        color: #555; /* Keep value color slightly muted */
+    }
+    .apw-woo-cart-table .apw-woo-cart-item-meta dd p { /* Target nested P tags in add-ons */
+        display: inline;
+        margin: 0;
+        color: #555;
+    }
+
+    /* Generic label positioning for other cells (Price, Quantity, Subtotal) */
+    /* This ensures the default label positioning applies where not overridden */
+    .apw-woo-cart-table tbody.apw-woo-cart-tbody td:not(.apw-woo-product-thumbnail):not(.apw-woo-product-name):not(.apw-woo-product-remove)::before {
+        content: attr(data-title);
+        font-weight: var(--apw-font-bold);
+        position: absolute;
         left: 10px;
+        top: 50%; /* Vertically center label relative to cell */
+        transform: translateY(-50%);
         text-align: left;
         white-space: nowrap;
         padding-right: 10px;
     }
-
-    /* Specific adjustments for certain cells */
-    .apw-woo-cart-table td.apw-woo-product-thumbnail {
-        text-align: center !important; /* Center thumbnail */
-    }
-
-    .apw-woo-cart-table td.apw-woo-product-thumbnail::before {
-        display: none; /* Hide label for thumbnail */
-    }
-
-    .apw-woo-cart-table td.apw-woo-product-thumbnail img.apw-woo-cart-item-thumbnail-img {
-        margin: 0 auto; /* Center image */
-        width: 100px; /* Slightly larger thumbnail */
-    }
+    /* --- END: APW Mobile Cart Fixes --- */
 
 
+    /* Specific adjustments for Remove button cell */
     .apw-woo-cart-table td.apw-woo-product-remove {
         text-align: center !important;
         padding-top: 15px;
         padding-bottom: 15px;
+        border-top: 1px solid #eee; /* Re-add top border for this specific cell */
     }
-
     .apw-woo-cart-table td.apw-woo-product-remove::before {
         display: none; /* Hide label for remove button */
     }
-
     .apw-woo-cart-table td.apw-woo-product-remove a.apw-woo-remove {
         font-size: 1.8rem;
     }
 
+    /* Ensure quantity input is aligned correctly with its label */
     .apw-woo-cart-table td.apw-woo-product-quantity .apw-woo-quantity-input {
-        display: inline-block; /* Ensure quantity input doesn't take full width */
-        margin-top: 5px;
+        display: inline-block; /* Keep inline */
+        float: right; /* Float right to align with the value */
+        margin-top: 0; /* Reset margin-top */
     }
+    /* Ensure the label for quantity is aligned */
+    .apw-woo-cart-table td.apw-woo-product-quantity::before {
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
 
     /* Adjust actions area for mobile */
     .apw-woo-cart-actions-row td.apw-woo-actions {
         text-align: center; /* Center actions */
+        padding: 20px 10px;
+        border-top: 2px solid var(--apw-faq-separator-color);
     }
 
     .apw-woo-coupon {
         display: block; /* Stack coupon */
         margin-bottom: 15px;
         margin-right: 0;
+        text-align: center; /* Center coupon elements */
     }
-
+    .apw-woo-coupon label {
+        display: block;
+        margin-bottom: 5px;
+    }
     .apw-woo-coupon input.apw-woo-coupon-code {
-        width: calc(100% - 140px); /* Adjust width based on button */
-        max-width: 200px;
+        width: calc(100% - 155px); /* Adjust width based on button approx width */
+        max-width: 250px; /* Max width for input */
+        margin-right: 5px;
+        display: inline-block;
+        vertical-align: middle;
     }
-
     .apw-woo-apply-coupon-button {
-        /* width: 120px; */ /* Give button fixed width if needed */
+        display: inline-block;
+        vertical-align: middle;
+        width: auto; /* Let button size naturally */
+        min-width: 130px; /* Ensure minimum width */
     }
 
     .apw-woo-update-cart-button {
         display: block; /* Stack update button */
         width: 100%;
         margin-top: 10px;
+        margin-bottom: 10px; /* Add margin below */
     }
+    /* Adjust the Continue Shopping button (if added by hook) */
+    .apw-woo-actions-row td.apw-woo-actions > a.button { /* Target Continue Shopping */
+        display: block;
+        width: 100%;
+        margin-top: 10px;
+        box-sizing: border-box;
+    }
+
 
     /* Stack cart totals */
     .apw-woo-cart-collaterals .cart_totals {
         float: none;
         width: 100%; /* Full width on mobile */
+        margin-top: 1.5rem; /* Add space above totals */
     }
-}
+} /* End @media (max-width: 768px) */
 
 
-/* ========================================
-   9. CHECKOUT PAGE STYLES (form-checkout.php)
+//* ========================================
+   9. CHECKOUT & ORDER RECEIVED PAGE STYLES (form-checkout.php & Order Received)
    ======================================== */
 
-/* Styles specific to the WooCommerce checkout page template. */
-/* Utilizes 'apw-woo-' prefixed classes added in form-checkout.php or WC core classes. */
+/* Styles specific to the WooCommerce checkout page template and order received page. */
+/* Utilizes 'apw-woo-' prefixed classes and standard WC classes. */
 
-/* --- Start Checkout Styles --- */
+/* --- START: Checkout Form Styles --- */
 
-/* Overall Form Styling (if needed) */
+/* Overall Form Styling */
 .woocommerce-checkout.apw-woo-checkout-form {
-    font-family: var(--apw-font-family); /* Example: Use base font */
-    color: var(--apw-woo-text-color); /* Example: Use base text color */
+    font-family: var(--apw-font-family, 'Montserrat', sans-serif);
+    color: var(--apw-woo-text-color, #0D252C);
 }
 
-/* --- START: Reduce content wrapper width --- */
-/* Target the main content column specifically on checkout */
-.woocommerce-checkout .col.apw-woo-content-wrapper {
+/* --- Content Wrapper Width (Checkout & Order Received) --- */
+/* Target the main content column specifically on checkout and order received */
+.woocommerce-checkout .col.apw-woo-content-wrapper,
+body.woocommerce-order-received .col.apw-woo-content-wrapper { /* Added order-received */
     max-width: 85%;
     margin-left: auto;
     margin-right: auto;
     float: none; /* Ensure it doesn't float */
+    padding-top: 2rem; /* Add some space below header */
+    padding-bottom: 2rem; /* Add some space above footer */
 }
+/* --- END Content Wrapper Width --- */
 
-/* --- END: Reduce content wrapper width --- */
 
 /* Section Headings (Billing details, Shipping details, Your order) */
 .woocommerce-checkout h3,
 .woocommerce-checkout h3#order_review_heading.apw-woo-order-review-heading {
-    font-family: var(--apw-font-family);
-    font-size: 1.8rem; /* Placeholder - Adjust as needed */
-    font-weight: var(--apw-font-bold);
-    color: var(--apw-woo-text-color);
+    font-family: var(--apw-font-family, 'Montserrat', sans-serif);
+    font-size: 1.8rem; /* Adjusted for consistency */
+    font-weight: var(--apw-font-bold, 700);
+    color: var(--apw-woo-text-color, #0D252C);
     margin-bottom: 1.5em;
-    /* Add other styles: text-transform, letter-spacing, specific color? */
+    /* text-transform: uppercase; Optional: if needed */
+    /* letter-spacing: 0.5px; Optional: if needed */
 }
 
 /* Form Row Styling (wraps label and input) */
 .woocommerce-checkout .form-row {
-    margin-bottom: 1em; /* Adjust spacing */
-    /* Add other styles */
+    margin-bottom: 1.25em; /* Adjusted spacing */
+    padding: 0; /* Flatsome override reset */
 }
 
 /* Form Labels */
 .woocommerce-checkout .form-row label {
-    font-family: var(--apw-font-family);
-    font-weight: var(--apw-font-medium); /* Or --apw-font-bold? */
-    font-size: 1rem; /* Placeholder - Adjust as needed */
-    color: var(--apw-woo-text-color);
+    font-family: var(--apw-font-family, 'Montserrat', sans-serif);
+    font-weight: var(--apw-font-medium, 500);
+    font-size: 1rem; /* Base size */
+    color: var(--apw-woo-text-color, #0D252C);
     margin-bottom: 0.5em;
     display: block;
-    /* Add other styles */
 }
 
 /* Required Field Indicator */
 .woocommerce-checkout .form-row label .required {
-    color: red; /* Placeholder - Adjust color */
-    font-weight: var(--apw-font-bold);
+    color: var(--apw-woo-error-color, red); /* Use a variable if available, fallback to red */
+    font-weight: var(--apw-font-bold, 700);
     margin-left: 0.25em;
+    text-decoration: none; /* Ensure no underline */
 }
 
-/* --- Input Fields --- */
+/* --- Input Fields (Checkout) --- */
 
 /* General Input Fields (Text, Email, Tel, Select, etc.) */
 .woocommerce-checkout input[type="text"],
@@ -1908,114 +1999,177 @@ select.wc-pao-addon-field option {
 .woocommerce-checkout input[type="tel"],
 .woocommerce-checkout input[type="password"],
 .woocommerce-checkout textarea,
-.woocommerce-checkout select:not(.select2-hidden-accessible) { /* Exclude hidden original select */
-    font-family: var(--apw-font-family);
-    font-size: var(--apw-woo-content-font-size); /* Match product page inputs? */
-    color: var(--apw-woo-text-color);
-    background-color: var(--apw-woo-dropdown-bg); /* Use existing dropdown bg? */
-    border: 1px solid var(--apw-woo-dropdown-border); /* Use existing dropdown border? */
-    border-radius: 20px; /* Match product page dropdowns? */
-    padding: 12px 20px; /* Default padding for most inputs */
-    min-height: 50px; /* Default min-height */
+.woocommerce-checkout select:not(.select2-hidden-accessible):not([multiple]) { /* Exclude hidden original select and multiselects */
+    font-family: var(--apw-font-family, 'Montserrat', sans-serif);
+    font-size: var(--apw-woo-content-font-size, 1.3125rem); /* Match product page */
+    color: var(--apw-woo-text-color, #0D252C);
+    background-color: var(--apw-woo-dropdown-bg, rgba(215, 224, 226, 0.3));
+    border: 1px solid var(--apw-woo-dropdown-border, #393D72);
+    border-radius: 20px; /* Match product page */
+    padding: 12px 20px;
+    min-height: 50px; /* Match product page */
     width: 100%;
     box-shadow: none;
     box-sizing: border-box;
     margin: 0;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
+
+.woocommerce-checkout input:focus,
+.woocommerce-checkout textarea:focus,
+.woocommerce-checkout select:not(.select2-hidden-accessible):focus {
+    border-color: var(--apw-woo-notice-highlight, #178093); /* Highlight focus */
+    box-shadow: 0 0 0 1px var(--apw-woo-notice-highlight, #178093);
+    outline: none;
+}
+
 
 /* Specific styles for Select2 dropdown containers */
 .woocommerce-checkout .select2-container--default .select2-selection--single {
-    font-family: var(--apw-font-family);
-    font-size: var(--apw-woo-content-font-size);
-    color: var(--apw-woo-text-color);
-    background-color: var(--apw-woo-dropdown-bg);
-    border: 1px solid var(--apw-woo-dropdown-border);
+    font-family: var(--apw-font-family, 'Montserrat', sans-serif);
+    font-size: var(--apw-woo-content-font-size, 1.3125rem);
+    color: var(--apw-woo-text-color, #0D252C);
+    background-color: var(--apw-woo-dropdown-bg, rgba(215, 224, 226, 0.3));
+    border: 1px solid var(--apw-woo-dropdown-border, #393D72);
     border-radius: 20px;
     box-shadow: none;
     box-sizing: border-box;
     width: 100%;
     margin: 0;
-
-    /* --- User Requirements --- */
-    height: 55px !important; /* Applied height, using !important for specificity */
-    padding: 0 !important; /* Removed padding from container, using !important */
-    line-height: 55px; /* Vertically align text inside */
+    height: 55px !important; /* Height requirement */
+    padding: 0 !important; /* Padding handled by inner elements */
+    line-height: 55px; /* Vertically align text */
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
+/* Focus state for Select2 */
+.woocommerce-checkout .select2-container--default.select2-container--open .select2-selection--single,
+.woocommerce-checkout .select2-container--default .select2-selection--single:focus {
+    border-color: var(--apw-woo-notice-highlight, #178093);
+    box-shadow: 0 0 0 1px var(--apw-woo-notice-highlight, #178093);
+    outline: none;
+}
+
 
 /* Adjust position of rendered text within Select2 */
 .woocommerce-checkout .select2-container--default .select2-selection--single .select2-selection__rendered {
-    line-height: 55px; /* Match container height */
-    padding-left: 20px !important; /* Re-add left padding for text */
-    padding-right: 40px !important; /* Re-add right padding for text (space for arrow) */
-    color: var(--apw-woo-text-color); /* Ensure text color is inherited */
+    line-height: 53px; /* Adjusted for border */
+    padding-left: 20px !important;
+    padding-right: 40px !important; /* Space for arrow */
+    color: var(--apw-woo-text-color, #0D252C);
+    height: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* Adjust position of the Select2 arrow */
 .woocommerce-checkout .select2-container--default .select2-selection--single .select2-selection__arrow {
-    height: 53px; /* Adjust slightly for border */
+    height: 53px; /* Match inner height */
     right: 10px;
-    top: 1px; /* Adjust vertical alignment */
+    top: 1px; /* Adjust alignment */
+    width: 20px; /* Standard width */
 }
+.woocommerce-checkout .select2-container--default .select2-selection--single .select2-selection__arrow b {
+    border-color: var(--apw-woo-text-color, #0D252C) transparent transparent transparent; /* Match text color */
+    border-width: 6px 6px 0 6px; /* Adjust size if needed */
+    margin-left: -6px; /* Center arrow */
+    margin-top: -3px;
+}
+/* Arrow direction when open */
+.woocommerce-checkout .select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {
+    border-color: transparent transparent var(--apw-woo-text-color, #0D252C) transparent;
+    border-width: 0 6px 6px 6px;
+}
+
 
 /* Style for Order Notes Textarea */
 .woocommerce-checkout textarea#order_comments {
-    min-height: 80px;
-    height: auto; /* Allow textarea to grow if needed, override inline style */
-    padding: 12px 20px; /* Keep padding for textarea */
-    line-height: 1.5; /* Improve readability */
-    /* Inherits border, background etc. from the general rule above */
+    min-height: 100px; /* Adjusted min-height */
+    height: auto;
+    padding: 12px 20px;
+    line-height: 1.6; /* Improve readability */
 }
 
-/* Specific style for the custom "Additional Emails" field if needed */
+/* Specific style for the custom "Additional Emails" field */
 .woocommerce-checkout #apw_woo_billing_additional_emails_field input {
-    /* Add specific overrides if needed, e.g., different height or padding */
+    /* Inherits general styles, add overrides here if needed */
 }
 
-/* --- End Input Fields --- */
+/* Preferred Billing Dropdown (if recurring product is in cart) */
+.woocommerce-checkout .apw-woo-preferred-billing-field select {
+    /* Inherits general select styles, add specific overrides here if needed */
+    /* Example: Add more margin-bottom if needed */
+    margin-bottom: 1.5em;
+}
 
 
-/* --- Order Review Table --- */
+/* --- END: Checkout Form Input Fields --- */
+
+
+/* --- START: Order Review Table (Checkout Page) --- */
 .woocommerce-checkout #order_review table.woocommerce-checkout-review-order-table {
     width: 100%;
-    border: 1px solid var(--apw-faq-separator-color); /* Example border */
-    border-radius: 5px; /* Example rounding */
+    border: 1px solid var(--apw-faq-separator-color, #e0e0e0);
+    border-radius: 5px;
     margin-bottom: 2em;
-    border-collapse: collapse; /* Clean look */
+    border-collapse: separate; /* For border-radius */
+    border-spacing: 0;
+    font-family: var(--apw-font-family, 'Montserrat', sans-serif);
 }
 
 .woocommerce-checkout #order_review table th,
 .woocommerce-checkout #order_review table td {
-    padding: 1em;
-    border-bottom: 1px solid var(--apw-faq-separator-color); /* Separator */
+    padding: 1em 1.25em; /* Consistent padding */
+    border-bottom: 1px solid var(--apw-faq-separator-color, #e0e0e0);
     text-align: left;
-    font-size: 1rem; /* Placeholder */
+    font-size: 1.1rem; /* Slightly adjusted size */
     vertical-align: middle;
+    color: var(--apw-woo-text-color, #0D252C);
+    line-height: 1.5;
 }
 
 .woocommerce-checkout #order_review table tfoot tr:last-child th,
 .woocommerce-checkout #order_review table tfoot tr:last-child td {
-    border-bottom: none;
+    border-bottom: none; /* Remove border on very last row */
 }
 
-.woocommerce-checkout #order_review table th {
-    font-weight: var(--apw-font-bold);
+.woocommerce-checkout #order_review table thead th {
+    font-weight: var(--apw-font-bold, 700);
 }
 
-.woocommerce-checkout #order_review table td {
-    /* Add styles */
+.woocommerce-checkout #order_review table tbody td {
+    font-weight: var(--apw-font-medium, 500);
 }
 
 .woocommerce-checkout #order_review table .product-name {
-    font-weight: var(--apw-font-medium);
+    font-weight: var(--apw-font-medium, 500);
+}
+.woocommerce-checkout #order_review table .product-quantity {
+    font-size: 0.9em; /* Slightly smaller for quantity */
 }
 
-.woocommerce-checkout #order_review table .product-total {
+.woocommerce-checkout #order_review table .product-total,
+.woocommerce-checkout #order_review table tfoot td {
+    text-align: right;
+    font-weight: var(--apw-font-medium, 500);
+}
+.woocommerce-checkout #order_review table tfoot th {
+    font-weight: var(--apw-font-bold, 700);
     text-align: right;
 }
+/* Make Total row bold */
+.woocommerce-checkout #order_review table tfoot .order-total th,
+.woocommerce-checkout #order_review table tfoot .order-total td strong,
+.woocommerce-checkout #order_review table tfoot .order-total .woocommerce-Price-amount {
+    font-weight: var(--apw-font-bold, 700) !important;
+    font-size: 1.2em; /* Make total stand out more */
+    color: var(--apw-woo-text-color, #0D252C);
+}
 
-/* --- End Order Review Table --- */
+/* --- END: Order Review Table (Checkout Page) --- */
 
-/* --- START: Hide Exemption Section Elements --- */
+
+/* --- START: Hide Exemption Section Elements (Checkout Page) --- */
 /* These selectors target elements assumed to be added by a tax exemption plugin (like Avalara)
    and placed *after* the main order review table within the #order_review div. */
 
@@ -2048,34 +2202,38 @@ select.wc-pao-addon-field option {
     display: none !important;
 }
 
-/* Hide the "Add Certificates" / "Manage existing certificates" links (using general selectors - JS is more reliable for text content) */
+/* Hide the "Add Certificates" / "Manage existing certificates" links */
+/* This hides *all* p and a tags following the table within #order_review.
+   Adjust if necessary to be more specific if this hides desired content. */
 .woocommerce-checkout #order_review table.woocommerce-checkout-review-order-table ~ p,
 .woocommerce-checkout #order_review table.woocommerce-checkout-review-order-table ~ a {
-    /* This hides *all* p and a tags following the table within #order_review.
-       Adjust if necessary to be more specific if this hides desired content. */
     display: none !important;
 }
 
-/* --- END: Hide Exemption Section Elements --- */
+/* --- END: Hide Exemption Section Elements (Checkout Page) --- */
 
-/* --- Payment Methods Section --- */
-.woocommerce-checkout .apw-woo-payment-section { /* Added apw-woo class */
-    /* Add styles */
+
+/* --- START: Payment Methods Section (Checkout Page) --- */
+.woocommerce-checkout .apw-woo-payment-section { /* Target our wrapper class */
     margin-top: 2em;
+    padding: 1.5em;
+    background-color: var(--apw-woo-dropdown-bg, rgba(215, 224, 226, 0.1)); /* Subtle background */
+    border: 1px solid var(--apw-faq-separator-color, #e0e0e0);
+    border-radius: 8px;
 }
 
 .woocommerce-checkout #payment ul.payment_methods {
     list-style: none;
     padding: 0;
     margin: 0 0 1em 0;
-    border: 1px solid var(--apw-faq-separator-color); /* Example border */
-    border-radius: 5px; /* Example rounding */
+    border: none; /* Remove default border, handled by wrapper */
 }
 
 .woocommerce-checkout #payment ul.payment_methods li {
-    padding: 1em;
-    border-bottom: 1px solid var(--apw-faq-separator-color); /* Separator */
+    padding: 1em 0; /* Vertical padding only */
+    border-bottom: 1px solid var(--apw-faq-separator-color, #e0e0e0); /* Separator */
     margin: 0;
+    line-height: 1.5;
 }
 
 .woocommerce-checkout #payment ul.payment_methods li:last-child {
@@ -2084,51 +2242,73 @@ select.wc-pao-addon-field option {
 
 .woocommerce-checkout #payment ul.payment_methods li input[type="radio"] {
     margin-right: 0.75em;
+    vertical-align: middle;
 }
 
 .woocommerce-checkout #payment ul.payment_methods li label {
-    display: inline; /* Make label sit next to radio */
-    font-weight: var(--apw-font-bold);
+    display: inline; /* Label next to radio */
+    font-weight: var(--apw-font-bold, 700);
+    font-size: 1.1rem; /* Slightly larger label */
+    color: var(--apw-woo-text-color, #0D252C);
+}
+/* Ensure images within labels are aligned */
+.woocommerce-checkout #payment ul.payment_methods li label img {
+    vertical-align: middle;
+    margin-left: 0.5em;
+    max-height: 28px; /* Limit image height */
+    width: auto;
 }
 
 .woocommerce-checkout #payment .payment_box {
-    background-color: #f9f9f9; /* Placeholder bg */
-    padding: 1em;
+    background-color: #fff; /* White background for contrast inside grey wrapper */
+    padding: 1.25em;
     margin-top: 1em;
     border-radius: 4px;
-    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .05);
-    color: var(--apw-woo-text-color);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, .07);
+    color: var(--apw-woo-text-color, #0D252C);
+    font-size: 1rem; /* Slightly smaller text inside box */
+    line-height: 1.6;
+}
+.woocommerce-checkout #payment .payment_box p {
+    margin-bottom: 0.75em;
+}
+.woocommerce-checkout #payment .payment_box p:last-child {
+    margin-bottom: 0;
 }
 
-/* --- End Payment Methods Section --- */
 
-/* --- START: Hide Privacy Policy Text --- */
+/* --- END: Payment Methods Section (Checkout Page) --- */
+
+
+/* --- START: Hide Privacy Policy Text (Checkout Page) --- */
 .woocommerce-checkout .woocommerce-privacy-policy-text {
     display: none !important;
 }
+/* --- END: Hide Privacy Policy Text (Checkout Page) --- */
 
-/* --- END: Hide Privacy Policy Text --- */
 
-
-/* --- Buttons --- */
+/* --- START: Buttons (Checkout Page) --- */
 
 /* Place Order Button */
 .woocommerce-checkout .place-order button#place_order {
-    background: var(--apw-woo-button-background) !important; /* Use button gradient */
+    background: var(--apw-woo-button-background, linear-gradient(#244B5A, #178093)) !important;
     color: #ffffff !important;
     border-radius: 58px !important;
-    font-family: var(--apw-font-family);
-    font-weight: var(--apw-font-bold);
-    font-size: 1.1rem !important; /* Placeholder */
+    font-family: var(--apw-font-family, 'Montserrat', sans-serif) !important;
+    font-weight: var(--apw-font-bold, 700) !important;
+    font-size: 1.1rem !important;
     text-transform: uppercase !important;
-    padding: 12px 30px !important; /* Placeholder */
+    padding: 12px 30px !important;
     border: none !important;
     text-align: center;
     text-decoration: none;
     transition: opacity 0.3s ease;
-    width: 100%; /* Make full width? */
-    margin-top: 1em;
+    width: 100%; /* Full width button */
+    margin-top: 1.5em; /* Space above button */
     cursor: pointer;
+    line-height: normal;
+    height: auto;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Subtle shadow */
 }
 
 .woocommerce-checkout .place-order button#place_order:hover {
@@ -2136,24 +2316,26 @@ select.wc-pao-addon-field option {
     color: #ffffff !important;
 }
 
-/* Validate Address Button */
+/* Validate Address Button (Avalara) */
 .woocommerce-checkout button.wc_avatax_validate_address.button {
-    background: var(--apw-woo-button-background) !important; /* Use button gradient */
+    background: var(--apw-woo-button-background, linear-gradient(#244B5A, #178093)) !important;
     color: #ffffff !important;
     border-radius: 58px !important;
-    font-family: var(--apw-font-family);
-    font-weight: var(--apw-font-bold);
-    font-size: 1.1rem !important; /* Match Place Order button size */
+    font-family: var(--apw-font-family, 'Montserrat', sans-serif) !important;
+    font-weight: var(--apw-font-bold, 700) !important;
+    font-size: 1rem !important; /* Slightly smaller than place order */
     text-transform: uppercase !important;
-    padding: 12px 30px !important; /* Match Place Order padding */
+    padding: 10px 25px !important; /* Adjusted padding */
     border: none !important;
     cursor: pointer;
     transition: opacity 0.3s ease;
-    line-height: normal; /* Ensure consistent line height */
-    height: auto; /* Let padding determine height */
-    vertical-align: middle; /* Align with adjacent elements if any */
-    margin-top: 0; /* Adjust margin as needed */
-    margin-right: 10px; /* Optional: Add space if next to other elements */
+    line-height: normal;
+    height: auto;
+    vertical-align: middle;
+    margin-top: 1em; /* Add space above */
+    margin-right: 10px;
+    display: inline-block; /* Keep inline */
+    width: auto;
 }
 
 .woocommerce-checkout button.wc_avatax_validate_address.button:hover {
@@ -2161,17 +2343,340 @@ select.wc-pao-addon-field option {
     color: #ffffff !important;
 }
 
-/* --- End Buttons --- */
-/* --- START: Style Check Payment Instructions --- */
+/* --- END: Buttons (Checkout Page) --- */
+
+
+/* --- START: Style Check Payment Instructions (Checkout Page) --- */
 .woocommerce-checkout #payment .payment_box.payment_method_cheque p {
-    color: #C60307; /* Apply the requested red color */
-    font-weight: var(--apw-font-bold); /* Use the existing bold variable (700) */
-    /* You could also use font-weight: bold; or font-weight: 700; directly */
+    color: var(--apw-woo-error-color, #C60307) !important; /* Use variable or fallback red */
+    font-weight: var(--apw-font-bold, 700) !important;
+    font-size: 1.1em; /* Make slightly larger */
+}
+/* --- END: Style Check Payment Instructions (Checkout Page) --- */
+
+/* --- END: Checkout Form Styles --- */
+
+
+
+/* --- START: Order Received Page Specific Styles --- */
+
+/* Ensure the wrapper has some margin */
+.apw-woo-order-received {
+    margin-top: 2rem;
+    margin-bottom: 2rem;
 }
 
-/* --- END: Style Check Payment Instructions --- */
+/* Style Headings */
+.apw-woo-order-received h2 {
+    font-family: var(--apw-font-family, 'Montserrat', sans-serif);
+    font-size: 1.8rem; /* Match checkout headings */
+    font-weight: var(--apw-font-bold, 700);
+    color: var(--apw-woo-text-color, #0D252C);
+    margin-bottom: 1.5em;
+}
 
-/* --- End Checkout Styles --- */
+/* Style Tables (Order Details, Downloads) */
+.apw-woo-order-received table.shop_table {
+    width: 100%;
+    border: 1px solid var(--apw-faq-separator-color, #e0e0e0);
+    border-radius: 5px;
+    margin-bottom: 2em;
+    border-collapse: separate; /* Use separate for border-radius */
+    border-spacing: 0;
+    font-size: var(--apw-woo-content-font-size, 1.3125rem); /* Match other content */
+    font-family: var(--apw-font-family, 'Montserrat', sans-serif);
+}
+
+.apw-woo-order-received table.shop_table th,
+.apw-woo-order-received table.shop_table td {
+    padding: 1em 1.25em; /* Consistent padding */
+    border-bottom: 1px solid var(--apw-faq-separator-color, #e0e0e0);
+    text-align: left;
+    vertical-align: middle;
+    color: var(--apw-woo-text-color, #0D252C);
+    line-height: 1.5;
+}
+
+.apw-woo-order-received table.shop_table thead th {
+    font-weight: var(--apw-font-bold, 700);
+    text-transform: uppercase;
+    font-size: 1.1rem; /* Slightly smaller header */
+    background-color: var(--apw-woo-dropdown-bg, rgba(215, 224, 226, 0.1)); /* Subtle header background */
+}
+/* Ensure top-left and top-right corners of thead match table radius */
+.apw-woo-order-received table.shop_table thead tr:first-child th:first-child {
+    border-top-left-radius: 5px;
+}
+.apw-woo-order-received table.shop_table thead tr:first-child th:last-child {
+    border-top-right-radius: 5px;
+}
+
+
+.apw-woo-order-received table.shop_table tbody td {
+    font-weight: var(--apw-font-medium, 500);
+}
+
+.apw-woo-order-received table.shop_table tfoot th {
+    font-weight: var(--apw-font-bold, 700);
+    text-align: right;
+    border-bottom: none; /* No border in footer */
+    border-top: 1px solid var(--apw-faq-separator-color, #e0e0e0); /* Add top border to footer rows */
+}
+.apw-woo-order-received table.shop_table tfoot td {
+    text-align: right;
+    border-bottom: none; /* No border in footer */
+    border-top: 1px solid var(--apw-faq-separator-color, #e0e0e0); /* Add top border to footer rows */
+}
+
+/* Make Total row bold and larger */
+.apw-woo-order-received table.shop_table tfoot tr.order_total th,
+.apw-woo-order-received table.shop_table tfoot tr.order_total td,
+.apw-woo-order-received table.shop_table tfoot tr.order_total .woocommerce-Price-amount {
+    font-weight: var(--apw-font-bold, 700) !important;
+    font-size: 1.2em;
+    color: var(--apw-woo-text-color, #0D252C);
+}
+
+/* Item Meta Data */
+.apw-woo-order-received .wc-item-meta {
+    list-style: none;
+    padding-left: 0;
+    margin-top: 0.5em;
+    margin-bottom: 0;
+    font-size: 0.9em;
+    color: #555;
+}
+.apw-woo-order-received .wc-item-meta li {
+    margin-bottom: 0.3em;
+    display: block; /* Ensure label and value are on separate lines */
+}
+.apw-woo-order-received .wc-item-meta li:last-child {
+    margin-bottom: 0;
+}
+.apw-woo-order-received .wc-item-meta .wc-item-meta-label {
+    font-weight: var(--apw-font-bold, 700);
+    color: var(--apw-woo-text-color, #0D252C);
+    display: block; /* Ensure label is on its own line */
+}
+.apw-woo-order-received .wc-item-meta p {
+    display: block; /* Ensure value is on its own line */
+    margin: 0.1em 0 0 0; /* Small space below label */
+    padding: 0;
+}
+
+
+/* Customer Details Section */
+.apw-woo-order-received section.woocommerce-customer-details {
+    margin-top: 2em;
+}
+.apw-woo-order-received .woocommerce-customer-details h2 {
+    font-size: 1.5rem; /* Slightly smaller heading for this section */
+    border-bottom: 1px solid var(--apw-faq-separator-color, #e0e0e0);
+    padding-bottom: 0.5em;
+    margin-bottom: 1em;
+}
+.apw-woo-order-received .woocommerce-customer-details address {
+    border: 1px solid var(--apw-faq-separator-color, #e0e0e0);
+    border-radius: 5px;
+    padding: 1.5em;
+    margin-bottom: 1em;
+    font-style: normal;
+    line-height: 1.6;
+    font-size: var(--apw-woo-content-font-size, 1.3125rem);
+    color: var(--apw-woo-text-color, #0D252C);
+    background-color: rgba(215, 224, 226, 0.1); /* Subtle background */
+}
+.apw-woo-order-received .woocommerce-customer-details address p {
+    margin-bottom: 0.5em;
+}
+.apw-woo-order-received .woocommerce-customer-details address p:last-child {
+    margin-bottom: 0;
+}
+.apw-woo-order-received .woocommerce-customer-details--email {
+    margin-top: 1em;
+}
+
+/* Address Columns Layout (Flexbox) */
+.apw-woo-order-received .woocommerce-columns--addresses {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2%; /* Space between columns */
+    margin-bottom: 1em;
+}
+.apw-woo-order-received .woocommerce-column--billing-address,
+.apw-woo-order-received .woocommerce-column--shipping-address {
+    flex: 1 1 48%; /* Allow flex grow/shrink, aim for 2 columns */
+    box-sizing: border-box;
+    margin-bottom: 0; /* Remove default margin handled by gap */
+}
+
+
+/* --- END: Order Received Page Specific Styles --- */
+
+
+
+/* --- START: Responsive Styles (Checkout & Order Received) --- */
+
+/* Tablet Styles (adjust breakpoint as needed) */
+@media (max-width: 849px) {
+    /* Reduce content width slightly more */
+    .woocommerce-checkout .col.apw-woo-content-wrapper,
+    body.woocommerce-order-received .col.apw-woo-content-wrapper {
+        max-width: 90%;
+    }
+
+    /* Adjust heading sizes */
+    .woocommerce-checkout h3,
+    .apw-woo-order-received h2 {
+        font-size: 1.6rem;
+    }
+
+    /* Input/Select field adjustments */
+    .woocommerce-checkout input[type="text"],
+    .woocommerce-checkout input[type="email"],
+    .woocommerce-checkout input[type="tel"],
+    .woocommerce-checkout input[type="password"],
+    .woocommerce-checkout textarea,
+    .woocommerce-checkout select:not(.select2-hidden-accessible):not([multiple]),
+    .woocommerce-checkout .select2-container--default .select2-selection--single {
+        font-size: 1.1rem; /* Smaller text */
+        min-height: 45px; /* Slightly shorter */
+        height: auto !important; /* Allow natural height for Select2 */
+        line-height: normal; /* Reset line-height for Select2 */
+        padding: 10px 15px; /* Reduce padding */
+    }
+    .woocommerce-checkout .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 43px; /* Match adjusted height */
+        padding-left: 15px !important;
+        padding-right: 35px !important;
+    }
+    .woocommerce-checkout .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 43px;
+    }
+
+    /* Table cell padding */
+    .woocommerce-checkout #order_review table th,
+    .woocommerce-checkout #order_review table td,
+    .apw-woo-order-received table.shop_table th,
+    .apw-woo-order-received table.shop_table td {
+        padding: 0.8em 1em;
+        font-size: 1rem;
+    }
+
+    /* Stack address columns earlier on tablets */
+    .apw-woo-order-received .woocommerce-column--billing-address,
+    .apw-woo-order-received .woocommerce-column--shipping-address {
+        flex-basis: 100%; /* Full width */
+        margin-bottom: 1.5em; /* Add margin when stacked */
+    }
+    .apw-woo-order-received .woocommerce-columns--addresses {
+        gap: 0; /* Remove gap when stacked */
+    }
+
+}
+
+/* Mobile Styles (adjust breakpoint as needed) */
+@media (max-width: 549px) {
+    /* Further reduce content width */
+    .woocommerce-checkout .col.apw-woo-content-wrapper,
+    body.woocommerce-order-received .col.apw-woo-content-wrapper {
+        max-width: 95%;
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
+
+    /* Adjust headings */
+    .woocommerce-checkout h3,
+    .apw-woo-order-received h2 {
+        font-size: 1.4rem;
+        margin-bottom: 1em;
+    }
+
+    /* Form layout adjustments */
+    .woocommerce-checkout .form-row {
+        margin-bottom: 1em;
+    }
+    .woocommerce-checkout .form-row-first,
+    .woocommerce-checkout .form-row-last {
+        float: none;
+        width: 100%;
+    }
+
+    /* Inputs */
+    .woocommerce-checkout input[type="text"],
+    .woocommerce-checkout input[type="email"],
+    .woocommerce-checkout input[type="tel"],
+    .woocommerce-checkout input[type="password"],
+    .woocommerce-checkout textarea,
+    .woocommerce-checkout select:not(.select2-hidden-accessible):not([multiple]),
+    .woocommerce-checkout .select2-container--default .select2-selection--single {
+        font-size: 1rem;
+        min-height: 40px;
+        padding: 8px 12px;
+    }
+    .woocommerce-checkout .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 38px;
+        padding-left: 12px !important;
+        padding-right: 30px !important;
+    }
+    .woocommerce-checkout .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 38px;
+    }
+
+
+    /* Order Review Table - Smaller text */
+    .woocommerce-checkout #order_review table th,
+    .woocommerce-checkout #order_review table td {
+        padding: 0.6em 0.8em;
+        font-size: 0.9rem;
+    }
+    .woocommerce-checkout #order_review table tfoot .order-total th,
+    .woocommerce-checkout #order_review table tfoot .order-total td strong,
+    .woocommerce-checkout #order_review table tfoot .order-total .woocommerce-Price-amount {
+        font-size: 1em !important; /* Slightly smaller total */
+    }
+
+
+    /* Order Received Table - Smaller text */
+    .apw-woo-order-received table.shop_table th,
+    .apw-woo-order-received table.shop_table td {
+        padding: 0.6em 0.8em;
+        font-size: 0.9rem;
+    }
+    .apw-woo-order-received table.shop_table tfoot tr.order_total th,
+    .apw-woo-order-received table.shop_table tfoot tr.order_total td,
+    .apw-woo-order-received table.shop_table tfoot tr.order_total .woocommerce-Price-amount {
+        font-size: 1em !important; /* Slightly smaller total */
+    }
+    .apw-woo-order-received .wc-item-meta {
+        font-size: 0.85em; /* Smaller meta */
+    }
+
+    /* Customer Details Address */
+    .apw-woo-order-received .woocommerce-customer-details address {
+        font-size: 1rem; /* Smaller address text */
+        padding: 1em;
+    }
+
+    /* Buttons - Ensure full width on mobile */
+    .woocommerce-checkout .place-order button#place_order,
+    .woocommerce-checkout button.wc_avatax_validate_address.button {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 0.75em; /* Add space between stacked buttons */
+        font-size: 1rem !important;
+        padding: 10px 20px !important;
+    }
+    .woocommerce-checkout button.wc_avatax_validate_address.button {
+        margin-top: 0.5em; /* Reduce top margin */
+    }
+
+
+} /* End Mobile Styles */
+
+/* --- END: Responsive Styles --- */
+
+/* --- END CHECKOUT & ORDER RECEIVED STYLES --- */
 
 /* ========================================
    12. RMA FORM STYLES
