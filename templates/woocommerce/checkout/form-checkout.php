@@ -217,7 +217,9 @@ if (!is_a($checkout, 'WC_Checkout')) {
 
                         <?php do_action('woocommerce_review_order_before_payment'); ?>
                         <div id="payment" class="woocommerce-checkout-payment apw-woo-payment-section">
-                            <?php /* if (WC()->cart && WC()->cart->needs_payment()) : ?>
+                            <?php
+                            /*
+                            if (WC()->cart && WC()->cart->needs_payment()) : ?>
                                 <ul class="wc_payment_methods payment_methods methods">
                                     <?php
                                     if (!empty($available_gateways)) {
@@ -229,7 +231,9 @@ if (!is_a($checkout, 'WC_Checkout')) {
                                     }
                                     ?>
                                 </ul>
-                            <?php endif; */ ?>
+                            <?php endif;
+                            */
+                            ?>
                             <?php /* <div class="form-row place-order">
                                 <noscript>
                                     <?php
@@ -250,7 +254,9 @@ if (!is_a($checkout, 'WC_Checkout')) {
                                 <?php do_action('woocommerce_review_order_after_submit'); ?>
 
                                 <?php wp_nonce_field('woocommerce-process-checkout', 'woocommerce-process-checkout-nonce'); ?>
-                            </div> */ ?>
+                            </div>
+                            */
+                            ?>
                         </div>
                         <?php do_action('woocommerce_review_order_after_payment'); ?>
                     </div>
