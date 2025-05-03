@@ -10,12 +10,37 @@
  *
  * @see     https://woocommerce.com/document/template-structure/
  * @package APW_Woo_Plugin/Templates
- * @version 7.9.0-apw.7 // Increment version
+ * @version 7.9.0-apw.8 // Increment version
  *
  * Original WooCommerce template version: 7.9.0
  */
 
 defined('ABSPATH') || exit;
+
+// Register our template locator to use custom cart-totals.php
+if (!function_exists('apw_woo_locate_cart_template')) {
+    function apw_woo_locate_cart_template($template, $template_name, $template_path)
+    {
+        // Only modify cart-totals.php
+        if ($template_name !== 'cart/cart-totals.php') {
+            return $template;
+        }
+
+        // Check if our custom template exists
+        $plugin_template = APW_WOO_PLUGIN_DIR . 'templates/woocommerce/' . $template_name;
+
+        if (file_exists($plugin_template)) {
+            if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                apw_woo_log('CART TEMPLATE: Using custom cart-totals.php template from plugin');
+            }
+            return $plugin_template;
+        }
+
+        return $template;
+    }
+
+    add_filter('woocommerce_locate_template', 'apw_woo_locate_cart_template', 10, 3);
+}
 
 // APW Woo Plugin: Log cart template loading if debug mode is on
 $apw_debug_mode = defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE;

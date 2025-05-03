@@ -495,6 +495,28 @@ class APW_Woo_Template_Loader
             apw_woo_log("Looking for template: {$template_name}");
         }
 
+        // Special handling for cart-totals.php
+        if ($template_name === 'cart/cart-totals.php') {
+            $cart_totals_path = $this->template_path . self::WOOCOMMERCE_DIRECTORY . $template_name;
+            if (file_exists($cart_totals_path)) {
+                if (APW_WOO_DEBUG_MODE) {
+                    apw_woo_log("TEMPLATE RESOLVER: Using custom cart-totals.php template: {$cart_totals_path}");
+                }
+                return $cart_totals_path;
+            }
+        }
+
+        // Special handling for cart-totals.php
+        if ($template_name === 'cart/cart-totals.php') {
+            $cart_totals_path = $this->template_path . self::WOOCOMMERCE_DIRECTORY . $template_name;
+            if (file_exists($cart_totals_path)) {
+                if (APW_WOO_DEBUG_MODE) {
+                    apw_woo_log("TEMPLATE RESOLVER: Using custom cart-totals.php template: {$cart_totals_path}");
+                }
+                return $cart_totals_path;
+            }
+        }
+
         // Define possible locations to check (in order of preference)
         $locations = [
             $this->template_path . self::WOOCOMMERCE_DIRECTORY . $template_name,

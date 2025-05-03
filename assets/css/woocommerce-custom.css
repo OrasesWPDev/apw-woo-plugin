@@ -1926,7 +1926,7 @@ select.wc-pao-addon-field option {
 } /* End @media (max-width: 768px) */
 
 
-//* ========================================
+/* ========================================
    9. CHECKOUT & ORDER RECEIVED PAGE STYLES (form-checkout.php & Order Received)
    ======================================== */
 
@@ -3556,6 +3556,15 @@ body.woocommerce-account .woocommerce-MyAccount-content .message-container a.but
 
 
 /* --- End My Account Styles --- */
+
+/* --- Cart Totals "Calculated at checkout" Styling --- */
+.apw-woo-calculated-at-checkout {
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-medium);
+    font-style: italic;
+    color: var(--apw-woo-text-color);
+    opacity: 0.8;
+}
 
 /* ========================================
    11. LOGIN/REGISTER PAGE STYLES

@@ -29,6 +29,7 @@ class APW_Woo_Template_Resolver
     private const CATEGORY_TEMPLATE = 'woocommerce/partials/category-products-display.php';
     private const PRODUCT_TEMPLATE = 'woocommerce/single-product.php';
     private const CART_TEMPLATE = 'woocommerce/cart/cart.php';
+    private const CART_TOTALS_TEMPLATE = 'woocommerce/cart/cart-totals.php';
     private const CHECKOUT_TEMPLATE = 'woocommerce/checkout/form-checkout.php';
     private const MY_ACCOUNT_TEMPLATE = 'woocommerce/myaccount/my-account.php';
 
