@@ -148,6 +148,18 @@ class APW_Woo_Recurring_Billing
             return; // Cannot proceed without a valid checkout object
         }
 
+        // Check for cart-totals.php template
+        if ($template_name === 'cart/cart-totals.php') {
+            $cart_totals_template = $this->template_path . self::WOOCOMMERCE_DIRECTORY . $template_name;
+            
+            if (file_exists($cart_totals_template)) {
+                if (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                    apw_woo_log('RESOLVER: Using custom cart-totals.php template from template resolver');
+                }
+                return $cart_totals_template;
+            }
+        }
+        
         // Check if a recurring product tag exists in the cart
         if ($this->apw_check_cart_for_recurring_tag()) {
             if (function_exists('apw_woo_log')) {
