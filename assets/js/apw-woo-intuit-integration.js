@@ -38,11 +38,11 @@
     // Function to initialize Intuit payment processing
     function initIntuitPayment() {
         let ok = false;
-        // Try sbjs tokenization
-        if (window.sbjs && typeof window.sbjs.init === 'function') {
-            logWithTime('Calling sbjs.init()');
+        // Pass the Intuit config into sbjs.init:
+        if (window.sbjs && typeof window.sbjs.init === 'function' && window.sv_wc_payment_gateway_payment_form_params) {
+            logWithTime('Calling sbjs.init(sv_wc_payment_gateway_payment_form_params)');
             try {
-                sbjs.init();
+                sbjs.init(window.sv_wc_payment_gateway_payment_form_params);
                 logWithTime('sbjs.init OK');
                 ok = true;
             } catch (e) {
