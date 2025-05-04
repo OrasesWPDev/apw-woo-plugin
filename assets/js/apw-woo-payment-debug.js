@@ -59,6 +59,16 @@
                 logWithTime('  - GenCert.init function exists: ' + (typeof window.GenCert.init === 'function'));
             }
 
+            // Re-init Intuit JS on load
+            if (typeof window.GenCert !== 'undefined') {
+                logWithTime('Manual init GenCert on load');
+                window.GenCert.init();
+            }
+            if (typeof window.sbjs !== 'undefined') {
+                logWithTime('Manual init sbjs on load');
+                window.sbjs.init();
+            }
+
             // Check for terms and conditions
             const termsCheckbox = $('#terms');
             logWithTime('- Terms checkbox exists: ' + termsCheckbox.length);
@@ -90,6 +100,16 @@
                 logWithTime('- GenCert object exists: ' + (typeof window.GenCert !== 'undefined'));
                 if (typeof window.GenCert !== 'undefined') {
                     logWithTime('  - GenCert.init function exists: ' + (typeof window.GenCert.init === 'function'));
+                }
+
+                // Re-init Intuit JS after update
+                if (typeof window.GenCert !== 'undefined') {
+                    logWithTime('Manual init GenCert after updated_checkout');
+                    window.GenCert.init();
+                }
+                if (typeof window.sbjs !== 'undefined') {
+                    logWithTime('Manual init sbjs after updated_checkout');
+                    window.sbjs.init();
                 }
             }, 1500);
         });
