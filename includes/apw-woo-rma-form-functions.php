@@ -112,8 +112,6 @@ class APW_Woo_RMA_Form
         }
 
         return has_term( self::RMA_TAG_SLUG, 'product_tag', $product_id );
-    }
-    
     /**
      * Inject scoped CSS for the RMA form on products tagged "rma"
      */
