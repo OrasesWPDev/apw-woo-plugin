@@ -82,19 +82,6 @@ class APW_Woo_Assets
             wp_localize_script('apw-woo-scripts', 'apwWooData', $page_data);
         }
 
-        // Register payment debugging script
-        wp_register_script(
-            'apw-woo-payment-debug',
-            APW_WOO_PLUGIN_URL . 'assets/js/apw-woo-payment-debug.js',
-            array('jquery'),
-            filemtime(APW_WOO_PLUGIN_DIR . 'assets/js/apw-woo-payment-debug.js'),
-            true
-        );
-
-        // Only enqueue on checkout page
-        if (function_exists('is_checkout') && is_checkout()) {
-            wp_enqueue_script('apw-woo-payment-debug');
-        }
     }
 
     /**
