@@ -40,8 +40,8 @@
             });
 
             // Check for token fields
-            logWithTime('- Payment token field exists: ' + $('input[name="payment_token"]').length);
-            logWithTime('- Card type field exists: ' + $('input[name="card_type"]').length);
+            logWithTime('- Intuit JS token field exists: ' + $('input[name="wc-intuit-payments-credit-card-js-token"]').length);
+            logWithTime('- Intuit card type field exists: ' + $('input[name="wc-intuit-payments-credit-card-card-type"]').length);
 
             // Log all hidden fields in the payment form for debugging
             logWithTime('- Hidden payment fields:');
@@ -49,11 +49,15 @@
                 logWithTime('  - ' + $(this).attr('name') + ': ' + $(this).val());
             });
 
-            // Check for Intuit objects
-            logWithTime('- Intuit WFQBC object exists: ' + (typeof window.WFQBC !== 'undefined'));
-            if (typeof window.WFQBC !== 'undefined') {
-                logWithTime('  - WFQBC.init function exists: ' + (typeof window.WFQBC.init === 'function'));
-            }
+             // Check for Intuit globals
+             logWithTime('- sbjs object exists: ' + (typeof window.sbjs !== 'undefined'));
+             if (typeof window.sbjs !== 'undefined') {
+                 logWithTime('  - sbjs.init function exists: ' + (typeof window.sbjs.init === 'function'));
+             }
+             logWithTime('- GenCert object exists: ' + (typeof window.GenCert !== 'undefined'));
+             if (typeof window.GenCert !== 'undefined') {
+                 logWithTime('  - GenCert.init function exists: ' + (typeof window.GenCert.init === 'function'));
+             }
 
             // Check for terms and conditions
             const termsCheckbox = $('#terms');
@@ -78,17 +82,15 @@
                 logWithTime('- Card type field exists: ' + $('input[name="card_type"]').length);
 
                 // Try to trigger Intuit initialization if it exists
-                if (typeof window.WFQBC !== 'undefined' && typeof window.WFQBC.init === 'function') {
-                    logWithTime('- Attempting to manually trigger Intuit initialization');
-                    try {
-                        window.WFQBC.init();
-                        logWithTime('  - Intuit initialization called successfully');
-                    } catch (e) {
-                        logWithTime('  - Error calling Intuit initialization: ' + e.message);
-                    }
-                } else {
-                    logWithTime('- Intuit WFQBC object not found or init not a function');
-                }
+                 // Check for Intuit globals after update
+                 logWithTime('- sbjs object exists: ' + (typeof window.sbjs !== 'undefined'));
+                 if (typeof window.sbjs !== 'undefined') {
+                     logWithTime('  - sbjs.init function exists: ' + (typeof window.sbjs.init === 'function'));
+                 }
+                 logWithTime('- GenCert object exists: ' + (typeof window.GenCert !== 'undefined'));
+                 if (typeof window.GenCert !== 'undefined') {
+                     logWithTime('  - GenCert.init function exists: ' + (typeof window.GenCert.init === 'function'));
+                 }
             }, 1500);
         });
 
