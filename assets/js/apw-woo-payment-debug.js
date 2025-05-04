@@ -59,14 +59,12 @@
                 logWithTime('  - GenCert.init function exists: ' + (typeof window.GenCert.init === 'function'));
             }
 
-            // Re-init Intuit JS on load
-            if (typeof window.GenCert !== 'undefined') {
-                logWithTime('Manual init GenCert on load');
-                window.GenCert.init();
-            }
-            if (typeof window.sbjs !== 'undefined') {
-                logWithTime('Manual init sbjs on load');
-                window.sbjs.init();
+            // Re-init Intuit via wrapper on load
+            if (typeof window.apwWooInitIntuit === 'function') {
+                logWithTime('Manual re-init Intuit via apwWooInitIntuit() on load');
+                window.apwWooInitIntuit();
+            } else {
+                logWithTime('apwWooInitIntuit() not available on load');
             }
 
             // Check for terms and conditions
@@ -87,9 +85,9 @@
                 logWithTime('- Payment box visible: ' + $('#payment').is(':visible'));
                 logWithTime('- Payment box height: ' + $('#payment').height() + 'px');
 
-                // Check for token fields again
-                logWithTime('- Payment token field exists: ' + $('input[name="payment_token"]').length);
-                logWithTime('- Card type field exists: ' + $('input[name="card_type"]').length);
+                // Check for Intuit JS token fields again
+                logWithTime('- Intuit JS token field exists: ' + $('input[name="wc-intuit-payments-credit-card-js-token"]').length);
+                logWithTime('- Intuit card type field exists: ' + $('input[name="wc-intuit-payments-credit-card-card-type"]').length);
 
                 // Try to trigger Intuit initialization if it exists
                 // Check for Intuit globals after update
@@ -102,14 +100,12 @@
                     logWithTime('  - GenCert.init function exists: ' + (typeof window.GenCert.init === 'function'));
                 }
 
-                // Re-init Intuit JS after update
-                if (typeof window.GenCert !== 'undefined') {
-                    logWithTime('Manual init GenCert after updated_checkout');
-                    window.GenCert.init();
-                }
-                if (typeof window.sbjs !== 'undefined') {
-                    logWithTime('Manual init sbjs after updated_checkout');
-                    window.sbjs.init();
+                // Re-init Intuit via wrapper after updated_checkout
+                if (typeof window.apwWooInitIntuit === 'function') {
+                    logWithTime('Manual re-init Intuit via apwWooInitIntuit() after updated_checkout');
+                    window.apwWooInitIntuit();
+                } else {
+                    logWithTime('apwWooInitIntuit() not available after updated_checkout');
                 }
             }, 1500);
         });

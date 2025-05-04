@@ -1,8 +1,12 @@
 ;(function($){
     'use strict';
 
-    // Ensure localization object exists
+    // Ensure localization object exists and inherit core WC flags
     window.apwWooIntuitData = window.apwWooIntuitData || {debug_mode:false, is_checkout:false};
+    if (typeof window.apwWooData !== 'undefined') {
+        apwWooIntuitData.is_checkout = window.apwWooData.page_type === 'checkout';
+        apwWooIntuitData.debug_mode    = window.apwWooData.debug_mode;
+    }
 
     // Logging helper
     function logWithTime(message) {
@@ -59,4 +63,6 @@
     // Run on document ready
     $(document).ready(initialize);
 
+    // Expose the internal initializer for external use
+    window.apwWooInitIntuit = initIntuitPayment;
 })(jQuery);
