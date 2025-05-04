@@ -234,16 +234,45 @@ class APW_Woo_RMA_Form
      */
     public function acf_form_head()
     {
-        if ( function_exists( 'acf_form_head' ) && is_product() && $this->has_rma_tag( get_queried_object() ) ) {
-            acf_form_head();
+        apw_woo_log('acf_form_head(): fired');
+        if ( ! function_exists( 'acf_form_head' ) ) {
+            apw_woo_log('acf_form_head(): ACF not active', 'error');
+            return;
         }
+
+        if ( ! is_product() ) {
+            apw_woo_log('acf_form_head(): skipped - not a product');
+            return;
+        }
+
+        $prod = get_queried_object();
+        apw_woo_log('acf_form_head(): product ID ' . ( is_object( $prod ) ? $prod->ID : 'unknown' ) );
+
+        if ( ! $this->has_rma_tag( $prod ) ) {
+            apw_woo_log('acf_form_head(): skipped - product missing "rma" tag');
+            return;
+        }
+
+        apw_woo_log('acf_form_head(): calling acf_form_head()');
+        acf_form_head();
     }
 
     /**
      * Output the RMA form before the Add to Cart button
      */
     public function display_rma_form() {
-        if ( ! is_product() || ! $this->has_rma_tag( get_queried_object() ) ) {
+        apw_woo_log('display_rma_form(): called');
+
+        if ( ! is_product() ) {
+            apw_woo_log('display_rma_form(): skipped - not a product');
+            return;
+        }
+
+        $prod = get_queried_object();
+        apw_woo_log('display_rma_form(): product ID ' . ( is_object( $prod ) ? $prod->ID : 'unknown' ) );
+
+        if ( ! $this->has_rma_tag( $prod ) ) {
+            apw_woo_log('display_rma_form(): skipped - product missing "rma" tag');
             return;
         }
         echo '<div class="apw-woo-rma-form">';
