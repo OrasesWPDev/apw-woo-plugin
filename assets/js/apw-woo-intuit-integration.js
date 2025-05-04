@@ -85,12 +85,21 @@
     function initialize() {
         logWithTime('Initializing Intuit payment integration');
 
-        // DEBUG: list any window keys matching "WFQBC" so we can find the real global
+        // DEBUG: list any window keys matching "WFQBC" or having init() so we can find the real global
         if (typeof window !== 'undefined' && apwWooIntuitData.debug_mode) {
             var wfqKeys = Object.keys(window).filter(function(k){
                 return /wfqbc|intuit|qb/i.test(k);
             });
             logWithTime('DEBUG: window globals matching /(wfqbc|intuit|qb)/i: ' + (wfqKeys.length ? wfqKeys.join(', ') : '[none]'));
+
+            var initKeys = Object.keys(window).filter(function(k){
+                try {
+                    return window[k] && typeof window[k] === 'object' && typeof window[k].init === 'function';
+                } catch (e) {
+                    return false;
+                }
+            });
+            logWithTime('DEBUG: window globals with .init() method: ' + (initKeys.length ? initKeys.join(', ') : '[none]'));
         }
         
         // Only run on checkout page
