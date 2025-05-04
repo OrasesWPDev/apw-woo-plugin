@@ -77,6 +77,8 @@ class APW_Woo_RMA_Form
         // Step 2: Display form & CSS
         add_action('wp_head', [$this, 'add_rma_product_css']);
         add_action('woocommerce_before_add_to_cart_button', [$this, 'display_rma_form']);
+        // Load ACF front-end form functions on product pages tagged "rma"
+        add_action('wp', [$this, 'acf_form_head'], 1);
         
         // Step 3: Validation
         add_action('woocommerce_add_to_cart_validation', [$this, 'validate_rma_form'], 10, 3);
@@ -226,28 +228,39 @@ class APW_Woo_RMA_Form
         <?php
     }
     /**
+     * Ensure ACF front-end form functions are loaded before rendering the form
+     *
+     * acf_form_head() must be called before any output
+     */
+    public function acf_form_head()
+    {
+        if ( function_exists( 'acf_form_head' ) && is_product() && $this->has_rma_tag( get_queried_object() ) ) {
+            acf_form_head();
+        }
+    }
+
+    /**
      * Output the RMA form before the Add to Cart button
      */
-    public function display_rma_form()
-    {
-        if (!is_product()) {
+    public function display_rma_form() {
+        if ( ! is_product() || ! $this->has_rma_tag( get_queried_object() ) ) {
             return;
         }
-        
-        global $product;
-        if (!$this->has_rma_tag($product)) {
-            return;
-        }
-        
-        // Prefill from session if previously submitted
-        $session_data = WC()->session->get('apw_rma_form_data', array());
-        
-        // Security nonce
-        $nonce = wp_create_nonce('apw_rma_form');
-        ?>
-        <div class="apw-woo-rma-form">
-            <h3><?php esc_html_e('Return Merchandise Authorization', 'apw-woo-plugin'); ?></h3>
-            <input type="hidden" name="apw_rma_form_nonce" value="<?php echo esc_attr($nonce); ?>">
+        echo '<div class="apw-woo-rma-form">';
+        echo '<h3>' . esc_html__( 'Return Merchandise Authorization', 'apw-woo-plugin' ) . '</h3>';
+        acf_form( array(
+            'id'                 => 'apw-rma-acf-form',
+            'post_id'            => 'new',
+            'field_groups'       => array( 'group_6814c1fe4e6f5' ),
+            'html_submit_button' => '<button type="submit" class="single_add_to_cart_button button alt">%s</button>',
+            'return'             => get_permalink() . '?rma_submitted=1',
+            'submit_value'       => __( 'Submit RMA', 'apw-woo-plugin' ),
+            'honeypot'           => true,
+            'uploader'           => 'basic',
+            'updated_message'    => false,
+        ) );
+        echo '</div>';
+    }
             
             <p class="form-row">
                 <label for="apw_rma_reason"><?php esc_html_e('Reason for Return', 'apw-woo-plugin'); ?><span class="required">*</span></label>
@@ -310,22 +323,6 @@ class APW_Woo_RMA_Form
                 ><?php echo isset($session_data['damage_details']) ? esc_textarea($session_data['damage_details']) : ''; ?></textarea>
             </p>
             
-            <script type="text/javascript">
-            jQuery(document).ready(function($) {
-                // Show/hide damage details field based on condition selection
-                $('#apw_rma_condition').on('change', function() {
-                    if ($(this).val() === 'damaged') {
-                        $('#apw_rma_damage_details_row').show();
-                        $('#apw_rma_damage_details').prop('required', true);
-                    } else {
-                        $('#apw_rma_damage_details_row').hide();
-                        $('#apw_rma_damage_details').prop('required', false);
-                    }
-                });
-            });
-            </script>
-        </div>
-        <?php
     }
     
     /**
