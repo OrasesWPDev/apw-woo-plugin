@@ -191,35 +191,6 @@ function apw_woo_init_product_addons() {
     }
 }
 
-/**
- * Initialize Intuit payment gateway integration
- *
- * This function is called from the main plugin file
- * to set up the Intuit payment gateway integration
- *
- * @return void
- */
-function apw_woo_initialize_intuit_integration() {
-    // Include the functions file
-    $intuit_file = APW_WOO_PLUGIN_DIR . 'includes/apw-woo-intuit-payment-functions.php';
-    
-    if (file_exists($intuit_file)) {
-        require_once $intuit_file;
-        
-        // Call the initialization function if it exists
-        if (function_exists('apw_woo_init_intuit_integration')) {
-            apw_woo_init_intuit_integration();
-            
-            if (APW_WOO_DEBUG_MODE) {
-                apw_woo_log('Intuit payment integration initialized from main plugin');
-            }
-        }
-    } else {
-        if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log('Intuit payment functions file not found: ' . $intuit_file, 'warning');
-        }
-    }
-}
 
 /**
  * Initialize Intuit payment gateway integration
