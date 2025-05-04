@@ -26,12 +26,15 @@ function apw_woo_is_intuit_gateway_active() {
     }
     
     // Check if the gateway is in the available gateways list
-    if (function_exists('WC') && isset(WC()->payment_gateways)) {
-        $available_gateways = WC()->payment_gateways->get_available_payment_gateways();
+    if (function_exists('WC') && method_exists(WC(), 'payment_gateways')) {
+        // Get the WC_Payment_Gateways instance and list its available gateways
+        $gateways_api      = WC()->payment_gateways();
+        $available_gateways = $gateways_api->get_available_payment_gateways();
         if (APW_WOO_DEBUG_MODE) {
             apw_woo_log('DEBUG: available gateways: ' . implode(', ', array_keys($available_gateways)));
         }
-        return isset($available_gateways['intuit_qbms_credit_card']) || isset($available_gateways['intuit_payments_credit_card']);
+        return isset($available_gateways['intuit_qbms_credit_card'])
+            || isset($available_gateways['intuit_payments_credit_card']);
     }
     
     return false;
