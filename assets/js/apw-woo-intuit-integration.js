@@ -37,28 +37,36 @@
     
     // Function to initialize Intuit payment processing
     function initIntuitPayment() {
-        var ok = false;
+        let ok = false;
         // Try sbjs tokenization
         if (window.sbjs && typeof window.sbjs.init === 'function') {
             logWithTime('Calling sbjs.init()');
             try {
-                window.sbjs.init();
-                logWithTime('sbjs.init() succeeded');
+                sbjs.init();
+                logWithTime('sbjs.init OK');
                 ok = true;
             } catch (e) {
-                logWithTime('Error calling sbjs.init(): ' + e.message);
+                logWithTime('sbjs.init failed: ' + e.message);
             }
         }
-        // Then GenCert wrapper
-        if (window.GenCert && typeof window.GenCert.init === 'function') {
-            logWithTime('Calling GenCert.init()');
-            try {
-                window.GenCert.init();
-                logWithTime('GenCert.init() succeeded');
-                ok = true;
-            } catch (e) {
-                logWithTime('Error calling GenCert.init(): ' + e.message);
+        // Find and call the Intuit Payments form handler
+        const handlerKey = Object.keys(window).find(k => k.startsWith('SV_WC_Payment_Form_Handler_'));
+        if (handlerKey) {
+            const handler = window[handlerKey];
+            if (handler && typeof handler.init === 'function') {
+                logWithTime(`Calling ${handlerKey}.init()`);
+                try {
+                    handler.init();
+                    logWithTime(`${handlerKey}.init OK`);
+                    ok = true;
+                } catch (e) {
+                    logWithTime(`${handlerKey}.init failed: ` + e.message);
+                }
+            } else {
+                logWithTime(`${handlerKey}.init is not a function`);
             }
+        } else {
+            logWithTime('No SV_WC_Payment_Form_Handler found');
         }
         return ok;
     }
