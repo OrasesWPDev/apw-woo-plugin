@@ -18,47 +18,49 @@
     
     // Function to check if Intuit fields exist and create them if needed
     function ensureIntuitFieldsExist() {
-        // Check if payment token field exists
-        if ($('input[name="payment_token"]').length === 0) {
-            logWithTime('Payment token field missing - creating it');
-            $('form.checkout').append('<input type="hidden" id="payment_token" name="payment_token" value="" />');
+        // Check if Intuit JS token field exists
+        if ($('input[name="wc-intuit-payments-credit-card-js-token"]').length === 0) {
+            logWithTime('Intuit JS token field missing - creating it');
+            $('form.checkout').append('<input type="hidden" id="wc-intuit-payments-credit-card-js-token" name="wc-intuit-payments-credit-card-js-token" value="" />');
         } else {
-            logWithTime('Payment token field exists');
+            logWithTime('Intuit JS token field exists');
         }
-        
-        // Check if card type field exists
-        if ($('input[name="card_type"]').length === 0) {
-            logWithTime('Card type field missing - creating it');
-            $('form.checkout').append('<input type="hidden" id="card_type" name="card_type" value="" />');
+
+        // Check if Intuit card type field exists
+        if ($('input[name="wc-intuit-payments-credit-card-card-type"]').length === 0) {
+            logWithTime('Intuit card type field missing - creating it');
+            $('form.checkout').append('<input type="hidden" id="wc-intuit-payments-credit-card-card-type" name="wc-intuit-payments-credit-card-card-type" value="" />');
         } else {
-            logWithTime('Card type field exists');
+            logWithTime('Intuit card type field exists');
         }
     }
     
     // Function to initialize Intuit payment processing
     function initIntuitPayment() {
-        // Check if GenCert object exists
-        if (typeof window.GenCert !== 'undefined') {
-            logWithTime('Intuit GenCert object found');
-            
-            // Check if init function exists
-            if (typeof window.GenCert.init === 'function') {
-                logWithTime('Calling GenCert.init()');
-                try {
-                    window.GenCert.init();
-                    logWithTime('GenCert.init() called successfully');
-                    return true;
-                } catch (e) {
-                    logWithTime('Error calling GenCert.init(): ' + e.message);
-                }
-            } else {
-                logWithTime('GenCert.init is not a function');
+        var ok = false;
+        // Try sbjs tokenization
+        if (window.sbjs && typeof window.sbjs.init === 'function') {
+            logWithTime('Calling sbjs.init()');
+            try {
+                window.sbjs.init();
+                logWithTime('sbjs.init() succeeded');
+                ok = true;
+            } catch (e) {
+                logWithTime('Error calling sbjs.init(): ' + e.message);
             }
-        } else {
-            logWithTime('Intuit GenCert object not found');
         }
-        
-        return false;
+        // Then GenCert wrapper
+        if (window.GenCert && typeof window.GenCert.init === 'function') {
+            logWithTime('Calling GenCert.init()');
+            try {
+                window.GenCert.init();
+                logWithTime('GenCert.init() succeeded');
+                ok = true;
+            } catch (e) {
+                logWithTime('Error calling GenCert.init(): ' + e.message);
+            }
+        }
+        return ok;
     }
     
     // Function to monitor for Intuit object and initialize when available
@@ -108,8 +110,8 @@
             return;
         }
         
-        // Custom fields injection disabled
-        // ensureIntuitFieldsExist();
+        // Ensure gateway hidden fields exist for GenCert
+        ensureIntuitFieldsExist();
         
         // Try to initialize immediately
         if (initIntuitPayment()) {
