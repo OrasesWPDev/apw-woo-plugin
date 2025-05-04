@@ -49,14 +49,14 @@
                 logWithTime('sbjs.init failed: ' + e.message);
             }
         }
-        // Find and call the Intuit Payments form handler
+        // Find and call the Intuit Payments form handler with its own config
         const handlerKey = Object.keys(window).find(k => k.startsWith('SV_WC_Payment_Form_Handler_'));
         if (handlerKey) {
             const handler = window[handlerKey];
             if (handler && typeof handler.init === 'function') {
-                logWithTime(`Calling ${handlerKey}.init()`);
+                logWithTime(`Calling ${handlerKey}.init(sv_wc_payment_gateway_payment_form_params)`);
                 try {
-                    handler.init();
+                    handler.init(window.sv_wc_payment_gateway_payment_form_params);
                     logWithTime(`${handlerKey}.init OK`);
                     ok = true;
                 } catch (e) {
