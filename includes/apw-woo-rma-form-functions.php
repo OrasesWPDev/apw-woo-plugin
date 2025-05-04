@@ -262,67 +262,6 @@ class APW_Woo_RMA_Form
         echo '</div>';
     }
             
-            <p class="form-row">
-                <label for="apw_rma_reason"><?php esc_html_e('Reason for Return', 'apw-woo-plugin'); ?><span class="required">*</span></label>
-                <textarea
-                    id="apw_rma_reason"
-                    name="apw_rma_data[reason]"
-                    rows="3"
-                    class="input-text"
-                    required
-                ><?php echo isset($session_data['reason']) ? esc_textarea($session_data['reason']) : ''; ?></textarea>
-            </p>
-            
-            <p class="form-row">
-                <label for="apw_rma_serial"><?php esc_html_e('Serial Number (if applicable)', 'apw-woo-plugin'); ?></label>
-                <input
-                    type="text"
-                    id="apw_rma_serial"
-                    name="apw_rma_data[serial]"
-                    class="input-text"
-                    value="<?php echo isset($session_data['serial']) ? esc_attr($session_data['serial']) : ''; ?>"
-                >
-            </p>
-            
-            <p class="form-row">
-                <label for="apw_rma_purchase_date"><?php esc_html_e('Original Purchase Date', 'apw-woo-plugin'); ?><span class="required">*</span></label>
-                <input
-                    type="text"
-                    id="apw_rma_purchase_date"
-                    name="apw_rma_data[purchase_date]"
-                    class="input-text"
-                    placeholder="MM/DD/YYYY"
-                    required
-                    value="<?php echo isset($session_data['purchase_date']) ? esc_attr($session_data['purchase_date']) : ''; ?>"
-                >
-            </p>
-            
-            <p class="form-row">
-                <label for="apw_rma_condition"><?php esc_html_e('Product Condition', 'apw-woo-plugin'); ?><span class="required">*</span></label>
-                <select
-                    id="apw_rma_condition"
-                    name="apw_rma_data[condition]"
-                    class="select"
-                    required
-                >
-                    <option value=""><?php esc_html_e('-- Select Condition --', 'apw-woo-plugin'); ?></option>
-                    <option value="new" <?php selected(isset($session_data['condition']) ? $session_data['condition'] : '', 'new'); ?>><?php esc_html_e('New/Unused', 'apw-woo-plugin'); ?></option>
-                    <option value="like_new" <?php selected(isset($session_data['condition']) ? $session_data['condition'] : '', 'like_new'); ?>><?php esc_html_e('Like New', 'apw-woo-plugin'); ?></option>
-                    <option value="used" <?php selected(isset($session_data['condition']) ? $session_data['condition'] : '', 'used'); ?>><?php esc_html_e('Used', 'apw-woo-plugin'); ?></option>
-                    <option value="damaged" <?php selected(isset($session_data['condition']) ? $session_data['condition'] : '', 'damaged'); ?>><?php esc_html_e('Damaged', 'apw-woo-plugin'); ?></option>
-                </select>
-            </p>
-            
-            <p class="form-row conditional-field" id="apw_rma_damage_details_row" style="<?php echo (isset($session_data['condition']) && $session_data['condition'] === 'damaged') ? 'display: block;' : ''; ?>">
-                <label for="apw_rma_damage_details"><?php esc_html_e('Damage Details', 'apw-woo-plugin'); ?><span class="required">*</span></label>
-                <textarea
-                    id="apw_rma_damage_details"
-                    name="apw_rma_data[damage_details]"
-                    rows="3"
-                    class="input-text"
-                ><?php echo isset($session_data['damage_details']) ? esc_textarea($session_data['damage_details']) : ''; ?></textarea>
-            </p>
-            
     }
     
     /**
