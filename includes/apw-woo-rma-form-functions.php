@@ -77,8 +77,8 @@ class APW_Woo_RMA_Form
         // Step 2: Display form & CSS
         add_action('wp_head', [$this, 'add_rma_product_css']);
         add_action('woocommerce_before_add_to_cart_button', [$this, 'display_rma_form']);
-        // Load ACF front-end form functions on product pages tagged "rma"
-        add_action('wp', [$this, 'acf_form_head'], 1);
+        // Load ACF front-end form functions early, before any HTML output
+        add_action('get_header', [$this, 'acf_form_head'], 0);
         
         // Step 3: Validation
         add_action('woocommerce_add_to_cart_validation', [$this, 'validate_rma_form'], 10, 3);
@@ -248,17 +248,21 @@ class APW_Woo_RMA_Form
         }
         echo '<div class="apw-woo-rma-form">';
         echo '<h3>' . esc_html__( 'Return Merchandise Authorization', 'apw-woo-plugin' ) . '</h3>';
-        acf_form( array(
-            'id'                 => 'apw-rma-acf-form',
-            'post_id'            => 'new',
-            'field_groups'       => array( 'group_6814c1fe4e6f5' ),
-            'html_submit_button' => '<button type="submit" class="single_add_to_cart_button button alt">%s</button>',
-            'return'             => get_permalink() . '?rma_submitted=1',
-            'submit_value'       => __( 'Submit RMA', 'apw-woo-plugin' ),
-            'honeypot'           => true,
-            'uploader'           => 'basic',
-            'updated_message'    => false,
-        ) );
+        if ( function_exists( 'acf_form' ) ) {
+            acf_form( array(
+                'id'                 => 'apw-rma-acf-form',
+                'post_id'            => 'new',
+                'field_groups'       => array( 'group_6814c1fe4e6f5' ),
+                'html_submit_button' => '<button type="submit" class="single_add_to_cart_button button alt">%s</button>',
+                'return'             => get_permalink() . '?rma_submitted=1',
+                'submit_value'       => __( 'Submit RMA', 'apw-woo-plugin' ),
+                'honeypot'           => true,
+                'uploader'           => 'basic',
+                'updated_message'    => false,
+            ) );
+        } else {
+            echo '<p>' . esc_html__( 'RMA form unavailable. ACF not active.', 'apw-woo-plugin' ) . '</p>';
+        }
         echo '</div>';
     }
 
