@@ -60,14 +60,7 @@ function apw_woo_add_intuit_payment_fields() {
         return;
     }
     
-    // Add the hidden fields that Intuit's JS will populate
-    ?>
-    <!-- APW WooCommerce Plugin: Intuit Payment Fields -->
-    <div id="apw-woo-intuit-fields" style="display:none;">
-        <input type="hidden" id="payment_token" name="payment_token" value="" />
-        <input type="hidden" id="card_type" name="card_type" value="" />
-    </div>
-    <?php
+    // Custom field injection disabled; using Intuit's own hidden inputs
     
     if (APW_WOO_DEBUG_MODE) {
         apw_woo_log('Added Intuit payment token and card type fields to checkout');
@@ -183,20 +176,17 @@ function apw_woo_init_intuit_integration() {
  */
 function apw_woo_preserve_intuit_fields($data) {
     // Ensure payment token and card type are preserved if they exist
-    if (isset($_POST['payment_token']) && !empty($_POST['payment_token'])) {
-        $data['payment_token'] = sanitize_text_field($_POST['payment_token']);
-        
+    if (isset($_POST['wc-intuit-payments-credit-card-js-token']) && !empty($_POST['wc-intuit-payments-credit-card-js-token'])) {
+        $data['wc-intuit-payments-credit-card-js-token'] = sanitize_text_field($_POST['wc-intuit-payments-credit-card-js-token']);
         if (APW_WOO_DEBUG_MODE) {
-            $token_length = strlen($data['payment_token']);
-            apw_woo_log("Payment token preserved (length: {$token_length})");
+            apw_woo_log("Intuit token preserved (length: " . strlen($data['wc-intuit-payments-credit-card-js-token']) . ")");
         }
     }
-    
-    if (isset($_POST['card_type']) && !empty($_POST['card_type'])) {
-        $data['card_type'] = sanitize_text_field($_POST['card_type']);
-        
+
+    if (isset($_POST['wc-intuit-payments-credit-card-card-type']) && !empty($_POST['wc-intuit-payments-credit-card-card-type'])) {
+        $data['wc-intuit-payments-credit-card-card-type'] = sanitize_text_field($_POST['wc-intuit-payments-credit-card-card-type']);
         if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log("Card type preserved: {$data['card_type']}");
+            apw_woo_log("Intuit card type preserved: " . $data['wc-intuit-payments-credit-card-card-type']);
         }
     }
     

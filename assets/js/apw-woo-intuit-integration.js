@@ -37,25 +37,25 @@
     
     // Function to initialize Intuit payment processing
     function initIntuitPayment() {
-        // Check if WFQBC object exists
-        if (typeof window.WFQBC !== 'undefined') {
-            logWithTime('Intuit WFQBC object found');
+        // Check if GenCert object exists
+        if (typeof window.GenCert !== 'undefined') {
+            logWithTime('Intuit GenCert object found');
             
             // Check if init function exists
-            if (typeof window.WFQBC.init === 'function') {
-                logWithTime('Calling WFQBC.init()');
+            if (typeof window.GenCert.init === 'function') {
+                logWithTime('Calling GenCert.init()');
                 try {
-                    window.WFQBC.init();
-                    logWithTime('WFQBC.init() called successfully');
+                    window.GenCert.init();
+                    logWithTime('GenCert.init() called successfully');
                     return true;
                 } catch (e) {
-                    logWithTime('Error calling WFQBC.init(): ' + e.message);
+                    logWithTime('Error calling GenCert.init(): ' + e.message);
                 }
             } else {
-                logWithTime('WFQBC.init is not a function');
+                logWithTime('GenCert.init is not a function');
             }
         } else {
-            logWithTime('Intuit WFQBC object not found');
+            logWithTime('Intuit GenCert object not found');
         }
         
         return false;
@@ -108,8 +108,8 @@
             return;
         }
         
-        // Ensure the required fields exist
-        ensureIntuitFieldsExist();
+        // Custom fields injection disabled
+        // ensureIntuitFieldsExist();
         
         // Try to initialize immediately
         if (initIntuitPayment()) {
