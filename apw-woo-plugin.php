@@ -750,8 +750,6 @@ function apw_woo_init()
     // Initialize Recurring Billing Field functionality
     apw_woo_initialize_recurring_billing();
 
-    // Initialize Intuit Payment Gateway integration
-    apw_woo_initialize_intuit_integration();
 
     // Initialize RMA Form functionality
 //    apw_woo_initialize_rma_form();
@@ -1008,4 +1006,5 @@ if (APW_WOO_DEBUG_MODE) {
 //--------------------------------------------------------------
 
 // Hook into WordPress 'plugins_loaded' to initialize our plugin
+add_action('woocommerce_init', 'apw_woo_initialize_intuit_integration', 20);
 add_action('plugins_loaded', 'apw_woo_init');
