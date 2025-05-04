@@ -111,6 +111,15 @@ class APW_Woo_Assets
             );
         }
 
+        // Pass our page_data to the Dynamic Pricing script
+        if ( wp_script_is('apw-woo-dynamic-pricing-scripts', 'enqueued') ) {
+            wp_localize_script(
+                'apw-woo-dynamic-pricing-scripts',
+                'apwWooDynamicPricing',
+                $page_data
+            );
+        }
+
     }
 
     /**
