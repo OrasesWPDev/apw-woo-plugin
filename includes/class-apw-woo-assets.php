@@ -82,6 +82,35 @@ class APW_Woo_Assets
             wp_localize_script('apw-woo-scripts', 'apwWooData', $page_data);
         }
 
+        // Load Intuit tokenization libraries on checkout
+        if ( 'checkout' === $current_page_type ) {
+            // GenCert for the QuickBooks gateway
+            wp_enqueue_script(
+                'wfqbc-gencert',
+                'https://jstest.intuit.com/js/GenCert.js',
+                array(),
+                null,
+                true
+            );
+            // sbjs library
+            wp_enqueue_script(
+                'wfqbc-sbjs',
+                'https://sbjs.intuitcdn.net/v1/sb.js',
+                array(),
+                null,
+                true
+            );
+        }
+
+        // Pass our page_data to the Intuit integration script
+        if ( wp_script_is('apw-woo-intuit-integration-scripts', 'enqueued') ) {
+            wp_localize_script(
+                'apw-woo-intuit-integration-scripts',
+                'apwWooData',
+                $page_data
+            );
+        }
+
     }
 
     /**

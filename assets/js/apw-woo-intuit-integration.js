@@ -60,8 +60,8 @@
         });
     }
 
-    // Run on document ready
-    $(document).ready(initialize);
+    // Run after window load to ensure Intuit libraries are ready
+    $(window).on('load', initialize);
 
     // Expose the internal initializer for external use
     window.apwWooInitIntuit = initIntuitPayment;
