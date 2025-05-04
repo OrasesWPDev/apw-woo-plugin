@@ -11,7 +11,7 @@
  * Plugin Name:       APW WooCommerce Plugin
  * Plugin URI:        https://github.com/OrasesWPDev/apw-woo-plugin
  * Description:       Custom WooCommerce enhancements for displaying products across shop, category, and product pages.
- * Version:           1.13.6
+ * Version:           1.13.7
  * Requires at least: 5.3
  * Requires PHP:      7.2
  * Author:            Orases
@@ -33,7 +33,7 @@ if (!defined('ABSPATH')) {
 /**
  * Plugin constants
  */
-define('APW_WOO_VERSION', '1.13.6');
+define('APW_WOO_VERSION', '1.13.7');
 define('APW_WOO_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('APW_WOO_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('APW_WOO_PLUGIN_FILE', __FILE__);
@@ -749,7 +749,7 @@ function apw_woo_init()
 
     // Initialize Recurring Billing Field functionality
     apw_woo_initialize_recurring_billing();
-    
+
     // Initialize Intuit Payment Gateway integration
     apw_woo_initialize_intuit_integration();
 

@@ -128,6 +128,10 @@ add_action('wp_enqueue_scripts', 'apw_woo_enqueue_intuit_scripts');
  * Initialize Intuit payment gateway integration
  */
 function apw_woo_init_intuit_integration() {
+    // Debug: log gateway detection before proceeding
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log('DEBUG: apw_woo_is_intuit_gateway_active() returns: ' . (function_exists('apw_woo_is_intuit_gateway_active') && apw_woo_is_intuit_gateway_active() ? 'true' : 'false'));
+    }
     // Prevent multiple initializations
     static $initialized = false;
     if ($initialized) {
