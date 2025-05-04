@@ -82,25 +82,7 @@ class APW_Woo_Assets
             wp_localize_script('apw-woo-scripts', 'apwWooData', $page_data);
         }
 
-        // Load Intuit tokenization libraries on checkout
-        if ( 'checkout' === $current_page_type ) {
-            // GenCert for the QuickBooks gateway
-            wp_enqueue_script(
-                'wfqbc-gencert',
-                'https://jstest.intuit.com/js/GenCert.js',
-                array(),
-                null,
-                true
-            );
-            // sbjs library
-            wp_enqueue_script(
-                'wfqbc-sbjs',
-                'https://sbjs.intuitcdn.net/v1/sb.js',
-                array(),
-                null,
-                true
-            );
-        }
+        // Manual Intuit library loading removed—will use the official wc-intuit-qbms-checkout handle
 
         // Pass our page_data to the Intuit integration script
         if ( wp_script_is('apw-woo-intuit-integration-scripts', 'enqueued') ) {
@@ -118,6 +100,26 @@ class APW_Woo_Assets
                 'apwWooDynamicPricing',
                 $page_data
             );
+        }
+
+        // Re-register Intuit integration script to depend on the official handler
+        if ( wp_script_is('apw-woo-intuit-integration-scripts','enqueued') ) {
+            $file = APW_WOO_PLUGIN_DIR . 'assets/js/apw-woo-intuit-integration.js';
+            wp_dequeue_script( 'apw-woo-intuit-integration-scripts' );
+            wp_deregister_script( 'apw-woo-intuit-integration-scripts' );
+            wp_register_script(
+                'apw-woo-intuit-integration-scripts',
+                APW_WOO_PLUGIN_URL . 'assets/js/apw-woo-intuit-integration.js',
+                array(
+                    'jquery',
+                    'apw-woo-scripts',
+                    'wc-checkout',
+                    'wc-intuit-qbms-checkout'
+                ),
+                filemtime( $file ),
+                true
+            );
+            wp_enqueue_script( 'apw-woo-intuit-integration-scripts' );
         }
 
     }
