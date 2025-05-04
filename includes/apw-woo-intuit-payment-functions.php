@@ -95,7 +95,7 @@ function apw_woo_enqueue_intuit_scripts() {
         wp_enqueue_script(
             'apw-woo-intuit-integration',
             APW_WOO_PLUGIN_URL . 'assets/js/' . $js_file,
-            array('jquery', 'wc-checkout', 'sbjs'), // Dependencies
+            array('jquery', 'wc-checkout', 'wc-intuit-qbms-checkout'), // Dependencies
             filemtime($js_path),
             true // Load in footer
         );
