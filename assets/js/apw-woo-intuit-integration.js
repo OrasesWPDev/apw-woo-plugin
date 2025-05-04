@@ -88,9 +88,9 @@
         // DEBUG: list any window keys matching "WFQBC" so we can find the real global
         if (typeof window !== 'undefined' && apwWooIntuitData.debug_mode) {
             var wfqKeys = Object.keys(window).filter(function(k){
-                return /wfqbc/i.test(k);
+                return /wfqbc|intuit|qb/i.test(k);
             });
-            logWithTime('DEBUG: window globals matching /WFQBC/: ' + (wfqKeys.length ? wfqKeys.join(', ') : '[none]'));
+            logWithTime('DEBUG: window globals matching /(wfqbc|intuit|qb)/i: ' + (wfqKeys.length ? wfqKeys.join(', ') : '[none]'));
         }
         
         // Only run on checkout page
