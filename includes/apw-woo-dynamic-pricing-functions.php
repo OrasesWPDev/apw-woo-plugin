@@ -491,30 +491,29 @@ function apw_woo_enqueue_dynamic_pricing_scripts()
 {
     // --- Check if we are on a single product page ---
 
-    // Use WooCommerce's standard check first
-    $is_standard_product_page = is_product();
+    $should_enqueue = false;
+    global $wp; // Ensure $wp is available
 
-    // Check for our custom product URL structure
-    $is_custom_product_page = false;
-    global $wp;
-    $current_url = $wp->request ?? ''; // Use null coalescing operator
-    // Use the more specific Page Detector class if available
+    // Use Page Detector class if available and reliable
     if (class_exists('APW_Woo_Page_Detector') && method_exists('APW_Woo_Page_Detector', 'is_product_page')) {
-        // Use the detector which includes the URL check and other methods
-        $is_custom_product_page = APW_Woo_Page_Detector::is_product_page($wp);
-    } elseif (preg_match('#^products/([^/]+)/([^/]+)$#', $current_url)) {
-        // Fallback URL check if detector class isn't loaded yet (less reliable)
-        $is_custom_product_page = true;
-        if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log('Dynamic pricing enqueue: Page Detector class not found, using basic URL match for custom product page.');
+        $should_enqueue = APW_Woo_Page_Detector::is_product_page($wp);
+        if (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+            apw_woo_log('Dynamic pricing enqueue: Used Page Detector. Result: ' . ($should_enqueue ? 'true' : 'false'));
+        }
+    } else {
+        // Fallback to standard is_product() check if detector isn't available
+        $should_enqueue = function_exists('is_product') && is_product();
+        if (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+            apw_woo_log('Dynamic pricing enqueue: Used is_product() fallback. Result: ' . ($should_enqueue ? 'true' : 'false'));
         }
     }
 
+
     // --- Enqueue Condition: Only load if it's a product page ---
-    if ($is_standard_product_page || $is_custom_product_page) {
+    if ($should_enqueue) {
 
         if (APW_WOO_DEBUG_MODE) {
-            $page_type = $is_standard_product_page ? 'standard product page' : 'custom URL product page';
+            $page_type = 'product page'; // Simplified since we now know it is one
             apw_woo_log('Enqueuing dynamic pricing script on ' . $page_type);
         }
 
@@ -530,9 +529,9 @@ function apw_woo_enqueue_dynamic_pricing_scripts()
             return; // Stop if file is missing
         }
 
-        // Enqueue the JavaScript file
+        // Enqueue the JavaScript file - Use a distinct handle
         wp_enqueue_script(
-            'apw-woo-dynamic-pricing',
+            'apw-woo-dynamic-pricing-scripts', // Use the distinct handle
             $js_dir . $js_file,
             array('jquery'), // Dependency
             filemtime($js_path), // Cache busting
@@ -540,14 +539,14 @@ function apw_woo_enqueue_dynamic_pricing_scripts()
         );
 
         // Localize script with data needed for AJAX
+        // Ensure the 'apwWooDynamicPricing' object name matches what the JS expects
         wp_localize_script(
-            'apw-woo-dynamic-pricing',
+            'apw-woo-dynamic-pricing-scripts', // Use the distinct handle
             'apwWooDynamicPricing',
             array(
                 'ajax_url' => admin_url('admin-ajax.php'),
                 'nonce' => wp_create_nonce('apw_woo_dynamic_pricing'),
                 'price_selector' => '.apw-woo-price-display, .woocommerce-Price-amount, .price .amount', // Expanded selectors
-                // Removed is_cart and is_checkout as they are irrelevant here
                 'is_product' => true, // Script only loads on product pages now
                 'debug_mode' => APW_WOO_DEBUG_MODE // Pass debug mode status
             )
@@ -559,20 +558,25 @@ function apw_woo_enqueue_dynamic_pricing_scripts()
 
     } else {
         // --- Not a product page, do not enqueue ---
-        if (APW_WOO_DEBUG_MODE) {
+        if (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
             // Determine why it's not loading for more informative logs
-            $reason = '';
-            if (is_cart()) $reason = 'cart page';
-            elseif (is_checkout()) $reason = 'checkout page';
-            elseif (is_shop()) $reason = 'shop page';
-            elseif (is_product_category()) $reason = 'category page';
-            else $reason = 'non-product page (' . ($current_url ?: 'unknown URL') . ')';
+            $reason = 'non-product page'; // Default reason
+            if (function_exists('is_cart') && is_cart()) $reason = 'cart page';
+            elseif (function_exists('is_checkout') && is_checkout()) $reason = 'checkout page';
+            elseif (function_exists('is_shop') && is_shop()) $reason = 'shop page';
+            elseif (function_exists('is_product_category') && is_product_category()) $reason = 'category page';
+            elseif (function_exists('is_account_page') && is_account_page()) $reason = 'account page';
+            else {
+                $current_url = isset($wp) && isset($wp->request) ? $wp->request : 'unknown URL';
+                $reason = 'other page (' . $current_url . ')';
+            }
 
             apw_woo_log('Skipping dynamic pricing script enqueue: Currently on ' . $reason);
         }
         return; // Explicitly return to prevent further execution
     }
 }
+
 
 /**
  * Initialize dynamic pricing hooks and integration

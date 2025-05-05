@@ -1,9 +1,9 @@
 <?php
 /**
- * Asset Management for APW WooCommerce Plugin
+ * Asset Management for APW WooCommerce Plugin (Revised for Clarity)
  *
  * @package APW_Woo_Plugin
- * @since 1.0.0
+ * @since 1.15.9
  */
 
 // Exit if accessed directly.
@@ -11,458 +11,338 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-/**
- * APW_Woo_Assets Class
- *
- * Handles all CSS and JavaScript asset registration, enqueueing,
- * and cache busting functionality.
- *
- * @since 1.0.0
- */
 class APW_Woo_Assets
 {
 
-    /**
-     * Initialize the asset system
-     *
-     * @return void
-     * @since 1.0.0
-     */
     public static function init()
     {
-        add_action('wp_enqueue_scripts', array(__CLASS__, 'register_assets'));
+        add_action('wp_enqueue_scripts', array(__CLASS__, 'register_and_enqueue_assets'), 20);
     }
 
-    /**
-     * Register and enqueue CSS/JS assets with cache busting
-     *
-     * Dynamically loads all CSS and JS files found in the assets directories,
-     * with automatic cache busting based on file modification times.
-     *
-     * @return void
-     * @since 1.0.0
-     */
-    public static function register_assets()
+    public static function register_and_enqueue_assets()
     {
-        // Only load on WooCommerce-related pages for better performance
-        if (!is_woocommerce() && !is_cart() && !is_checkout() && !is_account_page()) {
+        // Only proceed on relevant frontend pages
+        if (is_admin() || !(is_woocommerce() || is_cart() || is_checkout() || is_account_page() || is_product())) {
+            if (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                apw_woo_log('Assets: Not a relevant frontend page. Skipping asset loading.');
+            }
             return;
         }
 
-        // Determine the current page type for targeted asset loading
         $current_page_type = self::get_current_page_type();
-
-        if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log("Loading assets on {$current_page_type} page");
-        }
-
-        // Setup paths
         $assets_url = APW_WOO_PLUGIN_URL . 'assets/';
         $assets_dir = APW_WOO_PLUGIN_DIR . 'assets/';
 
-        // Auto-load all CSS files
-        self::auto_enqueue_styles($assets_dir, $assets_url, $current_page_type);
+        if (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+            apw_woo_log("Assets: Loading assets on '{$current_page_type}' page type.");
+        }
 
-        // Auto-load all JS files
-        self::auto_enqueue_scripts($assets_dir, $assets_url, $current_page_type);
+        // --- Enqueue Stylesheets ---
+        self::enqueue_styles($assets_dir, $assets_url, $current_page_type);
 
-        // Add page-specific data for JavaScript
+        // --- Enqueue Core Public Script ---
+        $public_js_path = $assets_dir . 'js/apw-woo-public.js';
+        if (file_exists($public_js_path)) {
+            wp_enqueue_script(
+                'apw-woo-scripts', // Main public script handle
+                $assets_url . 'js/apw-woo-public.js',
+                array('jquery'),
+                filemtime($public_js_path),
+                true // Load in footer
+            );
+            if (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                apw_woo_log('Assets: Enqueued apw-woo-public.js');
+            }
+        } elseif (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+            apw_woo_log('Assets Warning: File not found: apw-woo-public.js', 'warning');
+        }
+
+        // --- Localize Common Data for Core Script ---
         $page_data = array(
             'ajax_url' => admin_url('admin-ajax.php'),
             'page_type' => $current_page_type,
             'nonce' => wp_create_nonce('apw_woo_nonce'),
             'plugin_url' => APW_WOO_PLUGIN_URL,
-            // Add debug mode flag for JS
             'debug_mode' => APW_WOO_DEBUG_MODE
         );
-
-        // Allow extensions to modify JS data
         $page_data = apply_filters('apw_woo_js_data', $page_data, $current_page_type);
 
-        // Only localize if the script exists and has been enqueued
         if (wp_script_is('apw-woo-scripts', 'enqueued')) {
             wp_localize_script('apw-woo-scripts', 'apwWooData', $page_data);
-        }
-
-        // Manual Intuit library loading removed—will use the official wc-intuit-payments handle
-
-        // Pass our page_data to the Intuit integration script
-        // ** Note: Localizing to 'apw-woo-intuit-integration-scripts' handle **
-        if (wp_script_is('apw-woo-intuit-integration-scripts', 'enqueued')) {
-            wp_localize_script(
-                'apw-woo-intuit-integration-scripts', // Handle matches the script registration
-                'apwWooIntuitData', // Use a specific object name for Intuit data
-                $page_data // Pass the relevant data
-            );
-            if (APW_WOO_DEBUG_MODE) {
-                apw_woo_log('Localized data for apw-woo-intuit-integration-scripts');
+            if (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                apw_woo_log('Assets: Localized common data for apw-woo-scripts.');
             }
         }
 
-        // Pass our page_data to the Dynamic Pricing script
-        if (wp_script_is('apw-woo-dynamic-pricing-scripts', 'enqueued')) {
-            wp_localize_script(
-                'apw-woo-dynamic-pricing-scripts',
-                'apwWooDynamicPricing', // Use the correct object name expected by the script
-                $page_data // Pass the relevant data
-            );
-            if (APW_WOO_DEBUG_MODE) {
-                apw_woo_log('Localized data for apw-woo-dynamic-pricing-scripts');
+        // --- Conditionally Enqueue Dynamic Pricing Script ---
+        if (self::is_product_page_condition()) {
+            $dynamic_pricing_js_path = $assets_dir . 'js/apw-woo-dynamic-pricing.js';
+            if (file_exists($dynamic_pricing_js_path)) {
+                wp_enqueue_script(
+                    'apw-woo-dynamic-pricing-scripts',
+                    $assets_url . 'js/apw-woo-dynamic-pricing.js',
+                    array('jquery'), // Dependency
+                    filemtime($dynamic_pricing_js_path),
+                    true // Load in footer
+                );
+                // Localize specific data for dynamic pricing
+                wp_localize_script(
+                    'apw-woo-dynamic-pricing-scripts',
+                    'apwWooDynamicPricing', // Specific object name
+                    array(
+                        'ajax_url' => admin_url('admin-ajax.php'),
+                        'nonce' => wp_create_nonce('apw_woo_dynamic_pricing'),
+                        'price_selector' => '.apw-woo-price-display, .woocommerce-Price-amount, .price .amount',
+                        'is_product' => true,
+                        'debug_mode' => APW_WOO_DEBUG_MODE
+                    )
+                );
+                if (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                    apw_woo_log('Assets: Enqueued apw-woo-dynamic-pricing.js for product page.');
+                }
+            } elseif (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                apw_woo_log('Assets Warning: File not found: apw-woo-dynamic-pricing.js', 'warning');
             }
         }
 
-        // --- Re-register Intuit integration script to depend on the CORRECT official handle ---
-        if (wp_script_is('apw-woo-intuit-integration-scripts', 'registered') || wp_script_is('apw-woo-intuit-integration-scripts', 'enqueued')) {
-            $file = APW_WOO_PLUGIN_DIR . 'assets/js/apw-woo-intuit-integration.js';
-
-            // Dequeue and deregister first to ensure we can re-register with correct dependencies
-            wp_dequeue_script('apw-woo-intuit-integration-scripts');
-            wp_deregister_script('apw-woo-intuit-integration-scripts');
-
-            if (APW_WOO_DEBUG_MODE) {
-                apw_woo_log('Reregistering Intuit integration script with correct dependencies.');
+        // --- Conditionally Enqueue Intuit Integration Script ---
+        if ($current_page_type === 'checkout') {
+            // First, check if the Intuit Gateway plugin is likely active and its core script is registered
+            if (wp_script_is('wc-intuit-payments', 'registered') || wp_script_is('wc-intuit-payments', 'enqueued')) {
+                $intuit_integration_js_path = $assets_dir . 'js/apw-woo-intuit-integration.js';
+                if (file_exists($intuit_integration_js_path)) {
+                    wp_enqueue_script(
+                        'apw-woo-intuit-integration', // Consistent handle
+                        $assets_url . 'js/apw-woo-intuit-integration.js',
+                        array(
+                            'jquery',
+                            'wc-checkout',
+                            'wc-intuit-payments' // Correct Dependency
+                        ),
+                        filemtime($intuit_integration_js_path),
+                        true // Load in footer
+                    );
+                    // Localize data specifically for this script
+                    wp_localize_script(
+                        'apw-woo-intuit-integration',
+                        'apwWooIntuitData', // Specific object name
+                        array( // Only pass necessary data
+                            'debug_mode' => APW_WOO_DEBUG_MODE,
+                            'is_checkout' => true
+                        )
+                    );
+                    if (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                        apw_woo_log('Assets: Enqueued apw-woo-intuit-integration.js for checkout.');
+                    }
+                } elseif (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                    apw_woo_log('Assets Warning: File not found: apw-woo-intuit-integration.js', 'warning');
+                }
+            } elseif (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                apw_woo_log('Assets Warning: Intuit core script (wc-intuit-payments) not registered or enqueued. Skipping enqueue of apw-woo-intuit-integration.js.', 'warning');
             }
+        }
 
-            wp_register_script(
-                'apw-woo-intuit-integration-scripts', // Keep the original handle
-                APW_WOO_PLUGIN_URL . 'assets/js/apw-woo-intuit-integration.js',
-                array(
-                    'jquery',
-                    // 'apw-woo-scripts', // It should ideally depend on jquery only, or maybe wc-checkout
-                    'wc-checkout',
-                    // *** CORRECTED DEPENDENCY HANDLE ***
-                    'wc-intuit-payments' // Assuming this is the handle for wc-intuit-payments.min.js
-                ),
-                file_exists($file) ? filemtime($file) : APW_WOO_VERSION, // Check file exists before filemtime
+        // --- Conditionally Enqueue Payment Debug Script ---
+        $payment_debug_path = $assets_dir . 'js/apw-woo-payment-debug.js';
+        if ($current_page_type === 'checkout' && file_exists($payment_debug_path) && APW_WOO_DEBUG_MODE) {
+            wp_enqueue_script(
+                'apw-woo-payment-debug',
+                $assets_url . 'js/apw-woo-payment-debug.js',
+                array('jquery', 'apw-woo-scripts'), // Depends on common script
+                filemtime($payment_debug_path),
                 true
             );
-            wp_enqueue_script('apw-woo-intuit-integration-scripts');
-
-            // Re-localize after re-enqueuing
-            wp_localize_script(
-                'apw-woo-intuit-integration-scripts',
-                'apwWooIntuitData', // Use the specific object name
-                $page_data
-            );
-
-            if (APW_WOO_DEBUG_MODE) {
-                apw_woo_log('Re-enqueued and re-localized apw-woo-intuit-integration-scripts');
+            if (function_exists('apw_woo_log')) {
+                apw_woo_log('Assets: Enqueued Payment Debug script.');
             }
-        } elseif (APW_WOO_DEBUG_MODE) {
-            apw_woo_log('Intuit integration script was not previously enqueued or registered, skipping re-registration.');
         }
+
+        // --- Auto-enqueue any other JS files (if needed) ---
+        self::enqueue_other_scripts($assets_dir, $assets_url, $current_page_type);
 
     }
 
     /**
-     * Get the current WooCommerce page type
-     *
-     * Helper function to determine the current WooCommerce page context.
-     *
-     * @return string The current page type identifier
-     * @since 1.0.0
+     * Helper to check if the current page is a product page using detector or fallback.
+     */
+    private static function is_product_page_condition()
+    {
+        global $wp;
+        if (class_exists('APW_Woo_Page_Detector') && method_exists('APW_Woo_Page_Detector', 'is_product_page')) {
+            return APW_Woo_Page_Detector::is_product_page($wp);
+        }
+        return function_exists('is_product') && is_product();
+    }
+
+
+    /**
+     * Get the current WooCommerce page type (simplified).
      */
     public static function get_current_page_type()
     {
-        // Use Page Detector class if available
-        if (class_exists('APW_Woo_Page_Detector')) {
-            return APW_Woo_Page_Detector::get_page_type();
-        }
-
-        // Fallback logic if detector class is not loaded
-        if (function_exists('is_shop') && is_shop()) {
+        if (function_exists('is_shop') && is_shop() && !is_search()) {
             return 'shop';
-        } elseif (function_exists('is_product') && is_product()) {
+        }
+        if (function_exists('is_product') && is_product()) {
             return 'product';
-        } elseif (function_exists('is_product_category') && is_product_category()) {
+        }
+        if (function_exists('is_product_category') && is_product_category()) {
             return 'category';
-        } elseif (function_exists('is_cart') && is_cart()) {
+        }
+        if (function_exists('is_cart') && is_cart()) {
             return 'cart';
-        } elseif (function_exists('is_checkout') && is_checkout()) {
-            return 'checkout';
-        } elseif (function_exists('is_account_page') && is_account_page()) {
+        }
+        if (function_exists('is_checkout') && is_checkout()) {
+            return (function_exists('is_wc_endpoint_url') && is_wc_endpoint_url('order-received')) ? 'order-received' : 'checkout';
+        }
+        if (function_exists('is_account_page') && is_account_page()) {
             return 'account';
         }
-
         return 'generic';
     }
 
     /**
-     * Auto-discover and enqueue all stylesheet files with cache busting
-     *
-     * @param string $assets_dir The local directory path to assets
-     * @param string $assets_url The URL path to assets
-     * @param string $current_page_type The current page type
-     * @return void
-     * @since 1.0.0
+     * Auto-discover and enqueue all stylesheet files with cache busting.
      */
-    public static function auto_enqueue_styles($assets_dir, $assets_url, $current_page_type)
+    public static function enqueue_styles($assets_dir, $assets_url, $current_page_type)
     {
         $css_dir = $assets_dir . 'css/';
         $css_url = $assets_url . 'css/';
 
-        // Skip if CSS directory doesn't exist
-        if (!file_exists($css_dir) || !is_dir($css_dir)) {
+        if (!is_dir($css_dir)) {
+            if (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                apw_woo_log("Assets CSS directory not found: {$css_dir}", 'warning');
+            }
             return;
         }
 
-        // Get all CSS files
         $css_files = glob($css_dir . '*.css');
         if (empty($css_files)) {
             return;
         }
 
-        // Track which files we've loaded
-        $loaded_common = false;
+        $loaded_files = []; // Track loaded handles
+        $common_handle = 'apw-woo-styles'; // Use consistent handle for main CSS
+        $common_file_name = 'woocommerce-custom.css'; // Your main global CSS
+        $deps = array();
 
-        // First pass - Load the common file first if it exists
-        foreach ($css_files as $file) {
-            $filename = basename($file);
-
-            // Load common file first (assuming it exists and is needed globally)
-            // Adjust the filename if your common file has a different name
-            if ($filename === 'woocommerce-custom.css') { // Corrected common CSS filename
-                $file_path = $css_dir . $filename;
-                if (!file_exists($file_path)) continue; // Skip if file doesn't exist
-                $css_ver = filemtime($file_path);
-                $handle = 'apw-woo-styles'; // Main handle
-
-                wp_register_style(
-                    $handle,
-                    $css_url . $filename,
-                    array(),
-                    $css_ver
-                );
-                wp_enqueue_style($handle);
-
-                if (APW_WOO_DEBUG_MODE) {
-                    apw_woo_log("Enqueued common CSS ({$filename}) with version: " . $css_ver);
-                }
-
-                $loaded_common = true;
-                break;
+        // Enqueue common file first
+        $common_file_path = $css_dir . $common_file_name;
+        if (file_exists($common_file_path)) {
+            $css_ver = filemtime($common_file_path);
+            wp_register_style($common_handle, $css_url . $common_file_name, [], $css_ver);
+            wp_enqueue_style($common_handle);
+            $loaded_files[] = $common_handle;
+            $deps[] = $common_handle; // Other styles depend on this
+            if (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                apw_woo_log("Assets: Enqueued common CSS ({$common_file_name})");
             }
         }
 
-        // Set default dependencies
-        $deps = $loaded_common ? array('apw-woo-styles') : array();
-
-        // Second pass - Load page-specific files next
-        $page_specific_loaded = false;
-        // Construct the expected page-specific filename
+        // Enqueue page-specific file
         $page_specific_filename = "apw-woo-{$current_page_type}.css";
         $page_specific_path = $css_dir . $page_specific_filename;
+        $page_specific_handle = "apw-woo-{$current_page_type}-styles";
         if (file_exists($page_specific_path)) {
             $css_ver = filemtime($page_specific_path);
-            $handle = "apw-woo-{$current_page_type}-styles";
-
-            wp_register_style(
-                $handle,
-                $css_url . $page_specific_filename,
-                $deps,
-                $css_ver
-            );
-            wp_enqueue_style($handle);
-
-            if (APW_WOO_DEBUG_MODE) {
-                apw_woo_log("Enqueued {$current_page_type}-specific CSS with version: " . $css_ver);
+            wp_register_style($page_specific_handle, $css_url . $page_specific_filename, $deps, $css_ver);
+            wp_enqueue_style($page_specific_handle);
+            $loaded_files[] = $page_specific_handle;
+            if (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                apw_woo_log("Assets: Enqueued {$current_page_type}-specific CSS ({$page_specific_filename})");
             }
-            $page_specific_loaded = true;
         }
 
-        // Third pass - Load FAQ styles and then all other CSS files
-        $faq_style_loaded = false;
-        $faq_style_path = $css_dir . 'faq-styles.css';
+        // Enqueue FAQ styles
+        $faq_style_filename = 'faq-styles.css';
+        $faq_style_path = $css_dir . $faq_style_filename;
+        $faq_handle = 'apw-woo-faq-styles';
         if (file_exists($faq_style_path)) {
             $css_ver = filemtime($faq_style_path);
-            $handle = 'apw-woo-faq-styles';
-
-            wp_register_style(
-                $handle,
-                $css_url . 'faq-styles.css',
-                $deps, // Depends on common styles if loaded
-                $css_ver
-            );
-            wp_enqueue_style($handle);
-            $faq_style_loaded = true;
-
-            if (APW_WOO_DEBUG_MODE) {
-                apw_woo_log("Enqueued FAQ CSS (faq-styles.css) with version: " . $css_ver);
+            wp_register_style($faq_handle, $css_url . $faq_style_filename, $deps, $css_ver);
+            wp_enqueue_style($faq_handle);
+            $loaded_files[] = $faq_handle;
+            if (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                apw_woo_log("Assets: Enqueued FAQ CSS ({$faq_style_filename})");
             }
-        } elseif (APW_WOO_DEBUG_MODE) {
-            apw_woo_log("FAQ CSS file not found: faq-styles.css", 'warning');
         }
 
-        // Load any remaining CSS files (excluding common, page-specific, and faq)
+        // Enqueue remaining CSS files
         foreach ($css_files as $file) {
             $filename = basename($file);
+            $file_path = $css_dir . $filename;
 
-            // Skip already loaded files (common, page-specific, faq)
-            if ($filename === 'woocommerce-custom.css' || // Corrected common CSS filename
-                $filename === $page_specific_filename ||
-                $filename === 'faq-styles.css') {
+            // Generate handle
+            $handle_base = str_replace(array('apw-woo-', '.min.css', '.css'), array('', '', ''), $filename);
+            $handle = 'apw-woo-' . sanitize_title($handle_base) . '-styles';
+
+            // Skip if already loaded or doesn't exist
+            if (in_array($handle, $loaded_files) || !file_exists($file_path)) {
                 continue;
             }
 
-            // Skip if file doesn't exist
-            if (!file_exists($file)) continue;
-
-            // Get a clean handle from the filename
-            $handle_base = str_replace(
-                array('apw-woo-', '.min.css', '.css'),
-                array('', '', ''),
-                $filename
-            );
-
-            // Add prefix to ensure uniqueness and prevent conflicts
-            $handle = 'apw-woo-' . sanitize_title($handle_base) . '-styles';
-
-            $css_ver = filemtime($file);
-
-            wp_register_style(
-                $handle,
-                $css_url . $filename,
-                $deps, // Depends on common styles if loaded
-                $css_ver
-            );
+            $css_ver = filemtime($file_path);
+            wp_register_style($handle, $css_url . $filename, $deps, $css_ver);
             wp_enqueue_style($handle);
-
-            if (APW_WOO_DEBUG_MODE) {
-                apw_woo_log("Enqueued additional CSS ({$filename}) with version: " . $css_ver);
+            $loaded_files[] = $handle; // Mark as loaded
+            if (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                apw_woo_log("Assets: Enqueued additional CSS ({$filename})");
             }
         }
     }
 
     /**
-     * Auto-discover and enqueue all JavaScript files with cache busting
-     *
-     * @param string $assets_dir The local directory path to assets
-     * @param string $assets_url The URL path to assets
-     * @param string $current_page_type The current page type
-     * @return void
-     * @since 1.0.0
+     * Enqueues any other JS files not handled by specific functions.
      */
-    public static function auto_enqueue_scripts($assets_dir, $assets_url, $current_page_type)
+    public static function enqueue_other_scripts($assets_dir, $assets_url, $current_page_type)
     {
         $js_dir = $assets_dir . 'js/';
         $js_url = $assets_url . 'js/';
 
-        // Skip if JS directory doesn't exist
-        if (!file_exists($js_dir) || !is_dir($js_dir)) {
-            return;
+        if (!is_dir($js_dir)) {
+            return; // Skip if dir doesn't exist
         }
 
-        // Get all JS files
         $js_files = glob($js_dir . '*.js');
         if (empty($js_files)) {
             return;
         }
 
-        // Track which files we've loaded
-        $loaded_common = false;
+        $excluded_scripts = [
+            'apw-woo-public.js',
+            'apw-woo-dynamic-pricing.js',
+            'apw-woo-intuit-integration.js',
+            'apw-woo-payment-debug.js'
+        ];
 
-        // First pass - Load the common file first
-        foreach ($js_files as $file) {
-            $filename = basename($file);
-
-            // Load common file first
-            if ($filename === 'apw-woo-public.js') {
-                $file_path = $js_dir . $filename;
-                if (!file_exists($file_path)) continue; // Skip if file doesn't exist
-                $js_ver = filemtime($file_path);
-                $handle = 'apw-woo-scripts'; // Main handle
-
-                wp_register_script(
-                    $handle,
-                    $js_url . $filename,
-                    array('jquery'),
-                    $js_ver,
-                    true // Load in footer
-                );
-                wp_enqueue_script($handle);
-
-                if (APW_WOO_DEBUG_MODE) {
-                    apw_woo_log('Enqueued common JS with version: ' . $js_ver);
-                }
-
-                $loaded_common = true;
-                break;
-            }
+        // Base dependencies - typically includes jQuery and your main public script if loaded
+        $base_deps = array('jquery');
+        if (wp_script_is('apw-woo-scripts', 'enqueued')) {
+            $base_deps[] = 'apw-woo-scripts';
         }
 
-        // Set default dependencies
-        $deps = $loaded_common ? array('jquery', 'apw-woo-scripts') : array('jquery');
-
-        // Second pass - Load page-specific file next
-        $page_specific_loaded = false;
-        // Construct the expected page-specific filename
-        $page_specific_filename = "apw-woo-{$current_page_type}.js";
-        $page_specific_path = $js_dir . $page_specific_filename;
-        if (file_exists($page_specific_path)) {
-            $js_ver = filemtime($page_specific_path);
-            $handle = "apw-woo-{$current_page_type}-scripts";
-
-            wp_register_script(
-                $handle,
-                $js_url . $page_specific_filename,
-                $deps,
-                $js_ver,
-                true // Load in footer
-            );
-            wp_enqueue_script($handle);
-
-            if (APW_WOO_DEBUG_MODE) {
-                apw_woo_log("Enqueued {$current_page_type}-specific JS with version: " . $js_ver);
-            }
-            $page_specific_loaded = true;
-        }
-
-        // Third pass - Load all other JS files
         foreach ($js_files as $file) {
             $filename = basename($file);
+            $file_path = $js_dir . $filename;
 
-            // Skip if file doesn't exist
-            if (!file_exists($file)) continue;
-
-            // Skip already loaded files
-            if ($filename === 'apw-woo-public.js' || $filename === $page_specific_filename) {
+            // Skip excluded and non-existent files
+            if (in_array($filename, $excluded_scripts) || !file_exists($file_path)) {
                 continue;
             }
 
-            // Get a clean handle from the filename
-            $handle_base = str_replace(
-                array('apw-woo-', '.min.js', '.js'),
-                array('', '', ''),
-                $filename
-            );
-
-            // Add prefix to ensure uniqueness and prevent conflicts
+            $handle_base = str_replace(array('apw-woo-', '.min.js', '.js'), array('', '', ''), $filename);
             $handle = 'apw-woo-' . sanitize_title($handle_base) . '-scripts';
 
-            $js_ver = filemtime($file);
-
-            // Determine dependencies for specific scripts
-            $current_deps = $deps;
-            if ($handle === 'apw-woo-intuit-integration-scripts') {
-                // *** Dependencies handled during re-registration later ***
-                // Keep basic dependencies for now
-                $current_deps = array('jquery', 'wc-checkout'); // Minimal needed before re-registration
-            } elseif ($handle === 'apw-woo-dynamic-pricing-scripts') {
-                // Add wc-cart-fragments if needed by dynamic pricing
-                $current_deps[] = 'wc-cart-fragments';
+            // Prevent double enqueuing
+            if (wp_script_is($handle, 'enqueued') || wp_script_is($handle, 'registered')) {
+                continue;
             }
 
-            wp_register_script(
-                $handle,
-                $js_url . $filename,
-                array_unique($current_deps), // Ensure dependencies are unique
-                $js_ver,
-                true // Load in footer
-            );
-            wp_enqueue_script($handle);
+            $js_ver = filemtime($file_path);
+            wp_enqueue_script($handle, $js_url . $filename, $base_deps, $js_ver, true);
 
-            if (APW_WOO_DEBUG_MODE) {
-                apw_woo_log("Enqueued additional JS ({$filename}) with version: " . $js_ver);
+            if (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                apw_woo_log("Assets: Enqueued other JS file ({$filename})");
             }
         }
     }
