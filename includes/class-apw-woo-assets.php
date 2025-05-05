@@ -1,9 +1,9 @@
 <?php
 /**
- * Asset Management for APW WooCommerce Plugin (Revised for Clarity)
+ * Asset Management for APW WooCommerce Plugin (Revised for Clarity & Debugging)
  *
  * @package APW_Woo_Plugin
- * @since 1.15.9
+ * @since 1.15.10
  */
 
 // Exit if accessed directly.
@@ -19,9 +19,18 @@ class APW_Woo_Assets
         add_action('wp_enqueue_scripts', array(__CLASS__, 'register_and_enqueue_assets'), 20);
     }
 
+    /**
+     * Register and enqueue CSS/JS assets with cache busting and conditional loading.
+     * REVISED: Separated registration from enqueueing for better control.
+     * REVISED: Explicitly calls dedicated enqueue functions for conditional scripts.
+     * REVISED: Added specific debug logging for Intuit script enqueueing.
+     *
+     * @return void
+     * @since 1.0.0 / Revised in 1.15.10
+     */
     public static function register_and_enqueue_assets()
     {
-        // Only proceed on relevant frontend pages
+        // --- Only proceed on relevant frontend pages ---
         if (is_admin() || !(is_woocommerce() || is_cart() || is_checkout() || is_account_page() || is_product())) {
             if (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
                 apw_woo_log('Assets: Not a relevant frontend page. Skipping asset loading.');
@@ -106,18 +115,42 @@ class APW_Woo_Assets
         }
 
         // --- Conditionally Enqueue Intuit Integration Script ---
+        // +++ START ADDED DEBUG LOGGING FOR INTUIT +++
+        if (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+            apw_woo_log("Assets Intuit Check: Checking conditions for Intuit script enqueue...");
+            apw_woo_log("Assets Intuit Check: Current page type is '{$current_page_type}'. Is it 'checkout'? " . ($current_page_type === 'checkout' ? 'Yes' : 'No'));
+        }
+        // +++ END ADDED DEBUG LOGGING FOR INTUIT +++
+
         if ($current_page_type === 'checkout') {
-            // First, check if the Intuit Gateway plugin is likely active and its core script is registered
-            if (wp_script_is('wc-intuit-payments', 'registered') || wp_script_is('wc-intuit-payments', 'enqueued')) {
+            // +++ START ADDED DEBUG LOGGING FOR INTUIT +++
+            $intuit_core_handle = 'wc-intuit-payments'; // Handle for the Intuit gateway's main JS
+            $is_intuit_core_registered = wp_script_is($intuit_core_handle, 'registered');
+            $is_intuit_core_enqueued = wp_script_is($intuit_core_handle, 'enqueued');
+            if (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                apw_woo_log("Assets Intuit Check: Inside 'checkout' condition. Checking for Intuit core script handle '{$intuit_core_handle}'...");
+                apw_woo_log("Assets Intuit Check: Is '{$intuit_core_handle}' registered? " . ($is_intuit_core_registered ? 'Yes' : 'No'));
+                apw_woo_log("Assets Intuit Check: Is '{$intuit_core_handle}' enqueued? " . ($is_intuit_core_enqueued ? 'Yes' : 'No'));
+            }
+            // +++ END ADDED DEBUG LOGGING FOR INTUIT +++
+
+            // Check if the Intuit Gateway plugin's core script is registered OR already enqueued
+            if ($is_intuit_core_registered || $is_intuit_core_enqueued) {
                 $intuit_integration_js_path = $assets_dir . 'js/apw-woo-intuit-integration.js';
                 if (file_exists($intuit_integration_js_path)) {
+                    // +++ ADDED DEBUG LOGGING +++
+                    if (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                        apw_woo_log("Assets Intuit Check: Intuit core script found AND integration file exists. Enqueuing apw-woo-intuit-integration.js now.");
+                    }
+                    // +++ END ADDED DEBUG LOGGING +++
+
                     wp_enqueue_script(
                         'apw-woo-intuit-integration', // Consistent handle
                         $assets_url . 'js/apw-woo-intuit-integration.js',
                         array(
                             'jquery',
                             'wc-checkout',
-                            'wc-intuit-payments' // Correct Dependency
+                            $intuit_core_handle // Use the variable for dependency
                         ),
                         filemtime($intuit_integration_js_path),
                         true // Load in footer
@@ -138,9 +171,9 @@ class APW_Woo_Assets
                     apw_woo_log('Assets Warning: File not found: apw-woo-intuit-integration.js', 'warning');
                 }
             } elseif (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
-                apw_woo_log('Assets Warning: Intuit core script (wc-intuit-payments) not registered or enqueued. Skipping enqueue of apw-woo-intuit-integration.js.', 'warning');
+                apw_woo_log("Assets Warning: Intuit core script ('{$intuit_core_handle}') not registered or enqueued. Skipping enqueue of apw-woo-intuit-integration.js.", 'warning');
             }
-        }
+        } // --- End Intuit Conditional Enqueue ---
 
         // --- Conditionally Enqueue Payment Debug Script ---
         $payment_debug_path = $assets_dir . 'js/apw-woo-payment-debug.js';
@@ -148,19 +181,22 @@ class APW_Woo_Assets
             wp_enqueue_script(
                 'apw-woo-payment-debug',
                 $assets_url . 'js/apw-woo-payment-debug.js',
-                array('jquery', 'apw-woo-scripts'), // Depends on common script
+                // Depends on jquery and the core script where apwWooData is localized
+                array('jquery', 'apw-woo-scripts'),
                 filemtime($payment_debug_path),
                 true
             );
-            if (function_exists('apw_woo_log')) {
+            if (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
                 apw_woo_log('Assets: Enqueued Payment Debug script.');
             }
         }
+
 
         // --- Auto-enqueue any other JS files (if needed) ---
         self::enqueue_other_scripts($assets_dir, $assets_url, $current_page_type);
 
     }
+
 
     /**
      * Helper to check if the current page is a product page using detector or fallback.
@@ -206,6 +242,7 @@ class APW_Woo_Assets
      */
     public static function enqueue_styles($assets_dir, $assets_url, $current_page_type)
     {
+        // ... (CSS enqueueing logic remains the same as in message #11) ...
         $css_dir = $assets_dir . 'css/';
         $css_url = $assets_url . 'css/';
 
@@ -291,6 +328,7 @@ class APW_Woo_Assets
         }
     }
 
+
     /**
      * Enqueues any other JS files not handled by specific functions.
      */
@@ -342,8 +380,8 @@ class APW_Woo_Assets
             wp_enqueue_script($handle, $js_url . $filename, $base_deps, $js_ver, true);
 
             if (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
-                apw_woo_log("Assets: Enqueued other JS file ({$filename})");
+                apw_woo_log("Assets: Auto-enqueued other JS file ({$filename})");
             }
         }
     }
-}
+} // End Class
