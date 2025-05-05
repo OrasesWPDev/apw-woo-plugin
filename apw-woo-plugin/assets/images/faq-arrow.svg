@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="109.261" height="108.935" viewBox="0 0 109.261 108.935">
+  <g id="arow_t" data-name="arow t" transform="translate(109.261 68.779) rotate(150)">
+    <g id="Ellipse_6" data-name="Ellipse 6" transform="translate(0 0)" fill="#fff" stroke="#92ddc6" stroke-width="5">
+      <ellipse cx="40.156" cy="39.71" rx="40.156" ry="39.71" stroke="none"/>
+      <ellipse cx="40.156" cy="39.71" rx="37.656" ry="37.21" fill="none"/>
+    </g>
+    <path id="arrow" d="M24.379,8.846,16.159.626a2.012,2.012,0,1,0-2.846,2.844l4.859,4.851H2.012a2.013,2.013,0,0,0,0,4.025H18.128l-4.814,4.821a2.012,2.012,0,0,0,2.846,2.844l8.22-8.22a2,2,0,0,0,.589-1.423.413.413,0,0,0,0-.05.413.413,0,0,0,0-.05,2.012,2.012,0,0,0-.589-1.423Z" transform="translate(45.861 55.09) rotate(-150)" fill="#00aade"/>
+  </g>
+</svg>

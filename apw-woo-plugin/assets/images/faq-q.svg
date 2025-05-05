@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="109.261" height="108.935" viewBox="0 0 109.261 108.935">
+  <g id="arow_t" data-name="arow t" transform="translate(109.261 68.779) rotate(150)">
+    <g id="Ellipse_6" data-name="Ellipse 6" transform="translate(0 0)" fill="#fff" stroke="#92ddc6" stroke-width="5">
+      <ellipse cx="40.156" cy="39.71" rx="40.156" ry="39.71" stroke="none"/>
+      <ellipse cx="40.156" cy="39.71" rx="37.656" ry="37.21" fill="none"/>
+    </g>
+    <text id="Q" transform="translate(58.413 77.348) rotate(-150)" fill="#00aade" font-size="38" font-family="Montserrat-Bold, Montserrat" font-weight="700" letter-spacing="-0.025em"><tspan x="-15" y="37">Q</tspan></text>
+  </g>
+</svg>

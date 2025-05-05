@@ -1,0 +1,3809 @@
+/* ----------------------------------------
+   APW WOOCOMMERCE PLUGIN - GLOBAL WOOCOMMERCE STYLES
+   Base styles primarily for Shop (Top Level), Category (Middle Level),
+   and Single Product (Last Level) templates. Specific overrides may apply.
+   ---------------------------------------- */
+
+/* ----------------------------------------
+   CART QUANTITY INDICATOR STYLES
+   Styles for the cart quantity indicator bubble that appears next to cart links
+   ---------------------------------------- */
+/* Cart Quantity Indicator container */
+.cart-quantity-indicator {
+    position: relative;
+}
+
+/* Display the cart count using the ::after pseudo-element */
+.cart-quantity-indicator[data-cart-count]::after {
+    content: attr(data-cart-count);
+    background: #0F6789;
+    color: #92DDC6;
+    border-radius: 50%;
+    padding: 0.25em 0.5em;
+    margin-left: 0.3em;
+    font-size: 0.8em;
+    vertical-align: middle;
+}
+
+/* Show the indicator with "0" when cart is empty but user is logged in */
+.cart-quantity-indicator[data-cart-count="0"]::after {
+    display: inline-block; /* Always show for logged-in users with empty cart */
+}
+
+/* Hide the indicator when data-cart-count is empty (for logged-out users) */
+.cart-quantity-indicator[data-cart-count=""]::after {
+    display: none; /* Hide bubble for logged-out users */
+}
+
+/* ----------------------------------------
+   END CART QUANTITY INDICATOR STYLES
+   ---------------------------------------- */
+
+/* APW Woo Plugin - Checkout Redirect Notice Styling */
+
+/* Style the main notice container */
+/* Inherits basic styles from .woocommerce-info, add overrides/specifics here */
+.apw-woo-checkout-redirect-notice {
+    font-family: var(--apw-font-family, 'Montserrat', sans-serif); /* Use plugin font */
+    font-size: var(--apw-woo-content-font-size, 1.3125rem); /* Use standard content font size */
+    color: var(--apw-woo-text-color, #0D252C); /* Use standard text color */
+    line-height: 1.6;
+    border-left-color: var(--apw-woo-notice-highlight, #178093); /* Example: use highlight color for border */
+    padding: 1em 1.5em; /* Standard notice padding */
+    margin-bottom: 2em; /* Space below notice */
+    background-color: rgba(215, 224, 226, 0.3); /* Optional: Use light background like dropdowns */
+    border-radius: 5px; /* Consistent radius */
+}
+
+/* Style paragraphs within the notice */
+.apw-woo-checkout-redirect-notice p {
+    margin-bottom: 0.75em; /* Spacing between paragraphs */
+    font-size: inherit; /* Inherit font size from container */
+    color: inherit; /* Inherit text color */
+}
+
+.apw-woo-checkout-redirect-notice p:last-child {
+    margin-bottom: 0;
+}
+
+/* Style the manual redirect link/button */
+.apw-woo-checkout-redirect-notice .apw-woo-account-redirect-link {
+    /* Inherit styles from main action buttons (e.g., Place Order) */
+    background: var(--apw-woo-button-background) !important; /* Use defined button gradient */
+    color: #ffffff !important; /* White text */
+    border-radius: 58px !important; /* Match standard button radius */
+    font-family: var(--apw-font-family, 'Montserrat', sans-serif) !important; /* Use plugin font */
+    font-weight: var(--apw-font-bold, 700) !important; /* Bold font weight */
+    font-size: 1.1rem !important; /* Match Place Order button size */
+    text-transform: uppercase !important; /* Uppercase text */
+    padding: 12px 30px !important; /* Match Place Order padding */
+    border: none !important; /* No border */
+    text-decoration: none !important; /* Remove underline */
+    display: inline-block; /* Allow inline display */
+    text-align: center;
+    cursor: pointer;
+    transition: opacity 0.3s ease;
+    margin-top: 0.5em; /* Add some space above the button */
+}
+
+/* Hover state for the button */
+.apw-woo-checkout-redirect-notice .apw-woo-account-redirect-link:hover {
+    opacity: 0.85;
+    color: #ffffff !important; /* Ensure text stays white */
+    background: var(--apw-woo-button-background) !important; /* Ensure gradient remains */
+}
+
+
+/* ----------------------------------------
+   GLOBAL CSS VARIABLES (CUSTOM PROPERTIES)
+      Used across Shop, Category, and Product templates unless overridden.
+   ---------------------------------------- */
+/* --- APW WOO - Apply 1500px max-width to specific WooCommerce pages --- */
+/* Targets Shop, Category, Tag, Single Product, Cart, and Account pages */
+body.archive.post-type-archive-product .col.apw-woo-content-wrapper,
+body.tax-product_cat .col.apw-woo-content-wrapper,
+body.tax-product_tag .col.apw-woo-content-wrapper,
+body.single-product .col.apw-woo-content-wrapper,
+body.woocommerce-cart .col.apw-woo-content-wrapper,
+body.woocommerce-account .col.apw-woo-content-wrapper {
+    max-width: 1500px;
+    margin-left: auto; /* Center the container */
+    margin-right: auto; /* Center the container */
+    float: none; /* Ensure centering even if theme floats columns */
+    padding-left: 15px; /* Optional: Add some horizontal padding if needed */
+    padding-right: 15px; /* Optional: Add some horizontal padding if needed */
+    box-sizing: border-box; /* Ensure padding is included in the max-width */
+}
+
+/* --- START: Reduce content wrapper width --- */
+/* Target the main content column specifically on checkout */
+.woocommerce-checkout .col.apw-woo-content-wrapper {
+    max-width: 85%;
+    margin-left: auto;
+    margin-right: auto;
+    float: none; /* Ensure it doesn't float */
+}
+
+/* --- END: Reduce content wrapper width --- */
+
+:root {
+    /* --- Colors --- */
+    --apw-woo-card-header-bg: #003E57;
+    --apw-woo-card-header-text: #ffffff;
+    --apw-woo-text-color: #0D252C;
+    /* --- UPDATED Button Gradient Colors --- */
+    --apw-woo-button-gradient-start: #244B5A; /* Changed from #0D252C */
+    --apw-woo-button-gradient-end: #178093; /* Changed from #00AADE */
+    /* --- End Update --- */
+    --apw-woo-card-shadow-color: rgba(36, 75, 90, 0.06); /* #244B5A10 */
+
+    /* --- Typography --- */
+    /* Reusing from faq-styles.css */
+    --apw-font-family: 'Montserrat', sans-serif;
+    --apw-font-bold: 700;
+    --apw-font-medium: 500;
+    --apw-woo-card-title-size: 2.375rem; /* 38px / 16px */
+    --apw-woo-card-button-desc-size: 1.3125rem; /* 21px / 16px */
+    /* --- NEW: Intro Section Font Sizes (Added for Responsiveness) --- */
+    --apw-woo-intro-title-size: 2.5rem; /* 40px / 16px - Default H2 size for intro */
+    --apw-woo-intro-desc-size: 1.125rem; /* 18px / 16px - Default P size for intro */
+    /* --- End New --- */
+
+
+    /* --- Dimensions & Layout --- */
+    /* Image dimensions handled by aspect-ratio in rules */
+    --apw-woo-card-shadow-x: 5px;
+    --apw-woo-card-shadow-y: 25px;
+    --apw-woo-card-shadow-blur: 0px;
+
+    /* --- Gradients --- */
+    --apw-woo-button-gradient-angle: 204deg; /* Angle remains 204deg */
+    /* This variable now uses the updated start/end colors automatically */
+    --apw-woo-button-background: linear-gradient(var(--apw-woo-button-gradient-angle), var(--apw-woo-button-gradient-start), var(--apw-woo-button-gradient-end));
+
+    /* --- Spacing --- */
+    --apw-woo-spacing-small: 10px;
+    --apw-woo-spacing-medium: 15px;
+    --apw-woo-spacing-large: 30px;
+}
+
+/* ----------------------------------------
+   2. SHOP/CATEGORY LEVEL - GRID LAYOUT (Bottom Radius Added)
+   ---------------------------------------- */
+
+/* Grid container (Unchanged from previous version) */
+.apw-woo-categories-grid,
+.apw-woo-products-grid {
+    display: flex;
+    flex-wrap: wrap;
+    box-sizing: border-box;
+    row-gap: calc(3 * var(--apw-woo-spacing-large));
+    column-gap: calc(var(--apw-woo-spacing-large) + 10px);
+}
+
+/* Category/Product item (card) */
+.apw-woo-category-item,
+.apw-woo-product-item {
+    flex-basis: calc(50% - ((var(--apw-woo-spacing-large) + 10px) / 2));
+    flex-grow: 0;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    background-color: #fff; /* Background needed for content */
+
+    /* --- Corrected Border Radius --- */
+    /* Apply 16px radius to all corners of the item container */
+    /* The header inside will still respect its own 16px 16px 0 0 radius */
+    border-radius: 16px; /* CHANGED: Applied 16px radius to all corners */
+
+    /* --- Corrected Overflow --- */
+    /* Changed back to hidden to clip internal content to the item's radius */
+    overflow: hidden; /* CHANGED: Back to hidden */
+
+    position: relative; /* Still useful for positioning context if needed */
+    /* Drop shadow remains unchanged, will follow the new border-radius */
+    box-shadow: var(--apw-woo-card-shadow-x) var(--apw-woo-card-shadow-y) var(--apw-woo-card-shadow-blur) var(--apw-woo-card-shadow-color);
+}
+
+/* --- Flatsome Override (Unchanged) --- */
+.apw-woo-category-item > .row > .col,
+.apw-woo-product-item > .row > .col {
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin-top: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    width: 100%;
+    max-width: 100%;
+}
+
+/* --- Inner Row Styles (Unchanged) --- */
+.apw-woo-category-item .row,
+.apw-woo-product-item .row {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+
+/* ----------------------------------------
+   3. SHOP/CATEGORY LEVEL - CARD HEADER STYLING (Title/Button Spacing)
+   ---------------------------------------- */
+
+/* Card Header container (Unchanged) */
+.apw-woo-category-header,
+.apw-woo-product-header {
+    background-color: var(--apw-woo-card-header-bg);
+    color: var(--apw-woo-card-header-text);
+    padding: var(--apw-woo-spacing-medium) var(--apw-woo-spacing-large);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: nowrap;
+    height: 106px;
+    box-sizing: border-box;
+    border-radius: 16px 16px 0 0;
+}
+
+/* Card Title (H4) */
+.apw-woo-category-title,
+.apw-woo-product-title {
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold);
+    font-size: var(--apw-woo-card-title-size);
+    color: var(--apw-woo-card-header-text);
+    margin: 0;
+    line-height: 1.2;
+    flex-grow: 1;
+    flex-shrink: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    /* --- Added Left Margin --- */
+    margin-left: var(--apw-woo-spacing-small); /* Example: 10px margin */
+}
+
+/* View All / View Product Button */
+.apw-woo-view-all-button,
+.apw-woo-view-product-button {
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold);
+    font-size: var(--apw-woo-card-button-desc-size);
+    color: var(--apw-woo-card-header-text);
+    background: var(--apw-woo-button-background);
+    border: none;
+    padding: var(--apw-woo-spacing-small) var(--apw-woo-spacing-medium);
+    border-radius: 58px;
+    width: 134px;
+    height: auto;
+    cursor: pointer;
+    text-decoration: none;
+    transition: opacity 0.3s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    white-space: nowrap;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    /* --- Added Right Margin --- */
+    margin-right: var(--apw-woo-spacing-small); /* Example: 10px margin */
+}
+
+/* Hover styles (Unchanged) */
+.apw-woo-view-all-button:hover,
+.apw-woo-view-product-button:hover {
+    opacity: 0.85;
+    color: var(--apw-woo-card-header-text);
+}
+
+
+/* ----------------------------------------
+   4. SHOP/CATEGORY LEVEL - CARD IMAGE STYLING (Consolidated)
+   ---------------------------------------- */
+
+.apw-woo-category-image-wrapper,
+.apw-woo-product-image-wrapper {
+    width: 100%;
+    aspect-ratio: 720 / 475;
+    overflow: hidden;
+    background-color: #f0f0f0;
+}
+
+.apw-woo-category-image-link,
+.apw-woo-product-image-link {
+    display: block;
+    height: 100%;
+}
+
+.apw-woo-category-image,
+.apw-woo-product-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+
+/* ----------------------------------------
+   5. SHOP/CATEGORY LEVEL - CARD DESCRIPTION STYLING (Consolidated)
+   ---------------------------------------- */
+
+.apw-woo-category-description {
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-medium);
+    font-size: var(--apw-woo-card-button-desc-size);
+    color: var(--apw-woo-text-color);
+    line-height: 1.6;
+    padding: var(--apw-woo-spacing-medium) var(--apw-woo-spacing-large) var(--apw-woo-spacing-large) var(--apw-woo-spacing-large);
+    margin-left: 10px;
+}
+
+.apw-woo-category-description p {
+    margin-bottom: 1em;
+}
+
+.apw-woo-category-description p:last-child {
+    margin-bottom: 0;
+}
+
+/* --- NEW: Add base styles for Intro Section Title & Description --- */
+/* Ensure the intro title uses the new variable */
+/* Adjust selector '.apw-woo-section-title' if your H2 has a different class */
+.apw-woo-intro-section .apw-woo-section-title {
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold);
+    font-size: clamp(2.8rem, 5vw, 6.25rem);
+    text-align: center;
+    color: #244B5A; /* Or specific intro title color if needed */
+    padding-top: 4.688rem;
+    margin-bottom: var(--apw-woo-spacing-medium); /* Adjust spacing as needed */
+    line-height: 1.3;
+}
+
+/* Ensure the intro description P tags use the new variable */
+/* Adjust selector '.apw-woo-section-description' if your description container has a different class */
+.apw-woo-intro-section .apw-woo-section-description {
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-medium);
+    font-size: 1.313rem;
+    text-align: center;
+    color: #0D252C;
+    line-height: 1.6;
+    padding-bottom: 4.688rem;
+    margin-bottom: 1em; /* Standard paragraph spacing */
+}
+
+.apw-woo-intro-section .apw-woo-section-description p:last-child {
+    margin-bottom: 0;
+}
+
+/* --- End New Base Styles --- */
+
+
+/* ----------------------------------------
+   6. RESPONSIVE ADJUSTMENTS
+   ---------------------------------------- */
+
+/**
+ * WooCommerce Notice Styling
+ *
+ * These styles ensure that notices are properly displayed in our custom container
+ * and maintain consistent styling across the site.
+ */
+
+/* Notice container styling */
+.apw-woo-notices-container {
+    margin-bottom: 20px;
+    width: 100%;
+    clear: both;
+    display: block !important;
+    z-index: 999; /* Ensure notices are above other content */
+    min-height: 10px; /* Ensure container is visible even when empty */
+    position: relative; /* Establish positioning context */
+}
+
+/* Ensure all notice types are visible within our container */
+/* .apw-woo-notices-container .woocommerce-message,
+.apw-woo-notices-container .woocommerce-error,
+.apw-woo-notices-container .woocommerce-info,
+.apw-woo-notices-container .woocommerce-notice,
+.apw-woo-notices-container .message-wrapper {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: auto !important;
+    overflow: visible !important;
+    margin-bottom: 15px !important;
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    transform: none !important;
+    pointer-events: auto !important;
+} */
+
+/* Ensure buttons in notices are clickable */
+.apw-woo-notices-container .woocommerce-message .button,
+.apw-woo-notices-container .woocommerce-error .button,
+.apw-woo-notices-container .woocommerce-info .button,
+.apw-woo-notices-container .woocommerce-notice .button,
+.apw-woo-notices-container .message-wrapper .button {
+    display: inline-block !important;
+    pointer-events: auto !important;
+    position: static !important;
+}
+
+/* Style adjustments for notices to match theme */
+.message-wrapper {
+    margin-bottom: 15px;
+}
+
+/* Ensure buttons in notices work properly */
+.woocommerce-message .button,
+.woocommerce-error .button,
+.woocommerce-info .button,
+.woocommerce-notice .button,
+.message-wrapper .button,
+.message-container .button {
+    display: inline-block !important;
+    pointer-events: auto !important;
+}
+
+/* Ensure message containers have proper padding */
+.message-container {
+    padding: 8px 16px;
+}
+
+/* Hide notices in their original locations */
+body > .woocommerce-message:not(.apw-woo-processed),
+body > .woocommerce-error:not(.apw-woo-processed),
+body > .woocommerce-info:not(.apw-woo-processed),
+body > .woocommerce-notice:not(.apw-woo-processed),
+body > .message-wrapper:not(.apw-woo-processed),
+.woocommerce-notices-wrapper > *:not(.apw-woo-processed),
+header.header ~ .woocommerce-message:not(.apw-woo-processed),
+header.header ~ .woocommerce-error:not(.apw-woo-processed),
+header.header ~ .woocommerce-info:not(.apw-woo-processed),
+header.header ~ .message-wrapper:not(.apw-woo-processed),
+header.header + .woocommerce-message:not(.apw-woo-processed),
+header.header + .woocommerce-error:not(.apw-woo-processed),
+header.header + .woocommerce-info:not(.apw-woo-processed),
+header.header + .message-wrapper:not(.apw-woo-processed),
+.page-wrapper > .woocommerce-message:not(.apw-woo-processed),
+.page-wrapper > .woocommerce-error:not(.apw-woo-processed),
+.page-wrapper > .woocommerce-info:not(.apw-woo-processed),
+.page-wrapper > .message-wrapper:not(.apw-woo-processed),
+#wrapper > .woocommerce-message:not(.apw-woo-processed),
+#wrapper > .woocommerce-error:not(.apw-woo-processed),
+#wrapper > .woocommerce-info:not(.apw-woo-processed),
+#wrapper > .message-wrapper:not(.apw-woo-processed),
+main > .woocommerce-message:not(.apw-woo-processed),
+main > .woocommerce-error:not(.apw-woo-processed),
+main > .woocommerce-info:not(.apw-woo-processed),
+main > .message-wrapper:not(.apw-woo-processed) {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    position: absolute !important;
+    left: -9999px !important;
+}
+
+/* Ensure notices appear only once */
+.woocommerce-notices-wrapper:empty {
+    display: none !important;
+}
+
+/* --- Tablet & Mobile Shared Styles (849px and below) --- */
+/* Styles applied from tablet breakpoint downwards */
+@media (max-width: 849px) {
+    :root {
+        /* Adjust intro font sizes for tablet */
+        --apw-woo-intro-title-size: 2.125rem; /* 34px / 16px */
+        --apw-woo-intro-desc-size: 1.0625rem; /* 17px / 16px */
+
+        /* Optional: Adjust card title size for tablet if needed - now handled by clamp() */
+        /* --apw-woo-card-button-desc-size: 1.125rem; */ /* Example: 18px */
+    }
+
+    /* Change grid to 1 column */
+    .apw-woo-category-item,
+    .apw-woo-product-item {
+        flex-basis: 100%; /* Make each item take full width */
+    }
+
+    /* Adjust grid gap for single column layout */
+    .apw-woo-categories-grid,
+    .apw-woo-products-grid {
+        column-gap: 0; /* Remove column gap when stacked */
+        /* --- FIXED: Corrected underscore to asterisk --- */
+        row-gap: calc(2 * var(--apw-woo-spacing-large)); /* Default row gap for tablet */
+        /* --- End Fix --- */
+    }
+
+    /* --- NEW: Header Stacking & Centering (Applies to Tablet & Mobile) --- */
+    .apw-woo-category-header,
+    .apw-woo-product-header {
+        padding: var(--apw-woo-spacing-small) var(--apw-woo-spacing-medium); /* Use smaller padding */
+        height: auto; /* Allow height to adjust */
+        flex-direction: column; /* Stack title and button */
+        align-items: center; /* Center stacked items horizontally */
+        gap: var(--apw-woo-spacing-small); /* Add gap between stacked items */
+        text-align: center; /* Center inline text */
+    }
+
+    .apw-woo-category-title,
+    .apw-woo-product-title {
+        margin-left: 0; /* Remove left margin */
+        white-space: normal; /* Allow title to wrap */
+        text-align: center; /* Center title text */
+        width: 100%; /* Ensure title takes full width */
+        overflow: visible; /* Override overflow hidden to prevent ellipsis when wrapping */
+        text-overflow: clip; /* Change from ellipsis */
+    }
+
+    .apw-woo-view-all-button,
+    .apw-woo-view-product-button {
+        margin-right: 0; /* Remove right margin */
+        align-self: center; /* Center button itself */
+        width: auto; /* Allow button width to adjust */
+        padding: var(--apw-woo-spacing-small); /* Use smaller padding */
+    }
+
+    /* --- End Header Stacking & Centering --- */
+    /* Adjust description padding */
+    .apw-woo-category-description {
+        padding: var(--apw-woo-spacing-medium); /* Reduce padding */
+        margin-left: 0; /* Remove left margin */
+    }
+}
+
+/* --- Mobile Only Styles (549px and below) --- */
+/* Further adjustments specifically for mobile */
+@media (max-width: 549px) {
+    :root {
+        /* Further adjust intro font sizes for mobile */
+        --apw-woo-intro-title-size: 1.875rem; /* 30px / 16px */
+        --apw-woo-intro-desc-size: 1rem; /* 16px / 16px */
+
+        /* Optional: Adjust card title size further for mobile */
+        /* --apw-woo-card-title-size: 1.75rem; */ /* Example: 28px */
+        /* --apw-woo-card-button-desc-size: 1rem; */ /* Example: 16px */
+    }
+
+    /* Reduce grid spacing further on mobile */
+    .apw-woo-categories-grid,
+    .apw-woo-products-grid {
+        row-gap: var(--apw-woo-spacing-large); /* Reduce row gap more */
+    }
+
+    /* Optional: Center description text only on mobile */
+    /* .apw-woo-category-description { */
+    /* text-align: center; */
+    /* } */
+}
+
+/* --- START ADDED RULES --- */
+/* Custom Padding for third_level_bkgd element (moved from UX Builder attributes) */
+.third_level_bkgd > .col-inner {
+    padding-top: 10px;
+    padding-right: 0px;
+    padding-bottom: 0px;
+    padding-left: 0px;
+}
+
+@media (min-width: 550px) {
+    .third_level_bkgd > .col-inner {
+        padding-top: 30px;
+    }
+}
+
+/* --- END ADDED RULES --- */
+
+/* ----------------------------------------
+   7. SINGLE PRODUCT PAGE STYLES
+   Base styles for the single product template
+   ---------------------------------------- */
+:root {
+    /* --- Single Product Colors --- */
+    --apw-woo-text-color: #0D252C;
+    --apw-woo-tab-active-bg: #0D252C;
+    --apw-woo-tab-active-text: #ffffff;
+    --apw-woo-tab-inactive-bg: #B6C6CC;
+    --apw-woo-tab-inactive-text: #0D252C;
+    --apw-woo-dropdown-bg: rgba(215, 224, 226, 0.3); /* #D7E0E2 with 0.3 opacity */
+    --apw-woo-dropdown-border: #393D72;
+    /* For notices below cart button, a standout color option */
+    --apw-woo-notice-highlight: #178093;
+    /* Font size for all content - 21px as rem */
+    --apw-woo-content-font-size: 1.3125rem; /* 21px / 16px = 1.3125rem */
+}
+
+/* Global font size for all content in single product */
+.single-product p,
+.single-product label,
+.single-product .woocommerce-message,
+.single-product .woocommerce-error,
+.single-product .woocommerce-info,
+.single-product .woocommerce-notice,
+.single-product .posted_in,
+.single-product .sku_wrapper,
+.single-product .woocommerce-product-details__short-description,
+.single-product .product-addon-totals,
+.single-product .product_meta,
+.single-product .woocommerce-tabs .panel,
+.single-product .apw-woo-product-description-wrapper,
+.single-product .apw-woo-quantity-label,
+.single-product .product-addon-totals dt,
+.single-product .wc-pao-addon-name,
+.single-product .apw-woo-product-options-wrapper label,
+.single-product .product-addon label,
+.single-product .wc-pao-addon-description p,
+.apw-woo-notices-below-cart .woocommerce-message {
+    font-size: var(--apw-woo-content-font-size) !important;
+    line-height: 1.5 !important;
+}
+
+/* Add padding between header and content */
+.apw-woo-product-gallery-wrapper,
+.apw-woo-product-summary {
+    padding-top: 2rem;
+}
+
+/* Product Gallery - Add border-radius */
+.single-product .apw-woo-product-gallery-wrapper,
+.single-product .woocommerce-product-gallery { /* Target default WC gallery wrapper */
+    border-radius: 20px !important;
+    overflow: hidden !important; /* Ensure image respects the radius */
+}
+
+/* Optional: Target the image link or image directly if needed */
+.single-product .woocommerce-product-gallery__image a,
+.single-product .woocommerce-product-gallery__image img {
+    border-radius: 20px !important; /* Apply to link/image if wrapper isn't enough */
+}
+
+/* --- Product Title and Description on Single Product Page --- */
+/* This targets the H1 title specifically on the single product page */
+.single-product .apw-woo-product-title-wrapper .apw-woo-product-title {
+    font-family: var(--apw-font-family);
+    color: var(--apw-woo-text-color); /* Uses the dark text color */
+    font-weight: var(--apw-font-bold);
+    margin-bottom: var(--apw-woo-spacing-medium);
+}
+
+.single-product .apw-woo-product-description-wrapper {
+    font-family: var(--apw-font-family);
+    color: var(--apw-woo-text-color);
+    font-weight: var(--apw-font-medium);
+    margin-bottom: var(--apw-woo-spacing-large);
+}
+
+/* --- Product Title on Category/Shop Pages --- */
+/* This targets the H4 title inside product cards on archive pages */
+.apw-woo-product-item .apw-woo-product-header .apw-woo-product-title {
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold);
+    font-size: var(--apw-woo-card-title-size); /* Use card title size */
+    color: var(--apw-woo-card-header-text); /* Set back to white for cards */
+    margin: 0;
+    line-height: 1.2;
+    flex-grow: 1;
+    flex-shrink: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-left: var(--apw-woo-spacing-small);
+}
+
+/* Product Meta - Category Styling */
+.apw-woo-product-meta {
+    font-family: var(--apw-font-family);
+    color: var(--apw-woo-text-color);
+    margin-top: 20px;
+}
+
+.apw-woo-product-meta .posted_in {
+    font-weight: var(--apw-font-medium);
+}
+
+/* Style "Category:" label to be bold and match text color */
+.apw-woo-product-meta .posted_in,
+.apw-woo-product-meta .sku_wrapper {
+    font-weight: var(--apw-font-bold);
+    color: var(--apw-woo-text-color);
+}
+
+/* Keep category links blue and underlined on hover */
+.apw-woo-product-meta .posted_in a {
+    font-weight: var(--apw-font-medium);
+    text-decoration: none;
+}
+
+.apw-woo-product-meta .posted_in a:hover {
+    text-decoration: underline;
+}
+
+/* Two-Column Layout for Product Gallery and Summary */
+/* Target the specific row containing gallery and summary */
+.single-product .apw-woo-content-wrapper > .apw-woo-row:first-of-type { /* Target the first direct child row in the content wrapper */
+    display: flex !important;
+    flex-wrap: wrap !important; /* Allow wrapping on smaller screens */
+}
+
+/* Target our specific column classes */
+.single-product .apw-woo-product-gallery-col,
+.single-product .apw-woo-product-summary-col {
+    padding-left: 15px !important; /* Standard column padding */
+    padding-right: 15px !important; /* Standard column padding */
+    box-sizing: border-box !important;
+}
+
+/* Quantity and Price Layout - Fix Flatsome Override Issues & Adjust Styling */
+.single-product form.cart {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Make quantity row a flex container */
+.apw-woo-quantity-row {
+    display: flex;
+    align-items: center; /* Align items vertically */
+    justify-content: flex-start;
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+/* Style the quantity label */
+.apw-woo-quantity-label {
+    font-family: var(--apw-font-family);
+    font-size: var(--apw-woo-content-font-size);
+    font-weight: var(--apw-font-bold);
+    color: var(--apw-woo-text-color);
+    margin-right: 1rem;
+}
+
+/* Fix Flatsome override for quantity inputs */
+.apw-woo-quantity-row .quantity,
+.single-product .quantity {
+    display: flex !important;
+    align-items: stretch; /* Align items vertically based on full height */
+    margin-right: 2rem !important; /* Space between quantity and price */
+    opacity: 1 !important;
+}
+
+/* Style quantity buttons specifically with correct border radius and font size */
+.apw-woo-quantity-row .quantity .button.minus,
+.single-product .quantity .button.minus,
+.single-product .quantity .minus {
+    border-radius: 50px 0 0 50px !important; /* Rounded left corners */
+    background-color: var(--apw-woo-dropdown-bg) !important;
+    border: 1px solid var(--apw-woo-dropdown-border) !important;
+    color: var(--apw-woo-text-color) !important;
+    box-shadow: none !important;
+    height: 50px !important; /* Fixed height */
+    min-height: 50px !important;
+    margin: 0 !important;
+    border-right-width: 0 !important; /* Remove border between button and input */
+    font-size: 2.65rem !important; /* Updated font size */
+    line-height: 48px !important; /* Adjust line-height */
+    padding: 0 15px !important;
+    box-sizing: border-box !important;
+}
+
+.apw-woo-quantity-row .quantity .button.plus,
+.single-product .quantity .button.plus,
+.single-product .quantity .plus {
+    border-radius: 0 50px 50px 0 !important; /* Rounded right corners */
+    background-color: var(--apw-woo-dropdown-bg) !important;
+    border: 1px solid var(--apw-woo-dropdown-border) !important;
+    color: var(--apw-woo-text-color) !important;
+    box-shadow: none !important;
+    height: 50px !important; /* Fixed height */
+    min-height: 50px !important;
+    margin: 0 !important;
+    border-left-width: 0 !important; /* Remove border between input and button */
+    font-size: 1.8rem !important; /* Updated font size */
+    line-height: 48px !important; /* Adjust line-height */
+    padding: 0 15px !important;
+    box-sizing: border-box !important;
+}
+
+/* Style the quantity input field (middle part) with overrides for Flatsome */
+.apw-woo-quantity-row .quantity input[type="number"],
+.apw-woo-quantity-row .quantity input.qty,
+.apw-woo-quantity-row .quantity .qty,
+.single-product .quantity input[type="number"],
+.single-product .quantity input.qty,
+.single-product .quantity .qty {
+    border-radius: 0 !important; /* NO border radius */
+    width: 60px !important;
+    height: 50px !important; /* Match button height */
+    min-height: 50px !important;
+    border: 1px solid var(--apw-woo-dropdown-border) !important; /* Apply full border first */
+    border-left: none !important; /* Then remove side borders */
+    border-right: none !important; /* Then remove side borders */
+    background-color: var(--apw-woo-dropdown-bg) !important;
+    color: var(--apw-woo-text-color) !important;
+    font-family: var(--apw-font-family) !important;
+    font-size: var(--apw-woo-content-font-size) !important;
+    text-align: center !important;
+    padding: 0 !important;
+    margin: 0 !important; /* No margin */
+    box-shadow: none !important;
+    box-sizing: border-box !important; /* Ensure consistent box model */
+    line-height: normal !important;
+}
+
+/* Price display - Override Flatsome's price styles and remove margin-left: auto */
+.woocommerce div.product p.price,
+.woocommerce div.product span.price,
+.price,
+.apw-woo-price-display, /* Target our custom class */
+span.amount,
+.woocommerce-Price-amount {
+    display: inline-block !important;
+    margin: 0 !important;
+    /* margin-left: auto !important; REMOVED */
+    font-family: var(--apw-font-family) !important;
+    font-size: var(--apw-woo-content-font-size) !important;
+    font-weight: var(--apw-font-bold) !important;
+    color: var(--apw-woo-text-color) !important;
+    line-height: 1 !important;
+    align-self: center; /* Align vertically */
+}
+
+/* Make sure the price amount is bold and has the right color */
+.woocommerce div.product p.price .woocommerce-Price-amount,
+.woocommerce div.product span.price .woocommerce-Price-amount,
+.price .woocommerce-Price-amount,
+span.amount,
+.woocommerce-Price-amount,
+.woocommerce-Price-currencySymbol {
+    font-weight: var(--apw-font-bold) !important;
+    color: var(--apw-woo-text-color) !important;
+}
+
+/* Add to Cart Button - Position below */
+.woocommerce button.button.alt,
+.woocommerce #respond input#submit.alt,
+.woocommerce a.button.alt,
+.woocommerce button.button.alt,
+.woocommerce input.button.alt,
+.woocommerce button.single_add_to_cart_button,
+.single_add_to_cart_button {
+    background: var(--apw-woo-button-background) !important;
+    border-radius: 58px !important;
+    /*     padding: 10px 30px !important; */
+    text-transform: uppercase;
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold);
+    font-size: var(--apw-woo-content-font-size) !important;
+    color: #ffffff !important;
+    border: none !important;
+    text-decoration: none !important;
+    margin-top: 1rem !important; /* Space above button */
+    margin-bottom: 1rem !important;
+    align-self: flex-start;
+}
+
+.apw-woo-notices-container .apw-woo-processed {
+    outline: none !important;
+}
+
+/* Add padding between content and tabs */
+.woocommerce-tabs {
+    margin-top: 2rem;
+}
+
+/* Product Tabs */
+.woocommerce-tabs ul.tabs {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0 0 30px 0;
+    border: none;
+    overflow: visible;
+}
+
+.woocommerce-tabs ul.tabs::before {
+    display: none; /* Remove default border */
+}
+
+.woocommerce-tabs ul.tabs li {
+    width: 284px;
+    border: none;
+    background-color: var(--apw-woo-tab-inactive-bg);
+    border-radius: 10px !important; /* Full 10px border radius on all corners */
+    margin: 0 5px 0 0;
+    padding: 0;
+    position: relative;
+}
+
+.woocommerce-tabs ul.tabs li a {
+    display: block;
+    width: 100%;
+    padding: 15px 0;
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold) !important;
+    font-size: var(--apw-woo-content-font-size) !important;
+    color: var(--apw-woo-tab-inactive-text) !important;
+    text-transform: uppercase;
+    text-decoration: none;
+    text-align: center;
+    letter-spacing: 0.5px;
+}
+
+/* Active tab styling */
+.woocommerce-tabs ul.tabs li.active {
+    background-color: var(--apw-woo-tab-active-bg);
+    z-index: 2;
+}
+
+.woocommerce-tabs ul.tabs li.active a {
+    color: var(--apw-woo-tab-active-text) !important;
+}
+
+/* Remove default WooCommerce tab pseudo-elements */
+.woocommerce-tabs ul.tabs li::before,
+.woocommerce-tabs ul.tabs li::after,
+.woocommerce-tabs ul.tabs li.active::before,
+.woocommerce-tabs ul.tabs li.active::after {
+    display: none !important;
+    content: none !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Tab content styling */
+.woocommerce-tabs .panel {
+    padding: 30px;
+    border: none;
+    margin: 0;
+    color: var(--apw-woo-text-color);
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-medium);
+}
+
+.woocommerce-tabs .panel h2:first-of-type {
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold);
+    color: var(--apw-woo-text-color);
+    margin-bottom: 20px;
+}
+
+/* Product Add-ons - Comprehensive Styling */
+/* Container styling */
+.wc-pao-addon-container {
+    margin-bottom: 20px;
+}
+
+/* Label styling */
+.wc-pao-addon-name {
+    font-family: var(--apw-font-family) !important;
+    font-weight: var(--apw-font-medium) !important;
+    font-size: var(--apw-woo-content-font-size) !important;
+    color: var(--apw-woo-text-color) !important;
+    margin-bottom: 10px !important;
+    display: block;
+}
+
+/* Base select field styling - product agnostic */
+.wc-pao-addon-select,
+select.wc-pao-addon-field {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    border-radius: 20px !important;
+    background-color: var(--apw-woo-dropdown-bg) !important; /* Includes opacity */
+    border: 1px solid var(--apw-woo-dropdown-border) !important;
+    color: var(--apw-woo-text-color) !important;
+    font-family: var(--apw-font-family) !important;
+    font-weight: var(--apw-font-medium) !important;
+    font-size: var(--apw-woo-content-font-size) !important;
+    padding: 12px 20px !important;
+    min-height: 50px !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="6" viewBox="0 0 12 6"><path fill="%230D252C" d="M0 0l6 6 6-6z"/></svg>') !important;
+    background-repeat: no-repeat !important;
+    background-position: right 15px center !important;
+    background-size: 12px !important;
+}
+
+/* Custom styling for the dropdown */
+.wc-pao-addon-select:focus,
+select.wc-pao-addon-field:focus {
+    box-shadow: 0 0 0 1px var(--apw-woo-dropdown-border) !important;
+    outline: none !important;
+}
+
+/* Fix PAO validation notice AND Style Flatsome validation in our container */
+.wc-pao-validation-notice, /* Original selector */
+.apw-woo-notices-below-cart .message-container.container.alert-color /* Added selector for Flatsome */
+{
+    display: block !important;
+    color: #e2401c !important; /* Apply desired color */
+    font-family: var(--apw-font-family) !important; /* Apply desired font */
+    font-size: 1.5rem !important; /* Apply desired font size */
+    margin-top: 5px !important; /* Apply desired margin */
+    /* --- Resets needed for the Flatsome selector --- */
+    background-color: transparent !important; /* Remove Flatsome background */
+    border: none !important; /* Remove Flatsome border */
+    padding: 0 !important; /* Remove Flatsome padding */
+    text-align: left !important; /* Override Flatsome text-align */
+    font-weight: var(--apw-font-medium) !important; /* Standardize font weight */
+    line-height: 1.4 !important; /* Standardize line height */
+}
+
+/* Hide the Flatsome icon separately */
+.apw-woo-notices-below-cart .message-container.container.alert-color .message-icon.icon-close {
+    display: none !important;
+}
+
+/* CSS attempt to style the dropdown options - product agnostic */
+.wc-pao-addon-select option,
+select.wc-pao-addon-field option {
+    font-family: var(--apw-font-family) !important;
+    color: var(--apw-woo-text-color) !important;
+    background-color: var(--apw-woo-dropdown-bg) !important; /* Includes opacity */
+    font-size: var(--apw-woo-content-font-size) !important;
+    padding: 10px !important;
+}
+
+/* Firefox specific dropdown styling - product agnostic */
+@supports (-moz-appearance:none) {
+    .wc-pao-addon-select,
+    select.wc-pao-addon-field {
+        background-color: var(--apw-woo-dropdown-bg) !important; /* Includes opacity */
+        color: var(--apw-woo-text-color) !important;
+        border-radius: 20px !important;
+    }
+
+    .wc-pao-addon-select option,
+    select.wc-pao-addon-field option {
+        background-color: var(--apw-woo-dropdown-bg) !important; /* Includes opacity */
+        color: var(--apw-woo-text-color) !important;
+        padding: 10px 20px !important;
+    }
+}
+
+/* --- Style Variable Product Dropdowns --- */
+
+/* Target the select elements within the variations form */
+.variations_form .variations select {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    border-radius: 20px !important;
+    background-color: var(--apw-woo-dropdown-bg) !important; /* Use the PAO background */
+    border: 1px solid var(--apw-woo-dropdown-border) !important; /* Use the PAO border */
+    color: var(--apw-woo-text-color) !important; /* Use standard text color */
+    font-family: var(--apw-font-family) !important; /* Use standard font */
+    font-weight: var(--apw-font-medium) !important; /* Use medium weight */
+    font-size: var(--apw-woo-content-font-size) !important; /* Use standard content size */
+    padding: 12px 40px 12px 20px !important; /* Adjusted right padding for arrow */
+    min-height: 50px !important; /* Match PAO height */
+    width: 100% !important; /* Make dropdown full width of its container */
+    box-shadow: none !important;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="6" viewBox="0 0 12 6"><path fill="%230D252C" d="M0 0l6 6 6-6z"/></svg>') !important; /* Custom arrow */
+    background-repeat: no-repeat !important;
+    background-position: right 15px center !important;
+    background-size: 12px !important;
+    cursor: pointer; /* Indicate it's clickable */
+    box-sizing: border-box; /* Ensure padding is included in width/height */
+}
+
+/* Style the options within the variation dropdowns */
+.variations_form .variations select option {
+    font-family: var(--apw-font-family) !important;
+    color: var(--apw-woo-text-color) !important;
+    background-color: var(--apw-woo-dropdown-bg) !important; /* Match dropdown background */
+    font-size: var(--apw-woo-content-font-size) !important;
+    padding: 10px 20px !important; /* Add padding to options */
+}
+
+/* Focus style for variation dropdowns */
+.variations_form .variations select:focus {
+    box-shadow: 0 0 0 1px var(--apw-woo-dropdown-border) !important; /* Match PAO focus */
+    outline: none !important;
+}
+
+/* Optional: Firefox specific adjustments if needed (usually background color helps) */
+@supports (-moz-appearance:none) {
+    .variations_form .variations select {
+        background-color: var(--apw-woo-dropdown-bg) !important; /* Explicitly set for Firefox */
+    }
+
+    .variations_form .variations select option {
+        background-color: #ffffff !important; /* Firefox often needs a solid option background */
+        color: var(--apw-woo-text-color) !important;
+    }
+}
+
+
+/* --- Custom Styling for Flatsome Success Notice Below Cart --- */
+
+/* Hide the checkmark icon in the success notice */
+.apw-woo-notices-below-cart .message-container.success-color .icon-checkmark {
+    display: none !important;
+}
+
+/* Style the main text of the success notice */
+.apw-woo-notices-below-cart .message-container.success-color {
+    font-family: var(--apw-font-family) !important;
+    font-size: var(--apw-woo-content-font-size) !important; /* Match main content font size */
+    font-weight: var(--apw-font-medium) !important; /* Match standard text weight */
+    line-height: 1.5 !important; /* Improve readability */
+    /* Keep Flatsome's success color unless overridden */
+    /* background-color: transparent; /* Optional: Override Flatsome bg if needed */
+    /* color: var(--apw-woo-text-color); /* Optional: Override Flatsome text color if needed */
+    /* padding: 1em 1.5em !important; /* Adjust padding if needed */
+    border-radius: 5px !important; /* Consistent radius */
+    /*border-left: 5px solid var(--apw-woo-notice-highlight) !important; !* Use existing highlight color *!*/
+}
+
+/* Style the 'View cart' button within the success notice */
+.apw-woo-notices-below-cart .message-container.success-color .button.wc-forward {
+    /* --- Inherit styles from Add to Cart button --- */
+    background: var(--apw-woo-button-background) !important;
+    border-radius: 58px !important;
+    /*padding: 10px 30px !important; !* Revert to match Add to Cart padding *!*/
+    text-transform: uppercase !important;
+    font-family: var(--apw-font-family) !important;
+    font-weight: var(--apw-font-bold) !important;
+    font-size: var(--apw-woo-content-font-size) !important; /* Revert to match Add to Cart font size */
+    color: #ffffff !important;
+    border: none !important;
+    text-decoration: none !important;
+    box-shadow: none !important; /* Remove potential theme shadows */
+    transition: opacity 0.3s ease; /* Add hover effect */
+
+    /* --- NEW STYLES FOR BLOCK DISPLAY --- */
+    display: block !important; /* Make the button a block element */
+    width: fit-content !important; /* Make width only as wide as content + padding */
+    margin-top: 15px !important; /* Add space above the button */
+    margin-left: 0 !important; /* Remove left margin (was for inline) */
+    /* vertical-align: middle !important; /* Remove vertical align (not needed for block) */
+    text-align: center; /* Center text within button */
+    height: auto !important; /* Let padding define height */
+}
+
+/* Hover effect for the button */
+.apw-woo-notices-below-cart .message-container.success-color .button.wc-forward:hover {
+    opacity: 0.85 !important;
+    color: #ffffff !important; /* Ensure text color stays white */
+}
+
+/* Style the icon (optional, if Flatsome's icon needs adjustment) */
+.apw-woo-notices-below-cart .message-container.success-color .icon-checkmark {
+    /* color: var(--apw-woo-notice-highlight); /* Optional: Change icon color */
+    margin-right: 8px !important;
+    vertical-align: middle !important;
+}
+
+/* ----------------------------------------
+   X. CROSS-SELLS SECTION STYLING
+   Styles for the "You may be interested in..." section below FAQs
+   ---------------------------------------- */
+
+.apw-woo-cross-sells-section {
+    margin-top: 40px; /* Add some space above the section */
+    margin-bottom: 40px; /* Add some space below the section */
+    padding: 0 15px; /* Add padding consistent with container if needed */
+}
+
+/* Title Styling ("You may be interested in...") */
+.apw-woo-cross-sells-title {
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-extrabold); /* Weight 800 */
+    font-size: 3.75rem; /* 60px / 16px */
+    color: #B6C6CC;
+    text-align: center; /* Center the title */
+    margin-bottom: 30px; /* Space below title */
+}
+
+/* Grid Layout for Cross-Sell Items */
+.apw-woo-cross-sells-grid {
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    justify-content: space-around; /* Distribute items nicely */
+    gap: 30px; /* Space between items */
+    list-style: none; /* Remove potential list styling */
+    padding: 0;
+    margin: 0;
+}
+
+/* Individual Cross-Sell Item Container */
+.apw-woo-cross-sell-item {
+    flex: 0 1 calc(33.333% - 20px); /* Aim for 3 items per row, adjust calc() based on final gap */
+    box-sizing: border-box;
+    text-align: center; /* Center content within item */
+    display: flex; /* Make item a flex container for link */
+    flex-direction: column; /* Stack elements vertically inside */
+    overflow: hidden; /* Hide overflow to respect border radius */
+    max-width: 470px; /* Ensure item doesn't exceed image width */
+    margin-left: auto; /* Center align items if fewer than 3 */
+    margin-right: auto; /* Center align items if fewer than 3 */
+}
+
+.apw-woo-cross-sell-link {
+    display: flex; /* Make link a flex container */
+    flex-direction: column; /* Stack image and name vertically */
+    height: 100%; /* Make link fill the item */
+    text-decoration: none;
+}
+
+/* Image Wrapper - controls dimensions and top-left radius */
+.apw-woo-cross-sell-image-wrapper {
+    width: 100%;
+    height: 330px;
+    overflow: hidden; /* Important: Clip image to wrapper's radius */
+    border-top-left-radius: 43px;
+    background-color: #f0f0f0; /* Placeholder background */
+}
+
+/* Image Styling */
+.apw-woo-cross-sell-img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* Fill the container, may crop */
+    object-position: center;
+    border: none; /* Remove default borders */
+    /* Radius is applied to the wrapper */
+}
+
+/* Product Name (H3) Styling */
+.apw-woo-cross-sell-name {
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold); /* Weight 700 */
+    font-size: 1.625rem; /* 26px / 16px */
+    color: #ffffff !important; /* Force white color */
+    background-color: #244B5A;
+    width: 100%; /* Match image width */
+    padding: 20px; /* Add some padding inside the H3 */
+    margin: 0; /* Reset default H3 margin */
+    box-sizing: border-box; /* Include padding in width */
+    border-bottom-right-radius: 43px;
+    line-height: 1.4; /* Adjust line height */
+    text-align: center; /* Center text inside H3 */
+    /* Remove potential underline from parent link */
+    text-decoration: none !important;
+}
+
+/* Ensure link doesn't add underline to H3 */
+.apw-woo-cross-sell-link:hover .apw-woo-cross-sell-name {
+    text-decoration: none !important;
+}
+
+
+/* ----------------------------------------
+   8. RESPONSIVE SINGLE PRODUCT STYLING
+   Responsive adjustments for the single product page
+   ---------------------------------------- */
+/* --- Tablet Styles (849px and below) --- */
+@media (min-width: 550px) and (max-width: 849px) {
+    /* Ensure two columns */
+    .single-product .apw-woo-product-gallery-col,
+    .single-product .apw-woo-product-summary-col {
+        flex-basis: 50% !important;
+        max-width: 50% !important;
+        width: 50% !important;
+    }
+
+    /* Adjust tab padding for tablets */
+    .woocommerce-tabs ul.tabs li {
+        width: auto;
+        flex: 1;
+    }
+
+    .woocommerce-tabs ul.tabs li a {
+        padding: 12px 15px;
+        font-size: 1.1rem !important;
+    }
+
+    /* Adjust dropdown padding */
+    .wc-pao-addon-select,
+    select.wc-pao-addon-field {
+        padding: 10px 15px !important;
+        min-height: 45px;
+    }
+
+    /* Tablet font size adjustment */
+    .single-product p,
+    .single-product label,
+    .single-product .woocommerce-message,
+    .single-product .posted_in,
+    .single-product .sku_wrapper {
+        font-size: 1.1rem !important;
+    }
+
+    /* --- Responsive Cross-Sells (Tablet) --- */
+    .apw-woo-cross-sells-title {
+        font-size: 3rem; /* ~48px / 16px */
+    }
+
+    .apw-woo-cross-sells-grid {
+        /* Adjust gap for potentially closer spacing on tablets */
+        gap: 25px;
+    }
+
+    .apw-woo-cross-sell-item {
+        /* Allow slightly more width if needed, adjust basis */
+        flex-basis: calc(50% - 15px); /* Example: 2 items per row on tablet */
+        max-width: 90%; /* Allow items to shrink slightly */
+    }
+
+    .apw-woo-cross-sell-image-wrapper,
+    .apw-woo-cross-sell-name {
+        width: 100%; /* Make image/name wrapper fill the item width */
+        /* Adjust height proportionally or set auto */
+        height: auto; /* Let aspect-ratio handle image height */
+    }
+
+    .apw-woo-cross-sell-image-wrapper {
+        aspect-ratio: 470 / 330; /* Maintain aspect ratio */
+        height: auto; /* Override fixed height */
+    }
+
+    .apw-woo-cross-sell-name {
+        font-size: 1.375rem; /* ~22px / 16px */
+        /* Radius remains */
+    }
+
+}
+
+
+/* --- Mobile Styles (549px and below) --- */
+@media (max-width: 549px) {
+    /* Ensure stacking */
+    .single-product .apw-woo-product-gallery-col,
+    .single-product .apw-woo-product-summary-col {
+        flex-basis: 100% !important;
+        max-width: 100% !important;
+        width: 100% !important; /* Full width on mobile */
+        padding-top: 1rem !important; /* Add spacing when stacked */
+    }
+
+    .single-product .apw-woo-product-gallery-col {
+        padding-top: 0 !important; /* Remove top padding from the first item when stacked */
+    }
+
+    /* Make tabs more compact on mobile */
+    .woocommerce-tabs ul.tabs {
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .woocommerce-tabs ul.tabs li {
+        flex: 1 1 100%;
+        margin: 0 0 5px 0;
+        width: 100%; /* Ensure full width */
+    }
+
+    .woocommerce-tabs ul.tabs li a {
+        padding: 10px 15px;
+        font-size: 1rem !important;
+    }
+
+    /* Adjust tab content padding */
+    .woocommerce-tabs .panel {
+        padding: 20px 15px;
+    }
+
+    /* Further adjust dropdown styling */
+    .wc-pao-addon-select,
+    select.wc-pao-addon-field {
+        padding: 8px 12px !important;
+        min-height: 40px;
+    }
+
+    /* Mobile font size adjustment */
+    .single-product p,
+    .single-product label,
+    .single-product .woocommerce-message,
+    .single-product .posted_in,
+    .single-product .sku_wrapper {
+        font-size: 1rem !important;
+    }
+
+    /* Handle quantity and price stack on mobile */
+    .apw-woo-quantity-row {
+        flex-wrap: wrap;
+    }
+
+    .price {
+        margin-left: 0 !important;
+        margin-top: 0.5rem !important;
+        width: 100%;
+    }
+
+    /* --- Responsive Cross-Sells (Mobile) --- */
+    .apw-woo-cross-sells-title {
+        font-size: 2.5rem; /* ~40px / 16px */
+    }
+
+    .apw-woo-cross-sells-grid {
+        flex-direction: column; /* Stack items vertically */
+        align-items: center; /* Center stacked items */
+        gap: 20px; /* Adjust gap for vertical stacking */
+    }
+
+    .apw-woo-cross-sell-item {
+        flex-basis: 100%; /* Ensure item takes full width when stacked */
+        max-width: 400px; /* Optional: Set a max-width for very small screens */
+        width: 95%; /* Use most of the available width */
+    }
+
+    /* Image wrapper and name already set to 100% width, aspect ratio applies */
+    .apw-woo-cross-sell-name {
+        font-size: 1.25rem; /* ~20px / 16px */
+        /* Radius remains */
+    }
+
+}
+
+
+/* --- END SINGLE PRODUCT STYLES --- */
+
+/* ----------------------------------------
+   8. CART PAGE STYLES (cart.php)
+   Styles specific to the WooCommerce cart page template.
+   Utilizes 'apw-woo-' prefixed classes added in cart.php.
+   ---------------------------------------- */
+
+/* General Cart Table Structure */
+.apw-woo-cart-table {
+    width: 100%; /* Ensure table takes full width */
+    border-collapse: collapse; /* Clean up borders */
+    margin-bottom: 2rem; /* Space below the table */
+    font-family: var(--apw-font-family); /* Apply base font */
+}
+
+/* Cart Table Header Cells (Product, Price, Quantity, etc.) */
+.apw-woo-cart-table thead.apw-woo-cart-thead th {
+    font-weight: var(--apw-font-bold); /* Bold header text */
+    font-size: 1.1rem; /* Slightly larger header font */
+    color: var(--apw-woo-text-color); /* Use standard text color */
+    padding: 15px 10px; /* Padding inside header cells */
+    text-align: left; /* Align text left */
+    border-bottom: 2px solid var(--apw-faq-separator-color); /* Use separator color for border */
+    text-transform: uppercase; /* Uppercase headers */
+    letter-spacing: 0.5px;
+}
+
+/* Cart Table Body Cells */
+.apw-woo-cart-table tbody.apw-woo-cart-tbody td {
+    padding: 15px 10px; /* Padding inside body cells */
+    vertical-align: middle; /* Align content vertically centered */
+    border-bottom: 1px solid var(--apw-faq-separator-color); /* Separator lines between rows */
+    font-size: var(--apw-woo-content-font-size); /* Standard content font size */
+    color: var(--apw-woo-text-color); /* Standard text color */
+}
+
+/* Specifically target the product name cell for potential adjustments */
+.apw-woo-cart-table td.apw-woo-product-name {
+    /* Add any specific styles for the product name column if needed */
+}
+
+/* Style the product name link */
+.apw-woo-cart-table td.apw-woo-product-name a.apw-woo-cart-item-name-link {
+    color: var(--apw-woo-text-color); /* Or a specific link color */
+    font-weight: var(--apw-font-medium);
+    text-decoration: none;
+}
+
+.apw-woo-cart-table td.apw-woo-product-name a.apw-woo-cart-item-name-link:hover {
+    text-decoration: underline;
+}
+
+/* Product thumbnail image adjustments */
+.apw-woo-cart-table td.apw-woo-product-thumbnail img.apw-woo-cart-item-thumbnail-img {
+    width: 80px; /* Example size, adjust as needed */
+    height: auto;
+    display: block; /* Remove extra space below image */
+}
+
+/* Remove item link (X button) */
+.apw-woo-cart-table td.apw-woo-product-remove a.apw-woo-remove {
+    color: #cc0000; /* Example red color */
+    font-size: 1.5rem;
+    text-decoration: none;
+    font-weight: var(--apw-font-bold);
+}
+
+.apw-woo-cart-table td.apw-woo-product-remove a.apw-woo-remove:hover {
+    color: #990000; /* Darker red on hover */
+}
+
+/* Item meta data (variations, add-ons) styling */
+.apw-woo-cart-table .apw-woo-cart-item-meta dl {
+    margin: 0.5em 0 0 0; /* Add space above meta */
+    font-size: 0.9em; /* Slightly smaller font for meta */
+    color: #555; /* Slightly lighter color */
+}
+
+.apw-woo-cart-table .apw-woo-cart-item-meta dt {
+    font-weight: var(--apw-font-bold);
+    display: block; /* Display dt on its own line */
+    margin-bottom: 0.2em;
+}
+
+.apw-woo-cart-table .apw-woo-cart-item-meta dd {
+    display: block; /* Display dd on its own line */
+    margin: 0 0 0.5em 1em; /* Indent dd slightly */
+    padding: 0;
+}
+
+.apw-woo-cart-table .apw-woo-cart-item-meta dd p {
+    display: inline; /* Keep inner p tags inline */
+    margin: 0;
+}
+
+
+/* Quantity Input Styling */
+.apw-woo-cart-table .apw-woo-quantity-input.quantity {
+    border: none;
+    padding: 0;
+    margin: 0;
+    position: relative; /* For potential custom +/- buttons */
+    display: inline-block; /* Prevent taking full width */
+}
+
+/* Style the number input field */
+.apw-woo-cart-table .apw-woo-quantity-input input.apw-woo-qty {
+    border: 1px solid var(--apw-woo-dropdown-border) !important;
+    height: 40px !important;
+    width: 60px !important;
+    text-align: center !important;
+    font-size: var(--apw-woo-content-font-size) !important;
+    font-family: var(--apw-font-family) !important;
+    color: var(--apw-woo-text-color) !important;
+    border-radius: 4px !important; /* Example rounding */
+    box-shadow: none !important;
+    padding: 0 5px !important;
+    margin: 0 !important;
+    -moz-appearance: textfield; /* Hide spinners in Firefox */
+    appearance: textfield; /* Hide spinners in Chrome, Safari, Edge, Opera */
+}
+
+/* Hide spinners for Webkit browsers */
+.apw-woo-cart-table .apw-woo-quantity-input input.apw-woo-qty::-webkit-outer-spin-button,
+.apw-woo-cart-table .apw-woo-quantity-input input.apw-woo-qty::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+
+/* Hide Flatsome's quantity buttons */
+.apw-woo-cart-table .apw-woo-quantity-input .ux-quantity__button {
+    display: none !important;
+}
+
+
+/* --- Cart Actions (Coupon, Update Cart) --- */
+.apw-woo-cart-actions-row td.apw-woo-actions {
+    padding: 20px 10px; /* More padding for the actions row */
+    text-align: right; /* Align buttons/coupon to the right */
+    border-top: 2px solid var(--apw-faq-separator-color); /* Stronger separator */
+}
+
+.apw-woo-coupon {
+    display: inline-block; /* Keep coupon inline */
+    margin-right: 10px; /* Space between coupon and update button */
+    vertical-align: middle;
+}
+
+.apw-woo-coupon input.apw-woo-coupon-code {
+    padding: 8px 10px;
+    border: 1px solid var(--apw-faq-separator-color);
+    border-radius: 4px;
+    min-width: 350px; /* Ensure input is wide enough */
+    margin-right: 5px;
+    vertical-align: middle;
+    font-size: var(--apw-woo-content-font-size); /* Match other content */
+    font-family: var(--apw-font-family);
+}
+
+/* Style action buttons (Apply Coupon, Update Cart) using variables */
+.apw-woo-actions .button,
+.apw-woo-apply-coupon-button,
+.apw-woo-update-cart-button {
+    background: var(--apw-woo-button-background) !important; /* Use button gradient */
+    color: #ffffff !important;
+    border-radius: 58px !important;
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold);
+    font-size: 1rem !important; /* Slightly smaller button text */
+    text-transform: uppercase !important;
+    padding: 10px 20px !important;
+    border: none !important;
+    cursor: pointer;
+    transition: opacity 0.3s ease;
+    vertical-align: middle;
+}
+
+.apw-woo-actions .button:hover,
+.apw-woo-apply-coupon-button:hover,
+.apw-woo-update-cart-button:hover {
+    opacity: 0.85;
+    color: #ffffff !important;
+}
+
+/* --- Cart Totals --- */
+.apw-woo-cart-collaterals {
+    margin-top: 2rem; /* Space above cart totals */
+    width: 100%;
+}
+
+/* Style the cart totals wrapper output by WC */
+.apw-woo-cart-collaterals .cart_totals {
+    float: right; /* Align totals to the right */
+    width: 48%; /* Adjust width as needed */
+    box-sizing: border-box; /* Include padding/border in width */
+}
+
+/* Ensure totals clear floats */
+.apw-woo-cart-collaterals::after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+
+.apw-woo-cart-collaterals .cart_totals h2 {
+    font-family: var(--apw-font-family);
+    font-size: 1.5rem; /* Example size */
+    font-weight: var(--apw-font-bold);
+    color: var(--apw-woo-text-color);
+    margin-bottom: 1rem;
+    text-align: left; /* Align title left */
+}
+
+.apw-woo-cart-collaterals .cart_totals table.shop_table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid var(--apw-faq-separator-color);
+    border-radius: 5px; /* Slight rounding */
+    overflow: hidden; /* Clip content to radius */
+    margin-bottom: 1rem; /* Space below totals table */
+}
+
+.apw-woo-cart-collaterals .cart_totals table.shop_table th,
+.apw-woo-cart-collaterals .cart_totals table.shop_table td {
+    padding: 10px 15px;
+    font-size: var(--apw-woo-content-font-size);
+    border-bottom: 1px solid var(--apw-faq-separator-color);
+    text-align: left;
+    vertical-align: middle; /* Align vertically */
+}
+
+.apw-woo-cart-collaterals .cart_totals table.shop_table tr:last-child th,
+.apw-woo-cart-collaterals .cart_totals table.shop_table tr:last-child td {
+    border-bottom: none; /* Remove bottom border on last row */
+}
+
+.apw-woo-cart-collaterals .cart_totals table.shop_table th {
+    font-weight: var(--apw-font-bold);
+    width: 40%; /* Adjust label column width */
+}
+
+.apw-woo-cart-collaterals .cart_totals table.shop_table td {
+    text-align: right;
+}
+
+/* Style the "Proceed to Checkout" button */
+.apw-woo-cart-collaterals .wc-proceed-to-checkout a.checkout-button {
+    display: block; /* Make it full width within its container */
+    width: 100%; /* Make it take full width of the totals container */
+    box-sizing: border-box; /* Include padding in width */
+    margin-top: 1rem; /* Space above button */
+    background: var(--apw-woo-button-background) !important; /* Use button gradient */
+    color: #ffffff !important;
+    border-radius: 58px !important;
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold);
+    font-size: 1.1rem !important; /* Slightly larger font */
+    text-transform: uppercase !important;
+    padding: 12px 25px !important;
+    border: none !important;
+    text-align: center;
+    text-decoration: none;
+    transition: opacity 0.3s ease;
+}
+
+.apw-woo-cart-collaterals .wc-proceed-to-checkout a.checkout-button:hover {
+    opacity: 0.85;
+    color: #ffffff !important;
+}
+
+/* --- Responsive Adjustments for Cart --- */
+@media (max-width: 768px) {
+    /* Example breakpoint for tablets/smaller desktops */
+
+    /* Hide table header on small screens */
+    .apw-woo-cart-table thead.apw-woo-cart-thead {
+        display: none;
+    }
+
+    /* Stack rows */
+    .apw-woo-cart-table tbody.apw-woo-cart-tbody tr.apw-woo-cart-item {
+        display: block;
+        margin-bottom: 20px;
+        border-bottom: 2px solid var(--apw-faq-separator-color);
+        padding-bottom: 15px;
+    }
+    .apw-woo-cart-table tbody.apw-woo-cart-tbody tr.apw-woo-cart-item:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+
+    /* Stack cells */
+    .apw-woo-cart-table tbody.apw-woo-cart-tbody td {
+        display: block;
+        width: 100%;
+        text-align: right !important; /* Default alignment for most cells */
+        padding: 8px 10px;
+        border-bottom: none; /* Remove inner borders */
+        border-top: 1px solid #eee; /* Add light separator */
+        position: relative; /* For label positioning */
+        min-height: 35px; /* Ensure cells have some minimum height */
+    }
+    .apw-woo-cart-table tbody.apw-woo-cart-tbody td:first-child {
+        border-top: none; /* Remove top border on first cell */
+    }
+
+    /* --- START: APW Mobile Cart Fixes --- */
+
+    /* Hide the product thumbnail cell on mobile */
+    .apw-woo-cart-table td.apw-woo-product-thumbnail {
+        display: none !important; /* Hide the thumbnail cell */
+    }
+
+    /* Adjust product name cell alignment and label positioning */
+    .apw-woo-cart-table td.apw-woo-product-name {
+        padding-top: 25px !important; /* Add space above for the label */
+        padding-bottom: 15px !important; /* Add more space below name/meta */
+        text-align: left !important; /* Align product name left */
+        position: relative; /* Needed for absolute positioning of label */
+    }
+
+    /* Position the "Product" label at the top left */
+    .apw-woo-cart-table td.apw-woo-product-name::before {
+        content: attr(data-title); /* Get title from data-title attribute */
+        font-weight: var(--apw-font-bold);
+        position: absolute;
+        top: 8px; /* Adjust spacing from top */
+        left: 10px; /* Align with cell padding */
+        width: auto; /* Allow label to take natural width */
+        text-align: left; /* Ensure label text is left-aligned */
+        white-space: nowrap;
+        padding-right: 0; /* Remove default padding-right */
+    }
+
+    /* Ensure the actual product name link flows below the label */
+    .apw-woo-cart-table td.apw-woo-product-name a.apw-woo-cart-item-name-link {
+        display: block; /* Make link take full width */
+        margin-top: 5px; /* Add slight space below the absolutely positioned label */
+        font-weight: var(--apw-font-medium); /* Ensure correct weight */
+        color: var(--apw-woo-text-color); /* Ensure correct color */
+    }
+
+    /* Adjust meta data display */
+    .apw-woo-cart-table .apw-woo-cart-item-meta {
+        text-align: left; /* Align meta text left */
+        margin-left: 0; /* Remove potential indentation */
+        margin-top: 10px; /* Add space above meta */
+        font-size: 0.9em; /* Keep meta slightly smaller */
+        width: 100%; /* Ensure meta takes full width */
+    }
+    .apw-woo-cart-table .apw-woo-cart-item-meta dt,
+    .apw-woo-cart-table .apw-woo-cart-item-meta dd {
+        text-align: left; /* Ensure meta details are left-aligned */
+        display: block;
+        margin-left: 0;
+        width: 100%; /* Ensure full width */
+    }
+    .apw-woo-cart-table .apw-woo-cart-item-meta dt {
+        font-weight: var(--apw-font-bold);
+        margin-bottom: 0.2em;
+        color: var(--apw-woo-text-color); /* Ensure label color */
+    }
+    .apw-woo-cart-table .apw-woo-cart-item-meta dd {
+        margin-bottom: 0.5em;
+        color: #555; /* Keep value color slightly muted */
+    }
+    .apw-woo-cart-table .apw-woo-cart-item-meta dd p { /* Target nested P tags in add-ons */
+        display: inline;
+        margin: 0;
+        color: #555;
+    }
+
+    /* Generic label positioning for other cells (Price, Quantity, Subtotal) */
+    /* This ensures the default label positioning applies where not overridden */
+    .apw-woo-cart-table tbody.apw-woo-cart-tbody td:not(.apw-woo-product-thumbnail):not(.apw-woo-product-name):not(.apw-woo-product-remove)::before {
+        content: attr(data-title);
+        font-weight: var(--apw-font-bold);
+        position: absolute;
+        left: 10px;
+        top: 50%; /* Vertically center label relative to cell */
+        transform: translateY(-50%);
+        text-align: left;
+        white-space: nowrap;
+        padding-right: 10px;
+    }
+    /* --- END: APW Mobile Cart Fixes --- */
+
+
+    /* Specific adjustments for Remove button cell */
+    .apw-woo-cart-table td.apw-woo-product-remove {
+        text-align: center !important;
+        padding-top: 15px;
+        padding-bottom: 15px;
+        border-top: 1px solid #eee; /* Re-add top border for this specific cell */
+    }
+    .apw-woo-cart-table td.apw-woo-product-remove::before {
+        display: none; /* Hide label for remove button */
+    }
+    .apw-woo-cart-table td.apw-woo-product-remove a.apw-woo-remove {
+        font-size: 1.8rem;
+    }
+
+    /* Ensure quantity input is aligned correctly with its label */
+    .apw-woo-cart-table td.apw-woo-product-quantity .apw-woo-quantity-input {
+        display: inline-block; /* Keep inline */
+        float: right; /* Float right to align with the value */
+        margin-top: 0; /* Reset margin-top */
+    }
+    /* Ensure the label for quantity is aligned */
+    .apw-woo-cart-table td.apw-woo-product-quantity::before {
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+
+    /* Adjust actions area for mobile */
+    .apw-woo-cart-actions-row td.apw-woo-actions {
+        text-align: center; /* Center actions */
+        padding: 20px 10px;
+        border-top: 2px solid var(--apw-faq-separator-color);
+    }
+
+    .apw-woo-coupon {
+        display: block; /* Stack coupon */
+        margin-bottom: 15px;
+        margin-right: 0;
+        text-align: center; /* Center coupon elements */
+    }
+    .apw-woo-coupon label {
+        display: block;
+        margin-bottom: 5px;
+    }
+    .apw-woo-coupon input.apw-woo-coupon-code {
+        width: calc(100% - 155px); /* Adjust width based on button approx width */
+        max-width: 250px; /* Max width for input */
+        margin-right: 5px;
+        display: inline-block;
+        vertical-align: middle;
+    }
+    .apw-woo-apply-coupon-button {
+        display: inline-block;
+        vertical-align: middle;
+        width: auto; /* Let button size naturally */
+        min-width: 130px; /* Ensure minimum width */
+    }
+
+    .apw-woo-update-cart-button {
+        display: block; /* Stack update button */
+        width: 100%;
+        margin-top: 10px;
+        margin-bottom: 10px; /* Add margin below */
+    }
+    /* Adjust the Continue Shopping button (if added by hook) */
+    .apw-woo-actions-row td.apw-woo-actions > a.button { /* Target Continue Shopping */
+        display: block;
+        width: 100%;
+        margin-top: 10px;
+        box-sizing: border-box;
+    }
+
+
+    /* Stack cart totals */
+    .apw-woo-cart-collaterals .cart_totals {
+        float: none;
+        width: 100%; /* Full width on mobile */
+        margin-top: 1.5rem; /* Add space above totals */
+    }
+} /* End @media (max-width: 768px) */
+
+
+/* ========================================
+   9. CHECKOUT & ORDER RECEIVED PAGE STYLES (form-checkout.php & Order Received)
+   ======================================== */
+
+/* Styles specific to the WooCommerce checkout page template and order received page. */
+/* Utilizes 'apw-woo-' prefixed classes and standard WC classes. */
+
+/* --- START: Checkout Form Styles --- */
+
+/* Overall Form Styling */
+.woocommerce-checkout.apw-woo-checkout-form {
+    font-family: var(--apw-font-family, 'Montserrat', sans-serif);
+    color: var(--apw-woo-text-color, #0D252C);
+}
+
+/* --- Content Wrapper Width (Checkout & Order Received) --- */
+/* Target the main content column specifically on checkout */
+.woocommerce-checkout .col.apw-woo-content-wrapper {
+    max-width: 85%;
+    margin-left: auto;
+    margin-right: auto;
+    float: none; /* Ensure it doesn't float */
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+}
+/* Target the specific wrapper on the order received page */
+body.woocommerce-order-received .apw-woo-order-received.apw-woo-section-wrapper {
+    max-width: 85%;
+    margin-left: auto;
+    margin-right: auto;
+    float: none;
+    padding-top: 2rem; /* Add padding directly here */
+    padding-bottom: 2rem;
+    padding-left: 15px; /* Add side padding consistent with .col */
+    padding-right: 15px;/* Add side padding consistent with .col */
+    box-sizing: border-box;
+}
+/* --- END Content Wrapper Width --- */
+
+
+/* Section Headings (Billing details, Shipping details, Your order) */
+.woocommerce-checkout h3,
+.woocommerce-checkout h3#order_review_heading.apw-woo-order-review-heading {
+    font-family: var(--apw-font-family, 'Montserrat', sans-serif);
+    font-size: 1.8rem; /* Adjusted for consistency */
+    font-weight: var(--apw-font-bold, 700);
+    color: var(--apw-woo-text-color, #0D252C);
+    margin-bottom: 1.5em;
+    /* text-transform: uppercase; Optional: if needed */
+    /* letter-spacing: 0.5px; Optional: if needed */
+}
+
+/* Form Row Styling (wraps label and input) */
+.woocommerce-checkout .form-row {
+    margin-bottom: 1.25em; /* Adjusted spacing */
+    padding: 0; /* Flatsome override reset */
+}
+
+/* Form Labels */
+.woocommerce-checkout .form-row label {
+    font-family: var(--apw-font-family, 'Montserrat', sans-serif);
+    font-weight: var(--apw-font-medium, 500);
+    font-size: 1rem; /* Base size */
+    color: var(--apw-woo-text-color, #0D252C);
+    margin-bottom: 0.5em;
+    display: block;
+}
+
+/* Required Field Indicator */
+.woocommerce-checkout .form-row label .required {
+    color: var(--apw-woo-error-color, red); /* Use a variable if available, fallback to red */
+    font-weight: var(--apw-font-bold, 700);
+    margin-left: 0.25em;
+    text-decoration: none; /* Ensure no underline */
+}
+
+/* --- Input Fields (Checkout) --- */
+
+/* General Input Fields (Text, Email, Tel, Select, etc.) */
+.woocommerce-checkout input[type="text"],
+.woocommerce-checkout input[type="email"],
+.woocommerce-checkout input[type="tel"],
+.woocommerce-checkout input[type="password"],
+.woocommerce-checkout textarea,
+.woocommerce-checkout select:not(.select2-hidden-accessible):not([multiple]) { /* Exclude hidden original select and multiselects */
+    font-family: var(--apw-font-family, 'Montserrat', sans-serif);
+    font-size: var(--apw-woo-content-font-size, 1.3125rem); /* Match product page */
+    color: var(--apw-woo-text-color, #0D252C);
+    background-color: var(--apw-woo-dropdown-bg, rgba(215, 224, 226, 0.3));
+    border: 1px solid var(--apw-woo-dropdown-border, #393D72);
+    border-radius: 20px; /* Match product page */
+    padding: 12px 20px;
+    min-height: 50px; /* Match product page */
+    width: 100%;
+    box-shadow: none;
+    box-sizing: border-box;
+    margin: 0;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.woocommerce-checkout input:focus,
+.woocommerce-checkout textarea:focus,
+.woocommerce-checkout select:not(.select2-hidden-accessible):focus {
+    border-color: var(--apw-woo-notice-highlight, #178093); /* Highlight focus */
+    box-shadow: 0 0 0 1px var(--apw-woo-notice-highlight, #178093);
+    outline: none;
+}
+
+
+/* Specific styles for Select2 dropdown containers */
+.woocommerce-checkout .select2-container--default .select2-selection--single {
+    font-family: var(--apw-font-family, 'Montserrat', sans-serif);
+    font-size: var(--apw-woo-content-font-size, 1.3125rem);
+    color: var(--apw-woo-text-color, #0D252C);
+    background-color: var(--apw-woo-dropdown-bg, rgba(215, 224, 226, 0.3));
+    border: 1px solid var(--apw-woo-dropdown-border, #393D72);
+    border-radius: 20px;
+    box-shadow: none;
+    box-sizing: border-box;
+    width: 100%;
+    margin: 0;
+    height: 55px !important; /* Height requirement */
+    padding: 0 !important; /* Padding handled by inner elements */
+    line-height: 55px; /* Vertically align text */
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+/* Focus state for Select2 */
+.woocommerce-checkout .select2-container--default.select2-container--open .select2-selection--single,
+.woocommerce-checkout .select2-container--default .select2-selection--single:focus {
+    border-color: var(--apw-woo-notice-highlight, #178093);
+    box-shadow: 0 0 0 1px var(--apw-woo-notice-highlight, #178093);
+    outline: none;
+}
+
+
+/* Adjust position of rendered text within Select2 */
+.woocommerce-checkout .select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 53px; /* Adjusted for border */
+    padding-left: 20px !important;
+    padding-right: 40px !important; /* Space for arrow */
+    color: var(--apw-woo-text-color, #0D252C);
+    height: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Adjust position of the Select2 arrow */
+.woocommerce-checkout .select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 53px; /* Match inner height */
+    right: 10px;
+    top: 1px; /* Adjust alignment */
+    width: 20px; /* Standard width */
+}
+.woocommerce-checkout .select2-container--default .select2-selection--single .select2-selection__arrow b {
+    border-color: var(--apw-woo-text-color, #0D252C) transparent transparent transparent; /* Match text color */
+    border-width: 6px 6px 0 6px; /* Adjust size if needed */
+    margin-left: -6px; /* Center arrow */
+    margin-top: -3px;
+}
+/* Arrow direction when open */
+.woocommerce-checkout .select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {
+    border-color: transparent transparent var(--apw-woo-text-color, #0D252C) transparent;
+    border-width: 0 6px 6px 6px;
+}
+
+
+/* Style for Order Notes Textarea */
+.woocommerce-checkout textarea#order_comments {
+    min-height: 100px; /* Adjusted min-height */
+    height: auto;
+    padding: 12px 20px;
+    line-height: 1.6; /* Improve readability */
+}
+
+/* Specific style for the custom "Additional Emails" field */
+.woocommerce-checkout #apw_woo_billing_additional_emails_field input {
+    /* Inherits general styles, add overrides here if needed */
+}
+
+/* Preferred Billing Dropdown (if recurring product is in cart) */
+.woocommerce-checkout .apw-woo-preferred-billing-field select {
+    /* Inherits general select styles, add specific overrides here if needed */
+    /* Example: Add more margin-bottom if needed */
+    margin-bottom: 1.5em;
+}
+
+
+/* --- END: Checkout Form Input Fields --- */
+
+
+/* --- START: Order Review Table (Checkout Page) --- */
+.woocommerce-checkout #order_review table.woocommerce-checkout-review-order-table {
+    width: 100%;
+    border: 1px solid var(--apw-faq-separator-color, #e0e0e0);
+    border-radius: 5px;
+    margin-bottom: 2em;
+    border-collapse: separate; /* For border-radius */
+    border-spacing: 0;
+    font-family: var(--apw-font-family, 'Montserrat', sans-serif);
+}
+
+.woocommerce-checkout #order_review table th,
+.woocommerce-checkout #order_review table td {
+    padding: 1em 1.25em; /* Consistent padding */
+    border-bottom: 1px solid var(--apw-faq-separator-color, #e0e0e0);
+    text-align: left;
+    font-size: 1.1rem; /* Slightly adjusted size */
+    vertical-align: middle;
+    color: var(--apw-woo-text-color, #0D252C);
+    line-height: 1.5;
+}
+
+.woocommerce-checkout #order_review table tfoot tr:last-child th,
+.woocommerce-checkout #order_review table tfoot tr:last-child td {
+    border-bottom: none; /* Remove border on very last row */
+}
+
+.woocommerce-checkout #order_review table thead th {
+    font-weight: var(--apw-font-bold, 700);
+}
+
+.woocommerce-checkout #order_review table tbody td {
+    font-weight: var(--apw-font-medium, 500);
+}
+
+.woocommerce-checkout #order_review table .product-name {
+    font-weight: var(--apw-font-medium, 500);
+}
+.woocommerce-checkout #order_review table .product-quantity {
+    font-size: 0.9em; /* Slightly smaller for quantity */
+}
+
+.woocommerce-checkout #order_review table .product-total,
+.woocommerce-checkout #order_review table tfoot td {
+    text-align: right;
+    font-weight: var(--apw-font-medium, 500);
+}
+.woocommerce-checkout #order_review table tfoot th {
+    font-weight: var(--apw-font-bold, 700);
+    text-align: right;
+}
+/* Make Total row bold */
+.woocommerce-checkout #order_review table tfoot .order-total th,
+.woocommerce-checkout #order_review table tfoot .order-total td strong,
+.woocommerce-checkout #order_review table tfoot .order-total .woocommerce-Price-amount {
+    font-weight: var(--apw-font-bold, 700) !important;
+    font-size: 1.2em; /* Make total stand out more */
+    color: var(--apw-woo-text-color, #0D252C);
+}
+
+/* --- END: Order Review Table (Checkout Page) --- */
+
+
+/* --- START: Hide Exemption Section Elements (Checkout Page) --- */
+/* These selectors target elements assumed to be added by a tax exemption plugin (like Avalara)
+   and placed *after* the main order review table within the #order_review div. */
+
+/* Hide the 'Exemption' H3 and its following HR */
+.woocommerce-checkout #order_review table.woocommerce-checkout-review-order-table ~ div.field h3,
+.woocommerce-checkout #order_review table.woocommerce-checkout-review-order-table ~ div.field hr {
+    display: none !important;
+}
+
+/* Hide the exemption zone selection row and proceed button row */
+.woocommerce-checkout #order_review table.woocommerce-checkout-review-order-table ~ div.field.form-row {
+    display: none !important;
+}
+
+/* Hide the second HR */
+.woocommerce-checkout #order_review table.woocommerce-checkout-review-order-table ~ hr {
+    display: none !important;
+}
+
+/* Hide the form container and related buttons/labels */
+.woocommerce-checkout #order_review table.woocommerce-checkout-review-order-table ~ div#form_container,
+.woocommerce-checkout #order_review table.woocommerce-checkout-review-order-table ~ label, /* Hide labels potentially associated with hidden buttons */
+.woocommerce-checkout #order_review table.woocommerce-checkout-review-order-table ~ button#btnRefreshCertificates,
+.woocommerce-checkout #order_review table.woocommerce-checkout-review-order-table ~ button#btnWcClose {
+    display: none !important;
+}
+
+/* Hide the invalidation message */
+.woocommerce-checkout #order_review table.woocommerce-checkout-review-order-table ~ div.field > p#invalidateMsg {
+    display: none !important;
+}
+
+/* Hide the "Add Certificates" / "Manage existing certificates" links */
+/* This hides *all* p and a tags following the table within #order_review.
+   Adjust if necessary to be more specific if this hides desired content. */
+.woocommerce-checkout #order_review table.woocommerce-checkout-review-order-table ~ p,
+.woocommerce-checkout #order_review table.woocommerce-checkout-review-order-table ~ a {
+    display: none !important;
+}
+
+/* --- END: Hide Exemption Section Elements (Checkout Page) --- */
+
+
+/* --- START: Payment Methods Section (Checkout Page) --- */
+.woocommerce-checkout .apw-woo-payment-section { /* Target our wrapper class */
+    margin-top: 2em;
+    padding: 1.5em;
+    background-color: var(--apw-woo-dropdown-bg, rgba(215, 224, 226, 0.1)); /* Subtle background */
+    border: 1px solid var(--apw-faq-separator-color, #e0e0e0);
+    border-radius: 8px;
+}
+
+.woocommerce-checkout #payment ul.payment_methods {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1em 0;
+    border: none; /* Remove default border, handled by wrapper */
+}
+
+.woocommerce-checkout #payment ul.payment_methods li {
+    padding: 1em 0; /* Vertical padding only */
+    border-bottom: 1px solid var(--apw-faq-separator-color, #e0e0e0); /* Separator */
+    margin: 0;
+    line-height: 1.5;
+}
+
+.woocommerce-checkout #payment ul.payment_methods li:last-child {
+    border-bottom: none;
+}
+
+.woocommerce-checkout #payment ul.payment_methods li input[type="radio"] {
+    margin-right: 0.75em;
+    vertical-align: middle;
+}
+
+.woocommerce-checkout #payment ul.payment_methods li label {
+    display: inline; /* Label next to radio */
+    font-weight: var(--apw-font-bold, 700);
+    font-size: 1.1rem; /* Slightly larger label */
+    color: var(--apw-woo-text-color, #0D252C);
+}
+/* Ensure images within labels are aligned */
+.woocommerce-checkout #payment ul.payment_methods li label img {
+    vertical-align: middle;
+    margin-left: 0.5em;
+    max-height: 28px; /* Limit image height */
+    width: auto;
+}
+
+.woocommerce-checkout #payment .payment_box {
+    background-color: #fff; /* White background for contrast inside grey wrapper */
+    padding: 1.25em;
+    margin-top: 1em;
+    border-radius: 4px;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, .07);
+    color: var(--apw-woo-text-color, #0D252C);
+    font-size: 1rem; /* Slightly smaller text inside box */
+    line-height: 1.6;
+}
+.woocommerce-checkout #payment .payment_box p {
+    margin-bottom: 0.75em;
+}
+.woocommerce-checkout #payment .payment_box p:last-child {
+    margin-bottom: 0;
+}
+
+
+/* --- END: Payment Methods Section (Checkout Page) --- */
+
+
+/* --- START: Hide Privacy Policy Text (Checkout Page) --- */
+.woocommerce-checkout .woocommerce-privacy-policy-text {
+    display: none !important;
+}
+/* --- END: Hide Privacy Policy Text (Checkout Page) --- */
+
+
+/* --- START: Buttons (Checkout Page) --- */
+
+/* Place Order Button */
+.woocommerce-checkout .place-order button#place_order {
+    background: var(--apw-woo-button-background, linear-gradient(#244B5A, #178093)) !important;
+    color: #ffffff !important;
+    border-radius: 58px !important;
+    font-family: var(--apw-font-family, 'Montserrat', sans-serif) !important;
+    font-weight: var(--apw-font-bold, 700) !important;
+    font-size: 1.1rem !important;
+    text-transform: uppercase !important;
+    padding: 12px 30px !important;
+    border: none !important;
+    text-align: center;
+    text-decoration: none;
+    transition: opacity 0.3s ease;
+    width: 100%; /* Full width button */
+    margin-top: 1.5em; /* Space above button */
+    cursor: pointer;
+    line-height: normal;
+    height: auto;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Subtle shadow */
+}
+
+.woocommerce-checkout .place-order button#place_order:hover {
+    opacity: 0.85;
+    color: #ffffff !important;
+}
+
+/* Validate Address Button (Avalara) */
+.woocommerce-checkout button.wc_avatax_validate_address.button {
+    background: var(--apw-woo-button-background, linear-gradient(#244B5A, #178093)) !important;
+    color: #ffffff !important;
+    border-radius: 58px !important;
+    font-family: var(--apw-font-family, 'Montserrat', sans-serif) !important;
+    font-weight: var(--apw-font-bold, 700) !important;
+    font-size: 1rem !important; /* Slightly smaller than place order */
+    text-transform: uppercase !important;
+    padding: 10px 25px !important; /* Adjusted padding */
+    border: none !important;
+    cursor: pointer;
+    transition: opacity 0.3s ease;
+    line-height: normal;
+    height: auto;
+    vertical-align: middle;
+    margin-top: 1em; /* Add space above */
+    margin-right: 10px;
+    display: inline-block; /* Keep inline */
+    width: auto;
+}
+
+.woocommerce-checkout button.wc_avatax_validate_address.button:hover {
+    opacity: 0.85;
+    color: #ffffff !important;
+}
+
+/* --- END: Buttons (Checkout Page) --- */
+
+
+/* --- START: Style Check Payment Instructions (Checkout Page) --- */
+.woocommerce-checkout #payment .payment_box.payment_method_cheque p {
+    color: var(--apw-woo-error-color, #C60307) !important; /* Use variable or fallback red */
+    font-weight: var(--apw-font-bold, 700) !important;
+    font-size: 1.1em; /* Make slightly larger */
+}
+/* --- END: Style Check Payment Instructions (Checkout Page) --- */
+
+/* --- END: Checkout Form Styles --- */
+
+
+
+/* --- START: Order Received Page Specific Styles --- */
+
+/* Ensure the wrapper has some margin */
+.apw-woo-order-received {
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+}
+
+/* Style Headings */
+.apw-woo-order-received h2 {
+    font-family: var(--apw-font-family, 'Montserrat', sans-serif);
+    font-size: 1.8rem; /* Match checkout headings */
+    font-weight: var(--apw-font-bold, 700);
+    color: var(--apw-woo-text-color, #0D252C);
+    margin-bottom: 1.5em;
+}
+
+/* Style Tables (Order Details, Downloads) */
+.apw-woo-order-received table.shop_table {
+    width: 100%;
+    border: 1px solid var(--apw-faq-separator-color, #e0e0e0);
+    border-radius: 5px;
+    margin-bottom: 2em;
+    border-collapse: separate; /* Use separate for border-radius */
+    border-spacing: 0;
+    font-size: var(--apw-woo-content-font-size, 1.3125rem); /* Match other content */
+    font-family: var(--apw-font-family, 'Montserrat', sans-serif);
+}
+
+.apw-woo-order-received table.shop_table th,
+.apw-woo-order-received table.shop_table td {
+    padding: 1em 1.25em; /* Consistent padding */
+    border-bottom: 1px solid var(--apw-faq-separator-color, #e0e0e0);
+    text-align: left;
+    vertical-align: middle;
+    color: var(--apw-woo-text-color, #0D252C);
+    line-height: 1.5;
+}
+
+.apw-woo-order-received table.shop_table thead th {
+    font-weight: var(--apw-font-bold, 700);
+    text-transform: uppercase;
+    font-size: 1.1rem; /* Slightly smaller header */
+    background-color: var(--apw-woo-dropdown-bg, rgba(215, 224, 226, 0.1)); /* Subtle header background */
+}
+/* Ensure top-left and top-right corners of thead match table radius */
+.apw-woo-order-received table.shop_table thead tr:first-child th:first-child {
+    border-top-left-radius: 5px;
+}
+.apw-woo-order-received table.shop_table thead tr:first-child th:last-child {
+    border-top-right-radius: 5px;
+}
+
+
+.apw-woo-order-received table.shop_table tbody td {
+    font-weight: var(--apw-font-medium, 500);
+}
+
+.apw-woo-order-received table.shop_table tfoot th {
+    font-weight: var(--apw-font-bold, 700);
+    text-align: right;
+    border-bottom: none; /* No border in footer */
+    border-top: 1px solid var(--apw-faq-separator-color, #e0e0e0); /* Add top border to footer rows */
+}
+.apw-woo-order-received table.shop_table tfoot td {
+    text-align: right;
+    border-bottom: none; /* No border in footer */
+    border-top: 1px solid var(--apw-faq-separator-color, #e0e0e0); /* Add top border to footer rows */
+}
+
+/* Make Total row bold and larger */
+.apw-woo-order-received table.shop_table tfoot tr.order_total th,
+.apw-woo-order-received table.shop_table tfoot tr.order_total td,
+.apw-woo-order-received table.shop_table tfoot tr.order_total .woocommerce-Price-amount {
+    font-weight: var(--apw-font-bold, 700) !important;
+    font-size: 1.2em;
+    color: var(--apw-woo-text-color, #0D252C);
+}
+
+/* Item Meta Data */
+.apw-woo-order-received .wc-item-meta {
+    list-style: none;
+    padding-left: 0;
+    margin-top: 0.5em;
+    margin-bottom: 0;
+    font-size: 0.9em;
+    color: #555;
+}
+.apw-woo-order-received .wc-item-meta li {
+    margin-bottom: 0.3em;
+    display: block; /* Ensure label and value are on separate lines */
+}
+.apw-woo-order-received .wc-item-meta li:last-child {
+    margin-bottom: 0;
+}
+.apw-woo-order-received .wc-item-meta .wc-item-meta-label {
+    font-weight: var(--apw-font-bold, 700);
+    color: var(--apw-woo-text-color, #0D252C);
+    display: block; /* Ensure label is on its own line */
+}
+.apw-woo-order-received .wc-item-meta p {
+    display: block; /* Ensure value is on its own line */
+    margin: 0.1em 0 0 0; /* Small space below label */
+    padding: 0;
+}
+
+
+/* Customer Details Section */
+.apw-woo-order-received section.woocommerce-customer-details {
+    margin-top: 2em;
+}
+.apw-woo-order-received .woocommerce-customer-details h2 {
+    font-size: 1.5rem; /* Slightly smaller heading for this section */
+    border-bottom: 1px solid var(--apw-faq-separator-color, #e0e0e0);
+    padding-bottom: 0.5em;
+    margin-bottom: 1em;
+}
+.apw-woo-order-received .woocommerce-customer-details address {
+    border: 1px solid var(--apw-faq-separator-color, #e0e0e0);
+    border-radius: 5px;
+    padding: 1.5em;
+    margin-bottom: 1em;
+    font-style: normal;
+    line-height: 1.6;
+    font-size: var(--apw-woo-content-font-size, 1.3125rem);
+    color: var(--apw-woo-text-color, #0D252C);
+    background-color: rgba(215, 224, 226, 0.1); /* Subtle background */
+}
+.apw-woo-order-received .woocommerce-customer-details address p {
+    margin-bottom: 0.5em;
+}
+.apw-woo-order-received .woocommerce-customer-details address p:last-child {
+    margin-bottom: 0;
+}
+.apw-woo-order-received .woocommerce-customer-details--email {
+    margin-top: 1em;
+}
+
+/* Address Columns Layout (Flexbox) */
+.apw-woo-order-received .woocommerce-columns--addresses {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2%; /* Space between columns */
+    margin-bottom: 1em;
+}
+.apw-woo-order-received .woocommerce-column--billing-address,
+.apw-woo-order-received .woocommerce-column--shipping-address {
+    flex: 1 1 48%; /* Allow flex grow/shrink, aim for 2 columns */
+    box-sizing: border-box;
+    margin-bottom: 0; /* Remove default margin handled by gap */
+}
+
+
+/* --- END: Order Received Page Specific Styles --- */
+
+
+
+/* --- START: Responsive Styles (Checkout & Order Received) --- */
+
+/* Tablet Styles (adjust breakpoint as needed) */
+@media (max-width: 849px) {
+    /* Reduce content width slightly more */
+    .woocommerce-checkout .col.apw-woo-content-wrapper,
+    body.woocommerce-order-received .apw-woo-order-received.apw-woo-section-wrapper { /* Corrected target */
+        max-width: 90%;
+    }
+
+    /* Adjust heading sizes */
+    .woocommerce-checkout h3,
+    .apw-woo-order-received h2 {
+        font-size: 1.6rem;
+    }
+
+    /* Input/Select field adjustments */
+    .woocommerce-checkout input[type="text"],
+    .woocommerce-checkout input[type="email"],
+    .woocommerce-checkout input[type="tel"],
+    .woocommerce-checkout input[type="password"],
+    .woocommerce-checkout textarea,
+    .woocommerce-checkout select:not(.select2-hidden-accessible):not([multiple]),
+    .woocommerce-checkout .select2-container--default .select2-selection--single {
+        font-size: 1.1rem; /* Smaller text */
+        min-height: 45px; /* Slightly shorter */
+        height: auto !important; /* Allow natural height for Select2 */
+        line-height: normal; /* Reset line-height for Select2 */
+        padding: 10px 15px; /* Reduce padding */
+    }
+    .woocommerce-checkout .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 43px; /* Match adjusted height */
+        padding-left: 15px !important;
+        padding-right: 35px !important;
+    }
+    .woocommerce-checkout .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 43px;
+    }
+
+    /* Table cell padding */
+    .woocommerce-checkout #order_review table th,
+    .woocommerce-checkout #order_review table td,
+    .apw-woo-order-received table.shop_table th,
+    .apw-woo-order-received table.shop_table td {
+        padding: 0.8em 1em;
+        font-size: 1rem;
+    }
+
+    /* Stack address columns earlier on tablets */
+    .apw-woo-order-received .woocommerce-column--billing-address,
+    .apw-woo-order-received .woocommerce-column--shipping-address {
+        flex-basis: 100%; /* Full width */
+        margin-bottom: 1.5em; /* Add margin when stacked */
+    }
+    .apw-woo-order-received .woocommerce-columns--addresses {
+        gap: 0; /* Remove gap when stacked */
+        flex-direction: column; /* Explicitly stack */
+    }
+
+} /* End @media (max-width: 849px) */
+
+
+/* Mobile Styles (adjust breakpoint as needed) */
+@media (max-width: 549px) {
+    /* Further reduce content width */
+    .woocommerce-checkout .col.apw-woo-content-wrapper,
+    body.woocommerce-order-received .apw-woo-order-received.apw-woo-section-wrapper { /* Corrected target */
+        max-width: 95%;
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
+
+    /* Adjust headings */
+    .woocommerce-checkout h3,
+    .apw-woo-order-received h2 {
+        font-size: 1.4rem;
+        margin-bottom: 1em;
+    }
+
+    /* Form layout adjustments */
+    .woocommerce-checkout .form-row {
+        margin-bottom: 1em;
+    }
+    .woocommerce-checkout .form-row-first,
+    .woocommerce-checkout .form-row-last {
+        float: none;
+        width: 100%;
+    }
+
+    /* Inputs */
+    .woocommerce-checkout input[type="text"],
+    .woocommerce-checkout input[type="email"],
+    .woocommerce-checkout input[type="tel"],
+    .woocommerce-checkout input[type="password"],
+    .woocommerce-checkout textarea,
+    .woocommerce-checkout select:not(.select2-hidden-accessible):not([multiple]),
+    .woocommerce-checkout .select2-container--default .select2-selection--single {
+        font-size: 1rem;
+        min-height: 40px;
+        padding: 8px 12px;
+    }
+    .woocommerce-checkout .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 38px;
+        padding-left: 12px !important;
+        padding-right: 30px !important;
+    }
+    .woocommerce-checkout .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 38px;
+    }
+
+
+    /* Order Review Table - Smaller text */
+    .woocommerce-checkout #order_review table th,
+    .woocommerce-checkout #order_review table td {
+        padding: 0.6em 0.8em;
+        font-size: 0.9rem;
+    }
+    .woocommerce-checkout #order_review table tfoot .order-total th,
+    .woocommerce-checkout #order_review table tfoot .order-total td strong,
+    .woocommerce-checkout #order_review table tfoot .order-total .woocommerce-Price-amount {
+        font-size: 1em !important; /* Slightly smaller total */
+    }
+
+
+    /* Order Received Table - Smaller text */
+    .apw-woo-order-received table.shop_table th,
+    .apw-woo-order-received table.shop_table td {
+        padding: 0.6em 0.8em;
+        font-size: 0.9rem;
+    }
+    .apw-woo-order-received table.shop_table tfoot tr.order_total th,
+    .apw-woo-order-received table.shop_table tfoot tr.order_total td,
+    .apw-woo-order-received table.shop_table tfoot tr.order_total .woocommerce-Price-amount {
+        font-size: 1em !important; /* Slightly smaller total */
+    }
+    .apw-woo-order-received .wc-item-meta {
+        font-size: 0.85em; /* Smaller meta */
+    }
+
+    /* Customer Details Address */
+    .apw-woo-order-received .woocommerce-customer-details address {
+        font-size: 1rem; /* Smaller address text */
+        padding: 1em;
+    }
+
+    /* Buttons - Ensure full width on mobile */
+    .woocommerce-checkout .place-order button#place_order,
+    .woocommerce-checkout button.wc_avatax_validate_address.button {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 0.75em; /* Add space between stacked buttons */
+        font-size: 1rem !important;
+        padding: 10px 20px !important;
+    }
+    .woocommerce-checkout button.wc_avatax_validate_address.button {
+        margin-top: 0.5em; /* Reduce top margin */
+    }
+
+
+} /* End Mobile Styles */
+
+/* --- END: Responsive Styles --- */
+
+/* --- END CHECKOUT & ORDER RECEIVED STYLES --- */
+
+/* ========================================
+   12. RMA FORM STYLES
+   Styles for the RMA form on product pages
+   ======================================== */
+
+/* RMA Form Container */
+.apw-woo-rma-form {
+    margin-bottom: 30px;
+    padding: 20px;
+    background-color: rgba(215, 224, 226, 0.3);
+    border-radius: 8px;
+    border-left: 4px solid #178093;
+}
+
+/* RMA Form Title */
+.apw-woo-rma-form h3 {
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold);
+    font-size: 1.5rem;
+    color: var(--apw-woo-text-color);
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+/* Form Row */
+.apw-woo-rma-form .form-row {
+    margin-bottom: 20px;
+}
+
+/* Form Labels */
+.apw-woo-rma-form label {
+    display: block;
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold);
+    font-size: var(--apw-woo-content-font-size);
+    color: var(--apw-woo-text-color);
+    margin-bottom: 8px;
+}
+
+/* Required Field Indicator */
+.apw-woo-rma-form .required {
+    color: #C60307;
+    font-weight: var(--apw-font-bold);
+    margin-left: 4px;
+}
+
+/* Form Inputs */
+.apw-woo-rma-form select,
+.apw-woo-rma-form input[type="text"],
+.apw-woo-rma-form textarea {
+    width: 100%;
+    padding: 12px 20px;
+    border: 1px solid var(--apw-woo-dropdown-border);
+    border-radius: 20px;
+    background-color: var(--apw-woo-dropdown-bg);
+    font-family: var(--apw-font-family);
+    font-size: var(--apw-woo-content-font-size);
+    color: var(--apw-woo-text-color);
+    box-shadow: none;
+}
+
+/* Textarea Specific Styles */
+.apw-woo-rma-form textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+/* Select Dropdown Styling */
+.apw-woo-rma-form select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="6" viewBox="0 0 12 6"><path fill="%230D252C" d="M0 0l6 6 6-6z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    background-size: 12px;
+    padding-right: 40px;
+}
+
+/* Focus States */
+.apw-woo-rma-form select:focus,
+.apw-woo-rma-form input[type="text"]:focus,
+.apw-woo-rma-form textarea:focus {
+    outline: none;
+    border-color: #178093;
+    box-shadow: 0 0 0 1px #178093;
+}
+
+/* Error State */
+.apw-woo-rma-form select.error,
+.apw-woo-rma-form input[type="text"].error,
+.apw-woo-rma-form textarea.error {
+    border-color: #C60307;
+}
+
+/* Conditional Fields */
+.apw-woo-rma-form .conditional-field {
+    display: none;
+}
+
+/* Admin Order View RMA Data */
+.apw-rma-data-admin {
+    background-color: rgba(215, 224, 226, 0.2);
+    padding: 15px;
+    border-radius: 5px;
+    margin-top: 20px;
+}
+
+.apw-rma-data-admin h4 {
+    color: #178093;
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold);
+}
+
+.apw-rma-item-data {
+    margin-bottom: 20px;
+}
+
+.apw-rma-item-data p {
+    margin-bottom: 10px;
+}
+
+.apw-rma-item-data strong {
+    font-weight: var(--apw-font-bold);
+    color: var(--apw-woo-text-color);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .apw-woo-rma-form {
+        padding: 15px;
+    }
+    
+    .apw-woo-rma-form select,
+    .apw-woo-rma-form input[type="text"],
+    .apw-woo-rma-form textarea {
+        padding: 10px 15px;
+    }
+    
+    .apw-woo-rma-form h3 {
+        font-size: 1.3rem;
+    }
+}
+
+/* ========================================
+   10. MY ACCOUNT PAGE STYLES (my-account.php)
+   ======================================== */
+
+/* --- Start My Account Styles --- */
+
+/* General container for My Account content */
+.woocommerce-account .woocommerce-MyAccount-content { /* Added .woocommerce-account for specificity */
+    font-family: var(--apw-font-family);
+    color: var(--apw-woo-text-color);
+    line-height: 1.6; /* Standard line height */
+    padding-top: 1.5em; /* Add some space above the content */
+}
+
+/* Style the paragraphs within the My Account content area */
+.woocommerce-account .woocommerce-MyAccount-content p {
+    font-size: var(--apw-woo-content-font-size); /* Use existing variable for consistency (21px) */
+    margin-bottom: 1.5em; /* Spacing between paragraphs */
+}
+
+/* Style the bold text within paragraphs (e.g., username) */
+.woocommerce-account .woocommerce-MyAccount-content p strong {
+    font-weight: var(--apw-font-bold); /* Use existing bold variable */
+    color: inherit; /* Inherit the paragraph color */
+}
+
+/* Style the links within the paragraphs */
+.woocommerce-account .woocommerce-MyAccount-content p a {
+    color: var(--apw-woo-notice-highlight); /* Use a noticeable link color (e.g., #178093) */
+    font-weight: var(--apw-font-medium); /* Or bold? */
+    text-decoration: underline; /* Standard link underline */
+    transition: color 0.3s ease;
+}
+
+.woocommerce-account .woocommerce-MyAccount-content p a:hover {
+    color: var(--apw-woo-text-color); /* Darken link on hover */
+    text-decoration: none; /* Remove underline on hover */
+}
+
+/* --- START: My Account Form Field Styles --- */
+
+/* Apply consistent styling to input fields, textareas, and selects within My Account */
+/* Targeting elements within the main My Account content area */
+.woocommerce-account .woocommerce-MyAccount-content input[type="text"],
+.woocommerce-account .woocommerce-MyAccount-content input[type="email"],
+.woocommerce-account .woocommerce-MyAccount-content input[type="tel"],
+.woocommerce-account .woocommerce-MyAccount-content input[type="password"],
+.woocommerce-account .woocommerce-MyAccount-content input[type="number"], /* Added number input */
+.woocommerce-account .woocommerce-MyAccount-content textarea,
+.woocommerce-account .woocommerce-MyAccount-content select {
+    font-family: var(--apw-font-family);
+    font-size: var(--apw-woo-content-font-size); /* Match product/checkout inputs */
+    color: var(--apw-woo-text-color);
+    background-color: var(--apw-woo-dropdown-bg); /* Use existing dropdown bg */
+    border: 1px solid var(--apw-woo-dropdown-border); /* Use existing dropdown border */
+    border-radius: 20px; /* Match product/checkout dropdowns */
+    padding: 12px 20px; /* Default padding */
+    min-height: 50px; /* Default min-height */
+    width: 100%; /* Make fields take full width of their container */
+    box-shadow: none;
+    box-sizing: border-box; /* Include padding/border in width */
+    margin-bottom: 1em; /* Add spacing below fields */
+}
+
+/* Style Select2 dropdowns specifically if they appear in My Account */
+.woocommerce-account .woocommerce-MyAccount-content .select2-container--default .select2-selection--single {
+    font-family: var(--apw-font-family);
+    font-size: var(--apw-woo-content-font-size);
+    color: var(--apw-woo-text-color);
+    background-color: var(--apw-woo-dropdown-bg);
+    border: 1px solid var(--apw-woo-dropdown-border);
+    border-radius: 20px;
+    box-shadow: none;
+    box-sizing: border-box;
+    width: 100%;
+    height: 55px !important; /* Match checkout height */
+    padding: 0 !important;
+    line-height: 55px;
+}
+
+.woocommerce-account .woocommerce-MyAccount-content .select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 55px;
+    padding-left: 20px !important;
+    padding-right: 40px !important;
+    color: var(--apw-woo-text-color);
+}
+
+.woocommerce-account .woocommerce-MyAccount-content .select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 53px;
+    right: 10px;
+    top: 1px;
+}
+
+/* Ensure labels above fields have consistent styling */
+.woocommerce-account .woocommerce-MyAccount-content form .form-row label {
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-medium);
+    font-size: 1rem; /* Match checkout labels */
+    color: var(--apw-woo-text-color);
+    margin-bottom: 0.5em;
+    display: block;
+}
+
+.woocommerce-account .woocommerce-MyAccount-content form .form-row label .required {
+    color: red;
+    font-weight: var(--apw-font-bold);
+    margin-left: 0.25em;
+}
+
+/* --- END: My Account Form Field Styles --- */
+
+/* --- START: My Account Button Styles --- */
+
+/* Style general buttons within the My Account content area */
+/* Targets .button, common WC buttons, and potentially form submit buttons */
+.woocommerce-account .woocommerce-MyAccount-content .button,
+.woocommerce-account .woocommerce-MyAccount-content button[type="submit"],
+.woocommerce-account .woocommerce-MyAccount-content a.button,
+.apw-woo-myaccount-main .woocommerce-Button { /* Include links styled as buttons */
+    background: var(--apw-woo-button-background) !important; /* Use button gradient */
+    color: #ffffff !important;
+    border-radius: 58px !important;
+    font-family: var(--apw-font-family) !important;
+    font-weight: var(--apw-font-bold) !important;
+    font-size: 1.1rem !important; /* Match Place Order button size */
+    text-transform: uppercase !important;
+    padding: 12px 30px !important; /* Match Place Order padding */
+    border: none !important;
+    text-align: center !important;
+    text-decoration: none !important; /* Remove underline from <a> tags */
+    transition: opacity 0.3s ease !important;
+    cursor: pointer !important;
+    line-height: normal !important; /* Ensure consistent line height */
+    height: auto !important; /* Let padding determine height */
+    display: inline-block !important; /* Default display */
+    margin-top: 0.5em !important; /* Add some top margin */
+    margin-right: 10px !important; /* Add space between adjacent buttons */
+    vertical-align: middle !important;
+    box-shadow: none !important; /* Remove potential theme shadows */
+    min-height: unset !important;
+    max-height: unset !important;
+}
+
+/* Style specific buttons like 'Save changes' to ensure they are caught */
+.woocommerce-account .woocommerce-MyAccount-content form button[name="save_account_details"],
+.woocommerce-account .woocommerce-MyAccount-content form button[name="save_address"],
+.woocommerce-account .woocommerce-MyAccount-content a.edit { /* Often used for 'Edit' links next to addresses */
+    /* Inherits styles from the general rule above */
+    /* Add specific overrides here if needed */
+}
+
+/* Hover Styles for My Account buttons */
+.woocommerce-account .woocommerce-MyAccount-content .button:hover,
+.woocommerce-account .woocommerce-MyAccount-content button[type="submit"]:hover,
+.woocommerce-account .woocommerce-MyAccount-content a.button:hover,
+.apw-woo-myaccount-main .woocommerce-Button:hover {
+    opacity: 0.85 !important;
+    color: #ffffff !important;
+    background: var(--apw-woo-button-background) !important; /* Ensure gradient stays on hover */
+}
+
+/* --- END: My Account Button Styles --- */
+
+/* --- START: Global Fix for WooCommerce Buttons in My Account --- */
+/* This is a catch-all fix to ensure all WooCommerce buttons in My Account maintain styling */
+body.woocommerce-account .woocommerce-Button,
+body.woocommerce-account .woocommerce-button,
+body.woocommerce-account .button.wc-forward,
+body.woocommerce-account a.button {
+    background: var(--apw-woo-button-background) !important;
+    background-image: linear-gradient(204deg, #244B5A, #178093) !important; /* Explicit gradient */
+    background-color: #244B5A !important; /* Fallback solid color */
+    color: #ffffff !important;
+    border-radius: 58px !important;
+    font-family: var(--apw-font-family) !important;
+    font-weight: var(--apw-font-bold) !important;
+    font-size: 1.1rem !important;
+    text-transform: uppercase !important;
+    padding: 12px 30px !important;
+    border: none !important;
+    text-align: center !important;
+    text-decoration: none !important;
+    transition: opacity 0.3s ease !important;
+    box-shadow: none !important;
+    line-height: normal !important;
+    height: auto !important;
+    min-height: unset !important;
+    max-height: unset !important;
+}
+
+body.woocommerce-account .woocommerce-Button:hover,
+body.woocommerce-account .woocommerce-button:hover,
+body.woocommerce-account .button.wc-forward:hover,
+body.woocommerce-account a.button:hover {
+    opacity: 0.85 !important;
+    color: #ffffff !important;
+    background: var(--apw-woo-button-background) !important;
+    background-image: linear-gradient(204deg, #244B5A, #178093) !important; /* Explicit gradient */
+    background-color: #244B5A !important; /* Fallback solid color */
+    border: none !important;
+}
+
+/* Special case for message container buttons that need to be block elements */
+body.woocommerce-account .message-container .woocommerce-Button,
+body.woocommerce-account .message-container .button.wc-forward,
+body.woocommerce-account .message-container a.woocommerce-Button,
+body.woocommerce-account .message-container a.button.wc-forward {
+    display: block !important;
+    margin-top: 1.5rem !important;
+    width: fit-content !important;
+    background: var(--apw-woo-button-background) !important;
+    background-image: linear-gradient(204deg, #244B5A, #178093) !important;
+    background-color: #244B5A !important;
+    color: #ffffff !important;
+}
+
+/* Additional !important styles to override any theme JS that might be changing these */
+body.woocommerce-account .message-container .woocommerce-Button,
+body.woocommerce-account .message-container .button.wc-forward,
+body.woocommerce-account .message-container a.woocommerce-Button,
+body.woocommerce-account .message-container a.button.wc-forward {
+    background-color: #244B5A !important;
+    background-image: linear-gradient(204deg, #244B5A, #178093) !important;
+    color: #ffffff !important;
+    border: none !important;
+    text-decoration: none !important;
+    font-family: var(--apw-font-family) !important;
+    font-weight: var(--apw-font-bold) !important;
+    font-size: 1.1rem !important;
+    text-transform: uppercase !important;
+    padding: 12px 30px !important;
+    border-radius: 58px !important;
+}
+
+/* Add a style that will be applied via JavaScript */
+.apw-styled-button-processed {
+    background: var(--apw-woo-button-background) !important;
+    background-image: linear-gradient(204deg, #244B5A, #178093) !important;
+    background-color: #244B5A !important;
+    color: #ffffff !important;
+    font-family: var(--apw-font-family) !important;
+    font-weight: var(--apw-font-bold) !important;
+    font-size: 1.1rem !important;
+    text-transform: uppercase !important;
+}
+
+/* --- END: Global Fix for WooCommerce Buttons in My Account --- */
+
+
+/* --- START: My Account Dashboard Links List --- */
+.woocommerce-MyAccount-content ul.dashboard-links {
+    list-style: none;
+    padding: 0;
+    margin: 2em 0 1em 0; /* Add spacing around the list */
+    border: 1px solid var(--apw-faq-separator-color); /* Add a light border */
+    border-radius: 5px; /* Slight rounding */
+    overflow: hidden; /* Contain borders */
+}
+
+.woocommerce-MyAccount-content ul.dashboard-links li {
+    margin: 0;
+    padding: 0;
+    border-bottom: 1px solid var(--apw-faq-separator-color); /* Separator line */
+}
+
+.woocommerce-MyAccount-content ul.dashboard-links li:last-child {
+    border-bottom: none; /* Remove border from last item */
+}
+
+.woocommerce-MyAccount-content ul.dashboard-links li a {
+    display: block;
+    padding: 1em 1.5em; /* Padding inside each link */
+    font-size: 1.1rem; /* Slightly larger font for links */
+    color: var(--apw-woo-text-color);
+    font-weight: var(--apw-font-medium);
+    text-decoration: none;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.woocommerce-MyAccount-content ul.dashboard-links li a:hover {
+    background-color: var(--apw-woo-dropdown-bg); /* Light background on hover */
+    color: var(--apw-woo-text-color);
+}
+
+/* Style the active link */
+.woocommerce-MyAccount-content ul.dashboard-links li.is-active a,
+.woocommerce-MyAccount-content ul.dashboard-links li.active a { /* Include .active for potential theme variations */
+    font-weight: var(--apw-font-bold);
+    color: var(--apw-woo-notice-highlight); /* Highlight active link */
+    background-color: rgba(23, 128, 147, 0.1); /* Subtle background for active */
+}
+
+/* --- END: My Account Dashboard Links List --- */
+
+
+/* --- START: Style Buttons within My Account Notices/Messages (JS Override Method) --- */
+
+/* Target the button using the custom class added by apw-woo-public.js */
+/* Use #main for extra specificity against theme defaults */
+#main .woocommerce-account .woocommerce-MyAccount-content .apw-styled-message-button {
+    /* Re-apply the desired styles, using !important liberally to beat theme's JS/CSS */
+    background: var(--apw-woo-button-background) !important;
+    color: #ffffff !important;
+    border-radius: 58px !important;
+    font-family: var(--apw-font-family) !important;
+    font-weight: var(--apw-font-bold) !important;
+    font-size: 1.1rem !important;
+    text-transform: uppercase !important;
+    padding: 12px 30px !important;
+    border: none !important;
+    text-decoration: none !important;
+    transition: opacity 0.3s ease !important;
+    cursor: pointer !important;
+    line-height: normal !important;
+    height: auto !important;
+    display: inline-block !important;
+    margin-left: 10px !important;
+    vertical-align: middle !important;
+    box-shadow: none !important;
+    margin-bottom: 0 !important;
+}
+
+/* Hover state */
+#main .woocommerce-account .woocommerce-MyAccount-content .apw-styled-message-button:hover {
+    opacity: 0.85 !important;
+    color: #ffffff !important;
+    background: var(--apw-woo-button-background) !important; /* Ensure background doesn't change */
+    border: none !important; /* Ensure border doesn't reappear */
+}
+
+/* --- END: Style Buttons within My Account Notices/Messages --- */
+
+/* --- START: My Account Orders Page Styling --- */
+
+/* Style the "No orders yet" message container */
+.woocommerce-account .woocommerce-MyAccount-content .message-container {
+    font-family: var(--apw-font-family) !important;
+    font-size: var(--apw-woo-content-font-size) !important; /* Match content font size (21px) */
+    color: var(--apw-woo-text-color) !important; /* Match standard text color */
+    line-height: 1.5 !important;
+    margin: 2rem 0 !important; /* Add significant space above and below */
+    padding: 1.5rem !important; /* Add padding inside the message */
+    background-color: rgba(182, 198, 204, 0.1) !important; /* Light background with opacity */
+    border-radius: 8px !important; /* Rounded corners */
+    border-left: 4px solid var(--apw-woo-notice-highlight) !important; /* Left accent border */
+}
+
+/* Ensure the text inside message container has proper styling - CRITICAL FOR TEXT CONTENT */
+.woocommerce-account .woocommerce-MyAccount-content .message-container,
+.woocommerce-account .woocommerce-MyAccount-content .message-container > *:not(a),
+.woocommerce-account .woocommerce-MyAccount-content .message-container::before {
+    font-family: var(--apw-font-family) !important;
+    font-size: var(--apw-woo-content-font-size) !important;
+    color: var(--apw-woo-text-color) !important;
+    line-height: 1.5 !important;
+}
+
+/* Style the "Browse products" button within the message - ORDERS PAGE SPECIFIC */
+/* Simplified selector targeting both button types */
+.woocommerce-account .woocommerce-MyAccount-content .message-container a.woocommerce-Button,
+.woocommerce-account .woocommerce-MyAccount-content .message-container a.button.wc-forward,
+.woocommerce-account .woocommerce-MyAccount-content .message-container a.wc-forward {
+    display: block !important; /* Make button appear on its own line */
+    margin-top: 1.5rem !important; /* Add space between text and button */
+    width: fit-content !important; /* Make button only as wide as needed */
+    background: var(--apw-woo-button-background) !important; /* Use button gradient */
+    background-image: linear-gradient(204deg, #244B5A, #178093) !important; /* Explicit gradient */
+    background-color: #244B5A !important; /* Fallback solid color */
+    color: #ffffff !important;
+    border-radius: 58px !important;
+    font-family: var(--apw-font-family) !important;
+    font-weight: var(--apw-font-bold) !important;
+    font-size: 1.1rem !important;
+    text-transform: uppercase !important;
+    padding: 12px 30px !important;
+    border: none !important;
+    text-align: center !important;
+    text-decoration: none !important;
+    transition: opacity 0.3s ease !important;
+    box-shadow: none !important;
+    line-height: normal !important;
+    height: auto !important;
+    min-height: unset !important;
+    max-height: unset !important;
+    opacity: 1 !important;
+    position: static !important;
+    float: none !important;
+    clear: both !important;
+    vertical-align: baseline !important;
+}
+
+/* Hover effect for the button */
+.woocommerce-account .woocommerce-orders-table__empty-message .woocommerce-Button:hover,
+.woocommerce-account .woocommerce-MyAccount-content .message-container .woocommerce-Button:hover,
+.woocommerce-account .woocommerce-MyAccount-orders-table + .message-container .woocommerce-Button:hover,
+.woocommerce-account .woocommerce-MyAccount-content .message-container a.woocommerce-Button:hover {
+    opacity: 0.85 !important;
+    color: #ffffff !important;
+    background: var(--apw-woo-button-background) !important; /* Ensure gradient stays on hover */
+    background-image: linear-gradient(204deg, #244B5A, #178093) !important; /* Explicit gradient */
+    border: none !important;
+    text-decoration: none !important;
+}
+
+/* Force button styles with additional specificity */
+.woocommerce-account .woocommerce-MyAccount-content .message-container .woocommerce-Button.wc-forward,
+.woocommerce-account .woocommerce-MyAccount-content .message-container a.woocommerce-Button.wc-forward {
+    display: block !important;
+    margin-top: 1.5rem !important;
+    width: fit-content !important;
+    background: var(--apw-woo-button-background) !important;
+    background-image: linear-gradient(204deg, #244B5A, #178093) !important;
+    color: #ffffff !important;
+    border-radius: 58px !important;
+    font-family: var(--apw-font-family) !important;
+    font-weight: var(--apw-font-bold) !important;
+    font-size: 1.1rem !important;
+    text-transform: uppercase !important;
+    padding: 12px 30px !important;
+    border: none !important;
+}
+
+/* Style the orders table if it exists */
+.woocommerce-account .woocommerce-MyAccount-content .woocommerce-orders-table {
+    margin-bottom: 2.5rem; /* Add space below the orders table */
+}
+
+/* --- END: My Account Orders Page Styling --- */
+
+/* --- START: My Account Downloads Page Styling --- */
+
+/* Style the "No downloads available yet" message container */
+/* Note: Base message container styling is inherited from Orders section */
+
+/* Style the "Browse products" button within the message - DOWNLOADS PAGE SPECIFIC */
+.woocommerce-account .woocommerce-MyAccount-downloads-table__empty-message .button.wc-forward,
+.woocommerce-account .woocommerce-MyAccount-content .message-container .button.wc-forward,
+.woocommerce-account .woocommerce-MyAccount-downloads + .message-container .button.wc-forward,
+.woocommerce-account .woocommerce-MyAccount-content .message-container a.button.wc-forward {
+    display: block !important; /* Make button appear on its own line */
+    margin-top: 1.5rem !important; /* Add space between text and button */
+    width: fit-content !important; /* Make button only as wide as needed */
+    background: var(--apw-woo-button-background) !important; /* Use button gradient */
+    background-image: linear-gradient(204deg, #244B5A, #178093) !important; /* Explicit gradient */
+    color: #ffffff !important;
+    border-radius: 58px !important;
+    font-family: var(--apw-font-family) !important;
+    font-weight: var(--apw-font-bold) !important;
+    font-size: 1.1rem !important;
+    text-transform: uppercase !important;
+    padding: 12px 30px !important;
+    border: none !important;
+    text-align: center !important;
+    text-decoration: none !important;
+    transition: opacity 0.3s ease !important;
+    box-shadow: none !important;
+    line-height: normal !important;
+    height: auto !important;
+    min-height: unset !important;
+    max-height: unset !important;
+    opacity: 1 !important;
+    position: static !important;
+    float: none !important;
+    clear: both !important;
+    vertical-align: baseline !important;
+}
+
+/* Hover effect for the button */
+.woocommerce-account .woocommerce-MyAccount-downloads-table__empty-message .button.wc-forward:hover,
+.woocommerce-account .woocommerce-MyAccount-content .message-container .button.wc-forward:hover,
+.woocommerce-account .woocommerce-MyAccount-downloads + .message-container .button.wc-forward:hover,
+.woocommerce-account .woocommerce-MyAccount-content .message-container a.button.wc-forward:hover {
+    opacity: 0.85 !important;
+    color: #ffffff !important;
+    background: var(--apw-woo-button-background) !important; /* Ensure gradient stays on hover */
+    background-image: linear-gradient(204deg, #244B5A, #178093) !important; /* Explicit gradient */
+    border: none !important;
+    text-decoration: none !important;
+}
+
+/* Force button styles with additional specificity */
+body.woocommerce-account .woocommerce-MyAccount-content .message-container .button.wc-forward,
+body.woocommerce-account .woocommerce-MyAccount-content .message-container a.button.wc-forward {
+    display: block !important;
+    margin-top: 1.5rem !important;
+    width: fit-content !important;
+    background: var(--apw-woo-button-background) !important;
+    background-image: linear-gradient(204deg, #244B5A, #178093) !important;
+    color: #ffffff !important;
+    border-radius: 58px !important;
+    font-family: var(--apw-font-family) !important;
+    font-weight: var(--apw-font-bold) !important;
+    font-size: 1.1rem !important;
+    text-transform: uppercase !important;
+    padding: 12px 30px !important;
+    border: none !important;
+}
+
+/* Style the downloads table if it exists */
+.woocommerce-account .woocommerce-MyAccount-content .woocommerce-table--order-downloads {
+    margin-bottom: 2.5rem; /* Add space below the downloads table */
+}
+
+/* --- END: My Account Downloads Page Styling --- */
+
+/* --- START: Tax Certificates Page Styling --- */
+
+/* Style the main container for tax certificates */
+.woocommerce-account .woocommerce-MyAccount-content .messagepop {
+    display: none;
+    background-color: #ffffff;
+    border: 1px solid var(--apw-woo-dropdown-border);
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin: 0 auto;
+    padding: 25px;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    max-width: 600px;
+    z-index: 1000;
+    font-family: var(--apw-font-family);
+}
+
+/* Style the overlay background */
+#overlay, #overlayinvalidate {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+}
+
+/* Style the "Add Exemption" button */
+.woocommerce-account .woocommerce-MyAccount-content #btnAddExemption {
+    background: var(--apw-woo-button-background) !important;
+    color: #ffffff !important;
+    border-radius: 58px !important;
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold);
+    font-size: 1.1rem !important;
+    text-transform: uppercase !important;
+    padding: 12px 30px !important;
+    border: none !important;
+    text-align: center;
+    text-decoration: none !important;
+    transition: opacity 0.3s ease;
+    box-shadow: none !important;
+    cursor: pointer;
+}
+
+.woocommerce-account .woocommerce-MyAccount-content #btnAddExemption:hover {
+    opacity: 0.85;
+}
+
+/* Style the form table */
+.woocommerce-account .woocommerce-MyAccount-content .frmTable {
+    margin-bottom: 20px !important;
+    border: none !important;
+    width: 100%;
+}
+
+.woocommerce-account .woocommerce-MyAccount-content .frmTable td {
+    border: none !important;
+    padding: 10px;
+}
+
+/* Style the popup heading */
+.woocommerce-account .woocommerce-MyAccount-content .messagepop h3 {
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold);
+    font-size: 1.5rem;
+    color: var(--apw-woo-text-color);
+    margin-bottom: 0.5rem;
+}
+
+/* Style the popup labels */
+.woocommerce-account .woocommerce-MyAccount-content .messagepop label {
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-medium);
+    font-size: var(--apw-woo-content-font-size);
+    color: var(--apw-woo-text-color);
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+/* Style the dropdown select */
+.woocommerce-account .woocommerce-MyAccount-content .messagepop select {
+    font-family: var(--apw-font-family);
+    font-size: var(--apw-woo-content-font-size);
+    color: var(--apw-woo-text-color);
+    background-color: var(--apw-woo-dropdown-bg);
+    border: 1px solid var(--apw-woo-dropdown-border);
+    border-radius: 20px;
+    padding: 12px 20px;
+    min-height: 50px;
+    width: 100%;
+    box-shadow: none;
+    box-sizing: border-box;
+    margin-bottom: 1rem;
+    appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="6" viewBox="0 0 12 6"><path fill="%230D252C" d="M0 0l6 6 6-6z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    background-size: 12px;
+}
+
+/* Style all buttons in the popup */
+.woocommerce-account .woocommerce-MyAccount-content .messagepop button {
+    background: var(--apw-woo-button-background) !important;
+    color: #ffffff !important;
+    border-radius: 58px !important;
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold);
+    font-size: 1.1rem !important;
+    text-transform: uppercase !important;
+    padding: 12px 30px !important;
+    border: none !important;
+    text-align: center;
+    text-decoration: none !important;
+    transition: opacity 0.3s ease;
+    box-shadow: none !important;
+    cursor: pointer;
+    margin-top: 0.5rem;
+}
+
+.woocommerce-account .woocommerce-MyAccount-content .messagepop button:hover {
+    opacity: 0.85;
+}
+
+/* Style the "No certificates found" message */
+.woocommerce-account .woocommerce-MyAccount-content .woocommerce-message {
+    font-family: var(--apw-font-family);
+    font-size: var(--apw-woo-content-font-size);
+    color: var(--apw-woo-text-color);
+    background-color: rgba(182, 198, 204, 0.1);
+    border-radius: 8px;
+    border-left: 4px solid var(--apw-woo-notice-highlight);
+    padding: 1.5rem;
+    margin: 2rem 0;
+    line-height: 1.5;
+}
+
+/* Style the scrollable div */
+.woocommerce-account .woocommerce-MyAccount-content .scrolldiv {
+    overflow-y: auto;
+    max-height: 350px;
+    border: 1px solid var(--apw-faq-separator-color);
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 20px;
+}
+
+/* Style the invalidate popup */
+.woocommerce-account .woocommerce-MyAccount-content .invalidatepop {
+    display: none;
+    background-color: #ffffff;
+    border: 1px solid var(--apw-woo-dropdown-border);
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin: 0 auto;
+    padding: 25px;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    max-width: 400px;
+    z-index: 1000;
+    font-family: var(--apw-font-family);
+}
+
+.woocommerce-account .woocommerce-MyAccount-content #invalidateMsg {
+    font-family: var(--apw-font-family);
+    font-size: var(--apw-woo-content-font-size);
+    color: var(--apw-woo-text-color);
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+    .woocommerce-account .woocommerce-MyAccount-content .messagepop {
+        width: 90%;
+        padding: 15px;
+    }
+
+    .woocommerce-account .woocommerce-MyAccount-content .messagepop select {
+        padding: 10px 15px;
+        min-height: 45px;
+    }
+
+    .woocommerce-account .woocommerce-MyAccount-content .messagepop button {
+        padding: 10px 20px !important;
+        font-size: 1rem !important;
+        display: block;
+        width: 100%;
+        margin-top: 0.5rem;
+    }
+
+    .woocommerce-account .woocommerce-MyAccount-content .field.form-row-first,
+    .woocommerce-account .woocommerce-MyAccount-content .field.form-row-last {
+        float: none !important;
+        width: 100% !important;
+        margin-right: 0 !important;
+    }
+}
+
+/* --- END: Tax Certificates Page Styling --- */
+
+/* Add more specific styles for Orders, Addresses, etc. below as needed */
+
+
+/* --- End My Account Styles --- */
+
+/* --- Cart Totals "Calculated at checkout" Styling --- */
+.apw-woo-calculated-at-checkout {
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-medium);
+    font-style: italic;
+    color: var(--apw-woo-text-color);
+    opacity: 0.8;
+}
+
+/* ========================================
+   11. LOGIN/REGISTER PAGE STYLES
+   Styles for the WooCommerce login and registration forms
+   ======================================== */
+
+/* --- Start Login/Register Styles --- */
+
+/* Overall container styling */
+#customer_login {
+    font-family: var(--apw-font-family);
+    color: var(--apw-woo-text-color);
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+}
+
+/* Section headings (Login and Register) */
+#customer_login h3.uppercase {
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold);
+    font-size: 1.8rem;
+    color: var(--apw-woo-text-color);
+    margin-bottom: 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Form row styling */
+#customer_login .form-row {
+    margin-bottom: 1.5rem;
+}
+
+/* Form labels */
+#customer_login label {
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-medium);
+    font-size: var(--apw-woo-content-font-size);
+    color: var(--apw-woo-text-color);
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+/* Required field indicator */
+#customer_login label .required {
+    color: red;
+    font-weight: var(--apw-font-bold);
+    margin-left: 0.25rem;
+}
+
+/* Input fields styling */
+#customer_login input[type="text"],
+#customer_login input[type="email"],
+#customer_login input[type="password"] {
+    font-family: var(--apw-font-family);
+    font-size: var(--apw-woo-content-font-size);
+    color: var(--apw-woo-text-color);
+    background-color: var(--apw-woo-dropdown-bg);
+    border: 1px solid var(--apw-woo-dropdown-border);
+    border-radius: 20px;
+    padding: 12px 20px;
+    min-height: 50px;
+    width: 100%;
+    box-shadow: none;
+    box-sizing: border-box;
+}
+
+/* Password input container */
+#customer_login .password-input {
+    width: 100%;
+    display: block;
+    position: relative;
+}
+
+/* Show password button */
+#customer_login .show-password-input {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--apw-woo-text-color);
+    cursor: pointer;
+    padding: 0;
+    font-size: 1.2rem;
+}
+
+/* Remember me checkbox container */
+#customer_login .woocommerce-form__label-for-checkbox {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    cursor: pointer;
+}
+
+/* Remember me checkbox */
+#customer_login .woocommerce-form__input-checkbox {
+    margin-right: 0.5rem;
+    cursor: pointer;
+}
+
+/* Remember me text */
+#customer_login .woocommerce-form__label-for-checkbox span {
+    font-family: var(--apw-font-family);
+    font-size: 1rem;
+    color: var(--apw-woo-text-color);
+}
+
+/* Login button styling */
+#customer_login .woocommerce-form-login__submit {
+    background: var(--apw-woo-button-background) !important;
+    color: #ffffff !important;
+    border-radius: 58px !important;
+    font-family: var(--apw-font-family);
+    font-weight: var(--apw-font-bold);
+    font-size: 1.1rem !important;
+    text-transform: uppercase !important;
+    padding: 12px 30px !important;
+    border: none !important;
+    text-align: center;
+    text-decoration: none;
+    transition: opacity 0.3s ease;
+    cursor: pointer;
+    line-height: normal;
+    height: auto;
+    display: inline-block;
+    margin-right: 10px;
+    vertical-align: middle;
+    box-shadow: none;
+}
+
+/* Button hover state */
+#customer_login .woocommerce-form-login__submit:hover,
+#customer_login .woocommerce-form-register__submit:hover {
+    opacity: 0.85;
+    color: #ffffff !important;
+}
+
+/* Lost password link */
+#customer_login .lost_password {
+    margin-top: 1rem;
+}
+
+#customer_login .lost_password a {
+    font-family: var(--apw-font-family);
+    font-size: 1rem;
+    color: var(--apw-woo-notice-highlight);
+    text-decoration: underline;
+    transition: color 0.3s ease;
+}
+
+#customer_login .lost_password a:hover {
+    color: var(--apw-woo-text-color);
+    text-decoration: none;
+}
+
+/* Privacy policy text */
+.woocommerce-privacy-policy-text {
+    font-family: var(--apw-font-family);
+    font-size: 0.9rem;
+    color: var(--apw-woo-text-color);
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+}
+
+.woocommerce-privacy-policy-text a {
+    color: var(--apw-woo-notice-highlight);
+    text-decoration: underline;
+}
+
+.woocommerce-privacy-policy-text a:hover {
+    text-decoration: none;
+}
+
+/* --- Responsive Styles for Login/Register --- */
+
+/* Tablet Styles (849px and below) */
+@media (max-width: 849px) {
+    #customer_login .col-1,
+    #customer_login .col-2 {
+        max-width: 100%;
+        flex-basis: 100%;
+    }
+
+    #customer_login .col-1 {
+        margin-bottom: 2rem;
+    }
+
+    #customer_login h3.uppercase {
+        font-size: 1.5rem;
+    }
+
+    #customer_login label {
+        font-size: 1.1rem;
+    }
+
+    #customer_login input[type="text"],
+    #customer_login input[type="email"],
+    #customer_login input[type="password"] {
+        font-size: 1.1rem;
+        padding: 10px 15px;
+        min-height: 45px;
+    }
+}
+
+/* Mobile Styles (549px and below) */
+@media (max-width: 549px) {
+    #customer_login {
+        margin-top: 1rem;
+    }
+
+    #customer_login h3.uppercase {
+        font-size: 1.3rem;
+    }
+
+    #customer_login .form-row {
+        margin-bottom: 1rem;
+    }
+
+    #customer_login label {
+        font-size: 1rem;
+    }
+
+    #customer_login input[type="text"],
+    #customer_login input[type="email"],
+    #customer_login input[type="password"] {
+        font-size: 1rem;
+        padding: 8px 12px;
+        min-height: 40px;
+    }
+
+    #customer_login .woocommerce-form-login__submit,
+    #customer_login .woocommerce-form-register__submit {
+        width: 100%;
+        margin-right: 0;
+        padding: 10px 20px !important;
+        font-size: 1rem !important;
+    }
+}
+
+/* --- End Login/Register Styles --- */
+
