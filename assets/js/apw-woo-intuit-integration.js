@@ -17,13 +17,28 @@
         }
     }
 
-    // Initialize WFQBC with configuration
+    // Initialize WFQBC with configuration - NOW WITH MORE CHECKS
     function initIntuitPayment() {
-        if (typeof window.WFQBC === 'undefined' || typeof window.WFQBC.init !== 'function') {
-            logWithTime('WFQBC not ready or WFQBC.init is not a function');
+        logWithTime('Attempting initIntuitPayment...'); // Log entry into this function
+
+        // Check if WFQBC object exists
+        if (typeof window.WFQBC === 'undefined') {
+            logWithTime('Error: WFQBC object is not defined.');
             return false;
         }
-        logWithTime('Attempting to call WFQBC.init with config');
+        logWithTime('WFQBC object exists.');
+
+        // Check if WFQBC.init method exists
+        if (typeof window.WFQBC.init !== 'function') {
+            logWithTime('Error: WFQBC.init is not a function.');
+            // Log WFQBC structure for debugging if init is missing
+            if (typeof window.WFQBC === 'object') {
+                logWithTime('WFQBC object structure: ' + JSON.stringify(Object.keys(window.WFQBC)));
+            }
+            return false;
+        }
+        logWithTime('WFQBC.init function exists. Calling it...');
+
         try {
             WFQBC.init({
                 formSelector: 'form.checkout',
@@ -32,10 +47,11 @@
                 cardTypeFieldName: 'wc-intuit-payments-credit-card-card-type',
                 disclaimerSelector: '.payment_box.payment_method_intuit_payments_credit_card .wfqbc-disclaimer'
             });
-            logWithTime('WFQBC.init called successfully');
+            logWithTime('WFQBC.init called successfully.');
             return true;
         } catch (e) {
             logWithTime('WFQBC.init threw an error: ' + e.message);
+            console.error(e); // Log the full error object
             return false;
         }
     }
@@ -50,20 +66,26 @@
         }
 
         logWithTime('On checkout page, proceeding with Intuit init.');
-        initIntuitPayment(); // Initial call
+
+        // ADDED DELAY: Wait a very short time after document ready
+        setTimeout(function () {
+            logWithTime('Delayed init: Attempting initial initIntuitPayment call.');
+            initIntuitPayment(); // Initial call after delay
+        }, 150); // Delay in milliseconds (e.g., 150ms)
+
 
         // Re-init after checkout update
         $(document.body).off('updated_checkout.apwIntuit').on('updated_checkout.apwIntuit', function () {
             logWithTime('Event triggered: updated_checkout. Re-initializing Intuit...');
             // Add a small delay to ensure WC finishes updating the DOM
-            setTimeout(initIntuitPayment, 150);
+            setTimeout(initIntuitPayment, 250); // Increased delay slightly
         });
 
         // Re-init after payment method change
         $(document.body).off('payment_method_selected.apwIntuit').on('payment_method_selected.apwIntuit', function () {
             logWithTime('Event triggered: payment_method_selected. Re-initializing Intuit...');
             // Add a small delay
-            setTimeout(initIntuitPayment, 150);
+            setTimeout(initIntuitPayment, 250); // Increased delay slightly
         });
     }
 

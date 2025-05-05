@@ -11,7 +11,7 @@
  * Plugin Name:       APW WooCommerce Plugin
  * Plugin URI:        https://github.com/OrasesWPDev/apw-woo-plugin
  * Description:       Custom WooCommerce enhancements for displaying products across shop, category, and product pages.
- * Version:           1.17.4
+ * Version:           1.17.5
  * Requires at least: 5.3
  * Requires PHP:      7.2
  * Author:            Orases
@@ -33,7 +33,7 @@ if (!defined('ABSPATH')) {
 /**
  * Plugin constants
  */
-define('APW_WOO_VERSION', '1.17.4');
+define('APW_WOO_VERSION', '1.17.5');
 define('APW_WOO_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('APW_WOO_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('APW_WOO_PLUGIN_FILE', __FILE__);
@@ -734,7 +734,7 @@ function apw_woo_init()
 
     // Initialize asset management system
     if (class_exists('APW_Woo_Assets')) {
-        APW_Woo_Assets::init();
+//        APW_Woo_Assets::init();
         apw_woo_log('Asset management system initialized.');
     } else {
         // Fallback to legacy asset registration if class doesn't exist
@@ -1000,6 +1000,57 @@ function apw_woo_enable_performance_tracking($value)
 if (APW_WOO_DEBUG_MODE) {
     add_filter('apw_woo_enable_performance_tracking', '__return_true');
 }
+
+/**
+ * Direct Enqueue Test for Intuit Integration Script
+ */
+function apw_direct_intuit_script_test()
+{
+    // Only run on checkout page
+    if (function_exists('is_checkout') && is_checkout()) {
+
+        $script_handle = 'apw-orases-intuit-checkout-integration'; // Use the unique handle
+        $script_url = APW_WOO_PLUGIN_URL . 'assets/js/apw-woo-intuit-integration.js';
+        $script_path = APW_WOO_PLUGIN_DIR . 'assets/js/apw-woo-intuit-integration.js';
+        $dependency_handle = 'wc-intuit-qbms-checkout'; // The handle we confirmed is enqueued
+
+        // Check if the dependency script is actually enqueued before proceeding
+        if (wp_script_is($dependency_handle, 'enqueued') && file_exists($script_path)) {
+            if (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                apw_woo_log("Direct Enqueue Test: Conditions met. Enqueuing {$script_handle}.");
+            }
+            wp_enqueue_script(
+                $script_handle,
+                $script_url,
+                array('jquery', 'wc-checkout', $dependency_handle), // Correct dependencies
+                filemtime($script_path),
+                true // Load in footer (we can change this back later if needed)
+            );
+
+            // --- Re-add localization here ---
+            $page_data = array(
+                'debug_mode' => APW_WOO_DEBUG_MODE,
+                'is_checkout' => true
+            );
+            wp_localize_script(
+                $script_handle,
+                'apwWooIntuitData', // Specific object name
+                $page_data
+            );
+            if (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                apw_woo_log("Direct Enqueue Test: Localized data for {$script_handle}.");
+            }
+            // --- End localization ---
+
+        } elseif (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+            apw_woo_log("Direct Enqueue Test: Skipped. Dependency '{$dependency_handle}' not enqueued: " . (wp_script_is($dependency_handle, 'enqueued') ? 'Yes' : 'No') . " OR File missing: " . (file_exists($script_path) ? 'No' : 'Yes'));
+        }
+    }
+}
+
+// Hook with a standard priority
+add_action('wp_enqueue_scripts', 'apw_direct_intuit_script_test', 20);
+
 
 //--------------------------------------------------------------
 // Initialize the plugin
