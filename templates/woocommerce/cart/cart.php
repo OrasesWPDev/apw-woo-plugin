@@ -175,7 +175,7 @@ $correct_cart_title = $cart_page_id ? get_the_title($cart_page_id) : __('Cart', 
                                         echo apply_filters( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                                             'woocommerce_cart_item_remove_link',
                                             sprintf(
-                                                '<a href="%s" class="apw-woo-remove remove" aria-label="%s" data-product_id="%s" data-product_sku="%s" data-cart_item_key="%s">&times;</a>',
+                                                '<a href="%s" class="remove" aria-label="%s" data-product_id="%s" data-product_sku="%s" data-cart_item_key="%s">&times;</a>',
                                                 esc_url(wc_get_cart_remove_url($cart_item_key)),
                                                 /* translators: %s is the product name */
                                                 esc_attr(sprintf(__('Remove %s from cart', 'woocommerce'), wp_strip_all_tags($product_name))),
