@@ -100,6 +100,9 @@ if (!is_a($checkout, 'WC_Checkout')) {
                 // Display the order received content
                 ?>
                 <div class="apw-woo-order-received apw-woo-section-wrapper">
+                    <h3 class="apw-woo-thank-you-message" style="font-weight: bold; margin-bottom: 20px;">
+                        <?php echo esc_html__('Thank you for your order. You will get an order confirmation email shortly.', 'apw-woo-plugin'); ?>
+                    </h3>
                     <?php
                     // This hook displays the order details and thank you message
                     do_action('woocommerce_thankyou', $order_id);
