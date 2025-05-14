@@ -166,7 +166,8 @@ add_filter('woocommerce_email_headers', 'apw_woo_add_cc_to_emails', 10, 3);
  * - Add/Ensure 'Company name' field for billing and shipping.
  * - Make billing company/phone always required.
  * - Position billing company before country on the same line.
- * - Make shipping company/phone conditionally required.
+ * - Add shipping phone field and make it conditionally required.
+ * - Make shipping company field conditionally required.
  * - Position shipping company before country on the same line.
  * - Incorporates the 'Additional Emails' field addition.
  *
@@ -232,12 +233,12 @@ function apw_woo_modify_checkout_fields_structure_and_requirements($fields)
             $fields['shipping']['shipping_company'] = array(
                 'label' => __('Company name', 'woocommerce'),
                 'placeholder' => _x('Company name', 'placeholder', 'woocommerce'),
-                'required' => $ship_to_different_address_is_checked_on_load,
+                'required' => true, // Always required
                 'class' => array('form-row-first'),
                 'priority' => 30,
             );
         } else {
-            $fields['shipping']['shipping_company']['required'] = $ship_to_different_address_is_checked_on_load;
+            $fields['shipping']['shipping_company']['required'] = true; // Always required
             $fields['shipping']['shipping_company']['class'] = array('form-row-first');
             $fields['shipping']['shipping_company']['priority'] = 30;
         }
@@ -248,11 +249,16 @@ function apw_woo_modify_checkout_fields_structure_and_requirements($fields)
             $fields['shipping']['shipping_country']['priority'] = 40;
         }
 
-        // 3. Shipping Phone
-        if (isset($fields['shipping']['shipping_phone'])) {
-            $fields['shipping']['shipping_phone']['required'] = $ship_to_different_address_is_checked_on_load;
-            $fields['shipping']['shipping_phone']['class'] = array('form-row-wide');
-        }
+        // 3. Shipping Phone - Add this field as it doesn't exist by default
+        $fields['shipping']['shipping_phone'] = array(
+            'label' => __('Phone', 'woocommerce'),
+            'placeholder' => _x('Phone', 'placeholder', 'woocommerce'),
+            'required' => true, // Always required
+            'class' => array('form-row-wide'),
+            'clear' => true,
+            'priority' => 100, // After address fields
+            'type' => 'tel',
+        );
     }
 
     return $fields;
@@ -268,12 +274,14 @@ function apw_woo_validate_conditional_shipping_fields_on_submit()
 {
     if (isset($_POST['ship_to_different_address']) && 1 == $_POST['ship_to_different_address']) {
 
-        if (empty(trim($_POST['shipping_company']))) {
-            wc_add_notice(__('Shipping company is a required field when shipping to a different address.', 'apw-woo-plugin'), 'error');
+        // Validate shipping company field
+        if (!isset($_POST['shipping_company']) || empty(trim($_POST['shipping_company']))) {
+            wc_add_notice(__('Shipping company is a required field.', 'apw-woo-plugin'), 'error');
         }
 
-        if (empty(trim($_POST['shipping_phone']))) {
-            wc_add_notice(__('Shipping phone is a required field when shipping to a different address.', 'apw-woo-plugin'), 'error');
+        // Validate shipping phone field
+        if (!isset($_POST['shipping_phone']) || empty(trim($_POST['shipping_phone']))) {
+            wc_add_notice(__('Shipping phone is a required field.', 'apw-woo-plugin'), 'error');
         }
     }
 }
