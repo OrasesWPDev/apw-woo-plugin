@@ -3342,6 +3342,24 @@ body.woocommerce-account .woocommerce-MyAccount-content .message-container a.but
 
 /* --- END: My Account Downloads Page Styling --- */
 
+/* --- START: Checkout "Ship to different address" Styling --- */
+/* Make the shipping option more prominent and easier to notice */
+.woocommerce-shipping-fields h3 label span {
+    font-weight: var(--apw-font-bold, 700) !important;
+    font-size: 1.3rem !important;
+    color: var(--apw-woo-text-color, #0D252C) !important;
+}
+
+/* Add visual emphasis to the shipping checkbox section */
+.woocommerce-shipping-fields h3 {
+    margin-top: 1.5rem !important;
+    margin-bottom: 1.5rem !important;
+    padding: 10px !important;
+    background-color: rgba(215, 224, 226, 0.2) !important; /* Light background to make it stand out */
+    border-radius: 8px !important;
+}
+/* --- END: Checkout "Ship to different address" Styling --- */
+
 /* --- START: Tax Certificates Page Styling --- */
 
 /* Style the main container for tax certificates */
