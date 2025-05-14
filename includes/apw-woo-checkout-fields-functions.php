@@ -2,8 +2,9 @@
 /**
  * Custom Checkout Field Functions for APW WooCommerce Plugin
  *
- * Adds an 'Additional Emails' field to the checkout page, validates it,
- * saves it to the order, displays it in admin, and adds emails as CC to specified order emails.
+ * - Adds an 'Additional Emails' field to the checkout page, validates it,
+ *   saves it to the order, displays it in admin, and adds emails as CC.
+ * - Modifies 'Company' and 'Phone' fields to be required and adjusts layout.
  *
  * @package APW_Woo_Plugin
  */
@@ -13,7 +14,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// Define the new field key
+// Define the additional email field key
 define('APW_WOO_ADDITIONAL_EMAIL_FIELD_KEY', 'apw_woo_billing_additional_emails');
 
 /**
@@ -37,8 +38,7 @@ function apw_woo_add_additional_emails_field($fields)
     return $fields;
 }
 
-add_filter('woocommerce_checkout_fields', 'apw_woo_add_additional_emails_field');
-
+// Note: The filter to add the 'additional_emails_field' will be combined later or needs to be called carefully.
 
 /**
  * Validate the additional emails field during checkout process.
@@ -48,18 +48,17 @@ function apw_woo_validate_additional_emails_field()
 {
     $field_key = APW_WOO_ADDITIONAL_EMAIL_FIELD_KEY;
 
-    // Check if the field is set and not empty
     if (isset($_POST[$field_key]) && !empty(trim($_POST[$field_key]))) {
         $additional_emails_str = sanitize_text_field($_POST[$field_key]);
         $email_array = explode(',', $additional_emails_str);
         $email_array = array_map('trim', $email_array);
-        $email_array = array_filter($email_array); // Remove empty entries after trimming
+        $email_array = array_filter($email_array);
 
         $invalid_emails_found = false;
         foreach ($email_array as $email) {
             if (!is_email($email)) {
                 $invalid_emails_found = true;
-                break; // Stop checking after the first invalid email is found
+                break;
             }
         }
 
@@ -85,7 +84,6 @@ function apw_woo_save_additional_emails_field($order_id)
     $field_key = APW_WOO_ADDITIONAL_EMAIL_FIELD_KEY;
 
     if (isset($_POST[$field_key])) {
-        // Sanitize the input before saving
         $additional_emails_value = sanitize_text_field($_POST[$field_key]);
         update_post_meta($order_id, $field_key, $additional_emails_value);
     }
@@ -102,20 +100,19 @@ add_action('woocommerce_checkout_update_order_meta', 'apw_woo_save_additional_em
 function apw_woo_display_additional_emails_admin($order)
 {
     $field_key = APW_WOO_ADDITIONAL_EMAIL_FIELD_KEY;
-    $additional_emails = $order->get_meta($field_key, true); // Use $order object method
+    $additional_emails = $order->get_meta($field_key, true);
 
     if (!empty($additional_emails)) {
         ?>
         <div class="order_data_column apw-woo-admin-additional-emails">
             <h4><?php esc_html_e('Additional Emails', 'apw-woo-plugin'); ?></h4>
-            <p><?php echo esc_html($additional_emails); ?></p> <?php // Escaped output ?>
+            <p><?php echo esc_html($additional_emails); ?></p>
         </div>
         <?php
     }
 }
 
-// Removed duplicate add_action here
-add_action('woocommerce_admin_order_data_after_billing_address', 'apw_woo_display_additional_emails_admin', 10, 1); // Hooking after billing address for better placement
+add_action('woocommerce_admin_order_data_after_billing_address', 'apw_woo_display_additional_emails_admin', 10, 1);
 
 
 /**
@@ -128,22 +125,18 @@ add_action('woocommerce_admin_order_data_after_billing_address', 'apw_woo_displa
  */
 function apw_woo_add_cc_to_emails($headers, $email_id, $order)
 {
-    // Ensure we have a valid order object
     if (!is_a($order, 'WC_Order')) {
         return $headers;
     }
 
-    // Define which email notifications should include the CC
     $allowed_email_ids = apply_filters('apw_woo_cc_email_ids', array(
         'customer_on_hold_order',
         'customer_processing_order',
         'customer_completed_order',
         'customer_refunded_order',
         'customer_invoice',
-        // Add other relevant email IDs here if needed
     ));
 
-    // Check if the current email ID is allowed
     if (in_array($email_id, $allowed_email_ids)) {
         $field_key = APW_WOO_ADDITIONAL_EMAIL_FIELD_KEY;
         $extra_emails_str = $order->get_meta($field_key, true);
@@ -151,11 +144,10 @@ function apw_woo_add_cc_to_emails($headers, $email_id, $order)
         if (!empty($extra_emails_str)) {
             $extra_emails_array = explode(',', $extra_emails_str);
             $extra_emails_array = array_map('trim', $extra_emails_array);
-            $extra_emails_array = array_filter($extra_emails_array); // Remove empty values
+            $extra_emails_array = array_filter($extra_emails_array);
 
-            // Add each valid email as a CC header
             foreach ($extra_emails_array as $cc_email) {
-                if (is_email($cc_email)) { // Double-check validity before adding
+                if (is_email($cc_email)) {
                     $headers .= "Cc: " . sanitize_email($cc_email) . "\r\n";
                 }
             }
@@ -166,5 +158,126 @@ function apw_woo_add_cc_to_emails($headers, $email_id, $order)
 }
 
 add_filter('woocommerce_email_headers', 'apw_woo_add_cc_to_emails', 10, 3);
+
+// --- NEW AND MODIFIED FUNCTIONS FOR COMPANY AND PHONE FIELDS ---
+
+/**
+ * Modify checkout fields to:
+ * - Add/Ensure 'Company name' field for billing and shipping.
+ * - Make billing company/phone always required.
+ * - Position billing company before country on the same line.
+ * - Make shipping company/phone conditionally required.
+ * - Position shipping company before country on the same line.
+ * - Incorporates the 'Additional Emails' field addition.
+ *
+ * @param array $fields The original checkout fields.
+ * @return array The modified checkout fields.
+ */
+function apw_woo_modify_checkout_fields_structure_and_requirements($fields)
+{
+
+    // --- Billing Fields ---
+    if (isset($fields['billing'])) {
+
+        // 1. Billing Company
+        if (!isset($fields['billing']['billing_company'])) {
+            $fields['billing']['billing_company'] = array(
+                'label' => __('Company name', 'woocommerce'),
+                'placeholder' => _x('Company name', 'placeholder', 'woocommerce'),
+                'required' => true,
+                'class' => array('form-row-first'),
+                'priority' => 30,
+            );
+        } else {
+            $fields['billing']['billing_company']['required'] = true;
+            $fields['billing']['billing_company']['class'] = array('form-row-first');
+            $fields['billing']['billing_company']['priority'] = 30;
+        }
+
+        // 2. Billing Country / Region
+        if (isset($fields['billing']['billing_country'])) {
+            $fields['billing']['billing_country']['class'] = array('form-row-last');
+            $fields['billing']['billing_country']['priority'] = 40;
+        }
+
+        // 3. Billing Phone
+        if (isset($fields['billing']['billing_phone'])) {
+            $fields['billing']['billing_phone']['required'] = true;
+            $fields['billing']['billing_phone']['class'] = array('form-row-wide');
+        }
+
+        // 4. Additional Emails Field (integrated from apw_woo_add_additional_emails_field)
+        $fields['billing'][APW_WOO_ADDITIONAL_EMAIL_FIELD_KEY] = array(
+            'label' => __('Additional Emails (comma-separated)', 'apw-woo-plugin'),
+            'placeholder' => _x('email1@example.com, email2@example.com', 'placeholder', 'apw-woo-plugin'),
+            'required' => false,
+            'class' => array('form-row-wide'),
+            'clear' => true,
+            'priority' => 110 // After standard email
+        );
+    }
+
+    // --- Shipping Fields (Conditionally Handled) ---
+    $ship_to_different_address_is_checked_on_load = false;
+    if (function_exists('WC') && WC()->checkout() && method_exists(WC()->checkout(), 'get_value')) {
+        $ship_to_different_address_is_checked_on_load = (bool)WC()->checkout()->get_value('ship_to_different_address');
+    } elseif (isset($_POST['ship_to_different_address']) && $_POST['ship_to_different_address']) {
+        $ship_to_different_address_is_checked_on_load = true;
+    }
+
+    if (isset($fields['shipping'])) {
+
+        // 1. Shipping Company
+        if (!isset($fields['shipping']['shipping_company'])) {
+            $fields['shipping']['shipping_company'] = array(
+                'label' => __('Company name', 'woocommerce'),
+                'placeholder' => _x('Company name', 'placeholder', 'woocommerce'),
+                'required' => $ship_to_different_address_is_checked_on_load,
+                'class' => array('form-row-first'),
+                'priority' => 30,
+            );
+        } else {
+            $fields['shipping']['shipping_company']['required'] = $ship_to_different_address_is_checked_on_load;
+            $fields['shipping']['shipping_company']['class'] = array('form-row-first');
+            $fields['shipping']['shipping_company']['priority'] = 30;
+        }
+
+        // 2. Shipping Country / Region
+        if (isset($fields['shipping']['shipping_country'])) {
+            $fields['shipping']['shipping_country']['class'] = array('form-row-last');
+            $fields['shipping']['shipping_country']['priority'] = 40;
+        }
+
+        // 3. Shipping Phone
+        if (isset($fields['shipping']['shipping_phone'])) {
+            $fields['shipping']['shipping_phone']['required'] = $ship_to_different_address_is_checked_on_load;
+            $fields['shipping']['shipping_phone']['class'] = array('form-row-wide');
+        }
+    }
+
+    return $fields;
+}
+
+add_filter('woocommerce_checkout_fields', 'apw_woo_modify_checkout_fields_structure_and_requirements', 20);
+
+/**
+ * Validate shipping company and phone if "Ship to a different address" is checked.
+ * This function is called during the checkout submission process.
+ */
+function apw_woo_validate_conditional_shipping_fields_on_submit()
+{
+    if (isset($_POST['ship_to_different_address']) && 1 == $_POST['ship_to_different_address']) {
+
+        if (empty(trim($_POST['shipping_company']))) {
+            wc_add_notice(__('Shipping company is a required field when shipping to a different address.', 'apw-woo-plugin'), 'error');
+        }
+
+        if (empty(trim($_POST['shipping_phone']))) {
+            wc_add_notice(__('Shipping phone is a required field when shipping to a different address.', 'apw-woo-plugin'), 'error');
+        }
+    }
+}
+
+add_action('woocommerce_checkout_process', 'apw_woo_validate_conditional_shipping_fields_on_submit');
 
 ?>
