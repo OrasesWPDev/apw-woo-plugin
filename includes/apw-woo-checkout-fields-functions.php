@@ -295,18 +295,24 @@ add_action('woocommerce_checkout_process', 'apw_woo_validate_conditional_shippin
  * @return array Modified fields
  */
 function apw_woo_make_address_fields_required_on_account_page($fields) {
-    // Only apply on account pages with edit-address endpoint
-    if (!is_account_page() || !is_wc_endpoint_url('edit-address')) {
+    // Remove the is_wc_endpoint_url check - it's unreliable at filter time
+    // Instead, check if we're on an account page and if the fields array has the expected structure
+    if (!is_account_page() || empty($fields) || !is_array($fields)) {
         return $fields;
     }
     
+    // Debug logging
     if (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
-        apw_woo_log('Making company field required on account edit address page');
+        apw_woo_log('Address fields function called with fields: ' . print_r(array_keys($fields), true));
     }
     
     // Make company required if it exists in the fields
     if (isset($fields['company'])) {
         $fields['company']['required'] = true;
+        
+        if (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+            apw_woo_log('Made company field required in default address fields');
+        }
     }
     
     return $fields;
@@ -319,18 +325,23 @@ function apw_woo_make_address_fields_required_on_account_page($fields) {
  * @return array Modified fields
  */
 function apw_woo_make_billing_phone_required_on_account_page($fields) {
-    // Only apply on account pages with edit-address endpoint
-    if (!is_account_page() || !is_wc_endpoint_url('edit-address')) {
+    // Remove the is_wc_endpoint_url check
+    if (!is_account_page() || empty($fields) || !is_array($fields)) {
         return $fields;
     }
     
+    // Debug logging
     if (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
-        apw_woo_log('Making billing phone field required on account edit address page');
+        apw_woo_log('Billing fields function called with fields: ' . print_r(array_keys($fields), true));
     }
     
     // Make phone required if it exists in the fields
     if (isset($fields['billing_phone'])) {
         $fields['billing_phone']['required'] = true;
+        
+        if (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+            apw_woo_log('Made billing_phone field required');
+        }
     }
     
     return $fields;
@@ -343,13 +354,14 @@ function apw_woo_make_billing_phone_required_on_account_page($fields) {
  * @return array Modified fields
  */
 function apw_woo_add_shipping_phone_to_account_page($fields) {
-    // Only apply on account pages with edit-address endpoint
-    if (!is_account_page() || !is_wc_endpoint_url('edit-address')) {
+    // Remove the is_wc_endpoint_url check
+    if (!is_account_page() || empty($fields) || !is_array($fields)) {
         return $fields;
     }
     
+    // Debug logging
     if (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
-        apw_woo_log('Adding/making required shipping phone field on account edit address page');
+        apw_woo_log('Shipping fields function called with fields: ' . print_r(array_keys($fields), true));
     }
     
     // Add shipping phone field if it doesn't exist
@@ -380,18 +392,77 @@ function apw_woo_save_shipping_phone_field($customer_id, $posted_data) {
     }
 }
 
-// Add hooks for My Account address fields
-// Use higher priority (20) to ensure our modifications run after WooCommerce's default setup
-add_filter('woocommerce_default_address_fields', 'apw_woo_make_address_fields_required_on_account_page', 20);
-add_filter('woocommerce_billing_fields', 'apw_woo_make_billing_phone_required_on_account_page', 20);
-add_filter('woocommerce_shipping_fields', 'apw_woo_add_shipping_phone_to_account_page', 20);
-add_action('woocommerce_customer_save_address', 'apw_woo_save_shipping_phone_field', 10, 2);
+/**
+ * Validate required fields on My Account address forms
+ * This is a fallback validation in case the 'required' attribute doesn't trigger browser validation
+ */
+function apw_woo_validate_required_address_fields() {
+    if (!is_account_page() || !is_wc_endpoint_url('edit-address')) {
+        return;
+    }
+    
+    // Only run on form submission
+    if (empty($_POST)) {
+        return;
+    }
+    
+    // Get the address type (billing or shipping)
+    $load_address = isset($_GET['address']) ? wc_clean(wp_unslash($_GET['address'])) : 'billing';
+    
+    if (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+        apw_woo_log('Validating ' . $load_address . ' address fields');
+    }
+    
+    // Validate company field
+    if (empty($_POST[$load_address . '_company'])) {
+        wc_add_notice(__('Company name is a required field.', 'woocommerce'), 'error');
+        
+        if (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+            apw_woo_log('Company validation failed');
+        }
+    }
+    
+    // Validate phone field for both address types
+    if ($load_address === 'billing' && empty($_POST['billing_phone'])) {
+        wc_add_notice(__('Phone is a required field.', 'woocommerce'), 'error');
+        
+        if (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+            apw_woo_log('Billing phone validation failed');
+        }
+    } elseif ($load_address === 'shipping' && empty($_POST['shipping_phone'])) {
+        wc_add_notice(__('Phone is a required field.', 'woocommerce'), 'error');
+        
+        if (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+            apw_woo_log('Shipping phone validation failed');
+        }
+    }
+}
+
+// Add hooks for My Account address fields with HIGHER priority
+add_filter('woocommerce_default_address_fields', 'apw_woo_make_address_fields_required_on_account_page', 999);
+add_filter('woocommerce_billing_fields', 'apw_woo_make_billing_phone_required_on_account_page', 999);
+add_filter('woocommerce_shipping_fields', 'apw_woo_add_shipping_phone_to_account_page', 999);
+
+// Add validation hook for server-side validation
+add_action('woocommerce_before_save_address_form', 'apw_woo_validate_required_address_fields');
+
+// Add save hook for shipping phone with higher priority
+add_action('woocommerce_customer_save_address', 'apw_woo_save_shipping_phone_field', 20, 2);
 
 // Add debug action to check when fields are being processed
 if (APW_WOO_DEBUG_MODE) {
     add_action('init', function() {
-        if (is_account_page() && is_wc_endpoint_url('edit-address') && function_exists('apw_woo_log')) {
-            apw_woo_log('On account edit address page - hooks should be active');
+        if (is_account_page() && function_exists('apw_woo_log')) {
+            apw_woo_log('On account page - hooks should be active');
+            
+            // Check if we're on an edit address page
+            if (is_wc_endpoint_url('edit-address')) {
+                apw_woo_log('On edit-address endpoint specifically');
+                
+                // Get the address type
+                $load_address = isset($_GET['address']) ? wc_clean(wp_unslash($_GET['address'])) : 'billing';
+                apw_woo_log('Address type: ' . $load_address);
+            }
         }
     }, 999);
 }
