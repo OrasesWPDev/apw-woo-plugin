@@ -295,9 +295,13 @@ add_action('woocommerce_checkout_process', 'apw_woo_validate_conditional_shippin
  * @return array Modified fields
  */
 function apw_woo_make_address_fields_required_on_account_page($fields) {
-    // Only apply on account pages
-    if (!is_account_page()) {
+    // Only apply on account pages with edit-address endpoint
+    if (!is_account_page() || !is_wc_endpoint_url('edit-address')) {
         return $fields;
+    }
+    
+    if (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+        apw_woo_log('Making company field required on account edit address page');
     }
     
     // Make company required if it exists in the fields
@@ -315,9 +319,13 @@ function apw_woo_make_address_fields_required_on_account_page($fields) {
  * @return array Modified fields
  */
 function apw_woo_make_billing_phone_required_on_account_page($fields) {
-    // Only apply on account pages
-    if (!is_account_page()) {
+    // Only apply on account pages with edit-address endpoint
+    if (!is_account_page() || !is_wc_endpoint_url('edit-address')) {
         return $fields;
+    }
+    
+    if (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+        apw_woo_log('Making billing phone field required on account edit address page');
     }
     
     // Make phone required if it exists in the fields
@@ -335,9 +343,13 @@ function apw_woo_make_billing_phone_required_on_account_page($fields) {
  * @return array Modified fields
  */
 function apw_woo_add_shipping_phone_to_account_page($fields) {
-    // Only apply on account pages
-    if (!is_account_page()) {
+    // Only apply on account pages with edit-address endpoint
+    if (!is_account_page() || !is_wc_endpoint_url('edit-address')) {
         return $fields;
+    }
+    
+    if (APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+        apw_woo_log('Adding/making required shipping phone field on account edit address page');
     }
     
     // Add shipping phone field if it doesn't exist
@@ -369,9 +381,19 @@ function apw_woo_save_shipping_phone_field($customer_id, $posted_data) {
 }
 
 // Add hooks for My Account address fields
-add_filter('woocommerce_default_address_fields', 'apw_woo_make_address_fields_required_on_account_page');
-add_filter('woocommerce_billing_fields', 'apw_woo_make_billing_phone_required_on_account_page');
-add_filter('woocommerce_shipping_fields', 'apw_woo_add_shipping_phone_to_account_page');
+// Use higher priority (20) to ensure our modifications run after WooCommerce's default setup
+add_filter('woocommerce_default_address_fields', 'apw_woo_make_address_fields_required_on_account_page', 20);
+add_filter('woocommerce_billing_fields', 'apw_woo_make_billing_phone_required_on_account_page', 20);
+add_filter('woocommerce_shipping_fields', 'apw_woo_add_shipping_phone_to_account_page', 20);
 add_action('woocommerce_customer_save_address', 'apw_woo_save_shipping_phone_field', 10, 2);
+
+// Add debug action to check when fields are being processed
+if (APW_WOO_DEBUG_MODE) {
+    add_action('init', function() {
+        if (is_account_page() && is_wc_endpoint_url('edit-address') && function_exists('apw_woo_log')) {
+            apw_woo_log('On account edit address page - hooks should be active');
+        }
+    }, 999);
+}
 
 ?>
