@@ -288,4 +288,90 @@ function apw_woo_validate_conditional_shipping_fields_on_submit()
 
 add_action('woocommerce_checkout_process', 'apw_woo_validate_conditional_shipping_fields_on_submit');
 
+/**
+ * Make company and phone fields required on My Account edit address pages
+ * 
+ * @param array $fields The address fields
+ * @return array Modified fields
+ */
+function apw_woo_make_address_fields_required_on_account_page($fields) {
+    // Only apply on account pages
+    if (!is_account_page()) {
+        return $fields;
+    }
+    
+    // Make company required if it exists in the fields
+    if (isset($fields['company'])) {
+        $fields['company']['required'] = true;
+    }
+    
+    return $fields;
+}
+
+/**
+ * Make billing phone required on My Account edit address pages
+ * 
+ * @param array $fields The billing fields
+ * @return array Modified fields
+ */
+function apw_woo_make_billing_phone_required_on_account_page($fields) {
+    // Only apply on account pages
+    if (!is_account_page()) {
+        return $fields;
+    }
+    
+    // Make phone required if it exists in the fields
+    if (isset($fields['billing_phone'])) {
+        $fields['billing_phone']['required'] = true;
+    }
+    
+    return $fields;
+}
+
+/**
+ * Add shipping phone field to My Account edit address pages
+ * 
+ * @param array $fields The shipping fields
+ * @return array Modified fields
+ */
+function apw_woo_add_shipping_phone_to_account_page($fields) {
+    // Only apply on account pages
+    if (!is_account_page()) {
+        return $fields;
+    }
+    
+    // Add shipping phone field if it doesn't exist
+    if (!isset($fields['shipping_phone'])) {
+        $fields['shipping_phone'] = array(
+            'label' => __('Phone', 'woocommerce'),
+            'placeholder' => _x('Phone', 'placeholder', 'woocommerce'),
+            'required' => true,
+            'class' => array('form-row-wide'),
+            'clear' => true,
+            'type' => 'tel',
+            'priority' => 100, // After address fields
+        );
+    } else {
+        // Make it required if it already exists
+        $fields['shipping_phone']['required'] = true;
+    }
+    
+    return $fields;
+}
+
+/**
+ * Save shipping phone field from My Account edit address form
+ */
+function apw_woo_save_shipping_phone_field($customer_id, $posted_data) {
+    if (isset($posted_data['shipping_phone'])) {
+        update_user_meta($customer_id, 'shipping_phone', sanitize_text_field($posted_data['shipping_phone']));
+    }
+}
+
+// Add hooks for My Account address fields
+add_filter('woocommerce_default_address_fields', 'apw_woo_make_address_fields_required_on_account_page');
+add_filter('woocommerce_billing_fields', 'apw_woo_make_billing_phone_required_on_account_page');
+add_filter('woocommerce_shipping_fields', 'apw_woo_add_shipping_phone_to_account_page');
+add_action('woocommerce_customer_save_address', 'apw_woo_save_shipping_phone_field', 10, 2);
+
 ?>
