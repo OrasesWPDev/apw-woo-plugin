@@ -299,7 +299,13 @@ function apw_woo_make_company_required($fields) {
         if (!isset($fields['company']['class'])) {
             $fields['company']['class'] = array();
         }
-        $fields['company']['class'][] = 'validate-required';
+        if (!in_array('validate-required', $fields['company']['class'])) {
+            $fields['company']['class'][] = 'validate-required';
+        }
+        
+        // Add a custom data attribute for JavaScript to recognize
+        $fields['company']['custom_attributes'] = isset($fields['company']['custom_attributes']) ? $fields['company']['custom_attributes'] : array();
+        $fields['company']['custom_attributes']['data-required'] = 'true';
     }
     return $fields;
 }
@@ -308,20 +314,58 @@ function apw_woo_make_company_required($fields) {
  * Make phone field required in address forms
  */
 function apw_woo_make_phone_required($fields) {
-    if (isset($fields['phone']) || isset($fields['billing_phone']) || isset($fields['shipping_phone'])) {
-        // Handle different possible field keys
-        foreach (array('phone', 'billing_phone', 'shipping_phone') as $key) {
-            if (isset($fields[$key])) {
-                $fields[$key]['required'] = true;
-                
-                // Add required class
-                if (!isset($fields[$key]['class'])) {
-                    $fields[$key]['class'] = array();
-                }
+    // Handle different possible field keys
+    foreach (array('phone', 'billing_phone', 'shipping_phone') as $key) {
+        if (isset($fields[$key])) {
+            $fields[$key]['required'] = true;
+            
+            // Add required class
+            if (!isset($fields[$key]['class'])) {
+                $fields[$key]['class'] = array();
+            }
+            if (!in_array('validate-required', $fields[$key]['class'])) {
                 $fields[$key]['class'][] = 'validate-required';
             }
+            
+            // Add a custom data attribute for JavaScript to recognize
+            $fields[$key]['custom_attributes'] = isset($fields[$key]['custom_attributes']) ? $fields[$key]['custom_attributes'] : array();
+            $fields[$key]['custom_attributes']['data-required'] = 'true';
         }
     }
+    return $fields;
+}
+
+/**
+ * Specifically target My Account address fields
+ */
+function apw_woo_make_myaccount_fields_required($fields, $country, $type) {
+    // Make company field required
+    if (isset($fields['company'])) {
+        $fields['company']['required'] = true;
+        
+        // Add required class
+        if (!isset($fields['company']['class'])) {
+            $fields['company']['class'] = array();
+        }
+        if (!in_array('validate-required', $fields['company']['class'])) {
+            $fields['company']['class'][] = 'validate-required';
+        }
+    }
+    
+    // Make phone field required
+    $phone_key = $type . '_phone';
+    if (isset($fields[$phone_key])) {
+        $fields[$phone_key]['required'] = true;
+        
+        // Add required class
+        if (!isset($fields[$phone_key]['class'])) {
+            $fields[$phone_key]['class'] = array();
+        }
+        if (!in_array('validate-required', $fields[$phone_key]['class'])) {
+            $fields[$phone_key]['class'][] = 'validate-required';
+        }
+    }
+    
     return $fields;
 }
 
@@ -365,8 +409,34 @@ function apw_woo_validate_address_fields() {
 add_filter('woocommerce_default_address_fields', 'apw_woo_make_company_required', 999);
 add_filter('woocommerce_billing_fields', 'apw_woo_make_phone_required', 999);
 add_filter('woocommerce_shipping_fields', 'apw_woo_make_phone_required', 999);
+add_filter('woocommerce_billing_fields', 'apw_woo_make_myaccount_fields_required', 999, 3);
+add_filter('woocommerce_shipping_fields', 'apw_woo_make_myaccount_fields_required', 999, 3);
 add_action('template_redirect', 'apw_woo_validate_address_fields');
 add_action('woocommerce_customer_save_address', 'apw_woo_save_shipping_phone_field', 20, 2);
+
+/**
+ * Add JavaScript to ensure required fields are properly marked
+ */
+function apw_woo_add_required_fields_script() {
+    if (is_account_page() && is_wc_endpoint_url('edit-address')) {
+        ?>
+        <script type="text/javascript">
+        jQuery(document).ready(function($) {
+            // Force company field to be required
+            $('input[name$="_company"]').prop('required', true);
+            $('label[for$="_company"]').append('<abbr class="required" title="required">*</abbr>');
+            
+            // Force phone field to be required
+            $('input[name$="_phone"]').prop('required', true);
+            $('label[for$="_phone"]').append('<abbr class="required" title="required">*</abbr>');
+            
+            console.log("APW: Applied required attributes to company and phone fields");
+        });
+        </script>
+        <?php
+    }
+}
+add_action('wp_footer', 'apw_woo_add_required_fields_script');
 
 // Debug logging for address pages
 if (APW_WOO_DEBUG_MODE) {
