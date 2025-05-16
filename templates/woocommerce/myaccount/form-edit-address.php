@@ -7,7 +7,7 @@
  *
  * @see https://woocommerce.com/document/template-structure/
  * @package APW_Woo_Plugin/Templates
- * @version 3.6.0-apw.2
+ * @version 3.6.0-apw.3
  *
  * Original WooCommerce template version: 3.6.0
  */

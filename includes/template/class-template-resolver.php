@@ -32,6 +32,7 @@ class APW_Woo_Template_Resolver
     private const CART_TOTALS_TEMPLATE = 'woocommerce/cart/cart-totals.php';
     private const CHECKOUT_TEMPLATE = 'woocommerce/checkout/form-checkout.php';
     private const MY_ACCOUNT_TEMPLATE = 'woocommerce/myaccount/my-account.php';
+    private const EDIT_ADDRESS_TEMPLATE = 'woocommerce/myaccount/form-edit-address.php';
 
     /**
      * Template directory path
@@ -187,6 +188,14 @@ class APW_Woo_Template_Resolver
                 'template' => self::MY_ACCOUNT_TEMPLATE,
                 'page_type' => 'myaccount', // For context setup ('myaccount' is key for wc_get_page_id)
                 'description' => 'account'
+            ],
+            'edit_address' => [
+                'condition' => function() { 
+                    return is_account_page() && is_wc_endpoint_url('edit-address');
+                },
+                'template' => self::EDIT_ADDRESS_TEMPLATE,
+                'page_type' => 'myaccount',
+                'description' => 'edit address'
             ],
             // Now check archives (order matters if URLs overlap, e.g., /shop/category/)
             'category' => [
