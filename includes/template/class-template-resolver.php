@@ -91,6 +91,7 @@ class APW_Woo_Template_Resolver
             apw_woo_log("RESOLVER CONTEXT: is_cart(): " . (function_exists('is_cart') && is_cart() ? 'true' : 'false'));
             apw_woo_log("RESOLVER CONTEXT: is_checkout(): " . (function_exists('is_checkout') && is_checkout() ? 'true' : 'false'));
             apw_woo_log("RESOLVER CONTEXT: is_account_page(): " . (function_exists('is_account_page') && is_account_page() ? 'true' : 'false'));
+            apw_woo_log("RESOLVER CONTEXT: is_wc_endpoint_url('edit-address'): " . (function_exists('is_wc_endpoint_url') && is_wc_endpoint_url('edit-address') ? 'true' : 'false'));
             apw_woo_log("RESOLVER CONTEXT: is_shop(): " . (function_exists('is_shop') && is_shop() ? 'true' : 'false'));
             apw_woo_log("RESOLVER CONTEXT: is_product_category(): " . (function_exists('is_product_category') && is_product_category() ? 'true' : 'false'));
             apw_woo_log("RESOLVER CONTEXT: is_product(): " . (function_exists('is_product') && is_product() ? 'true' : 'false'));
@@ -190,7 +191,7 @@ class APW_Woo_Template_Resolver
                 'description' => 'account'
             ],
             'edit_address' => [
-                'condition' => function() { 
+                'condition' => function () {
                     return is_account_page() && is_wc_endpoint_url('edit-address');
                 },
                 'template' => self::EDIT_ADDRESS_TEMPLATE,
