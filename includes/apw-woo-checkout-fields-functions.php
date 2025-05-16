@@ -338,7 +338,10 @@ function apw_woo_make_phone_required($fields) {
 /**
  * Specifically target My Account address fields
  */
-function apw_woo_make_myaccount_fields_required($fields, $country, $type) {
+function apw_woo_make_myaccount_fields_required($fields) {
+    // Get the address type from the URL
+    $load_address = isset($_GET['address']) ? wc_clean(wp_unslash($_GET['address'])) : 'billing';
+    
     // Make company field required
     if (isset($fields['company'])) {
         $fields['company']['required'] = true;
@@ -353,7 +356,7 @@ function apw_woo_make_myaccount_fields_required($fields, $country, $type) {
     }
     
     // Make phone field required
-    $phone_key = $type . '_phone';
+    $phone_key = $load_address . '_phone';
     if (isset($fields[$phone_key])) {
         $fields[$phone_key]['required'] = true;
         
@@ -409,8 +412,8 @@ function apw_woo_validate_address_fields() {
 add_filter('woocommerce_default_address_fields', 'apw_woo_make_company_required', 999);
 add_filter('woocommerce_billing_fields', 'apw_woo_make_phone_required', 999);
 add_filter('woocommerce_shipping_fields', 'apw_woo_make_phone_required', 999);
-add_filter('woocommerce_billing_fields', 'apw_woo_make_myaccount_fields_required', 999, 3);
-add_filter('woocommerce_shipping_fields', 'apw_woo_make_myaccount_fields_required', 999, 3);
+add_filter('woocommerce_billing_fields', 'apw_woo_make_myaccount_fields_required', 999);
+add_filter('woocommerce_shipping_fields', 'apw_woo_make_myaccount_fields_required', 999);
 add_action('template_redirect', 'apw_woo_validate_address_fields');
 add_action('woocommerce_customer_save_address', 'apw_woo_save_shipping_phone_field', 20, 2);
 
