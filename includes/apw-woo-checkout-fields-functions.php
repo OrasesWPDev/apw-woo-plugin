@@ -289,9 +289,14 @@ function apw_woo_validate_conditional_shipping_fields_on_submit()
 add_action('woocommerce_checkout_process', 'apw_woo_validate_conditional_shipping_fields_on_submit');
 
 /**
- * Make company field required in address forms
+ * Make company field required in checkout forms
  */
 function apw_woo_make_company_required($fields) {
+    // Skip if we're on My Account page (handled by dedicated functions)
+    if (is_account_page() && is_wc_endpoint_url('edit-address')) {
+        return $fields;
+    }
+    
     if (isset($fields['company'])) {
         $fields['company']['required'] = true;
         
@@ -311,9 +316,14 @@ function apw_woo_make_company_required($fields) {
 }
 
 /**
- * Make phone field required in address forms
+ * Make phone field required in checkout forms
  */
 function apw_woo_make_phone_required($fields) {
+    // Skip if we're on My Account page (handled by dedicated functions)
+    if (is_account_page() && is_wc_endpoint_url('edit-address')) {
+        return $fields;
+    }
+    
     // Handle different possible field keys
     foreach (array('phone', 'billing_phone', 'shipping_phone') as $key) {
         if (isset($fields[$key])) {
@@ -336,13 +346,21 @@ function apw_woo_make_phone_required($fields) {
 }
 
 /**
- * Specifically target My Account address fields
+ * Make fields required specifically in My Account address forms
+ * This function only runs on My Account pages
  */
-function apw_woo_make_myaccount_fields_required($fields) {
-    // Get the address type from the URL
-    $load_address = isset($_GET['address']) ? wc_clean(wp_unslash($_GET['address'])) : 'billing';
+function apw_woo_make_myaccount_address_fields_required($fields) {
+    // Only apply on My Account address pages
+    if (!is_account_page() || !is_wc_endpoint_url('edit-address')) {
+        return $fields;
+    }
     
-    // Make company field required
+    // Debug log the fields we're modifying
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log('My Account address fields before modification: ' . print_r(array_keys($fields), true));
+    }
+    
+    // Company field (note: in My Account forms, it's just 'company' without prefix)
     if (isset($fields['company'])) {
         $fields['company']['required'] = true;
         
@@ -355,17 +373,73 @@ function apw_woo_make_myaccount_fields_required($fields) {
         }
     }
     
-    // Make phone field required
-    $phone_key = $load_address . '_phone';
-    if (isset($fields[$phone_key])) {
-        $fields[$phone_key]['required'] = true;
+    // Phone field handling is done in the specific billing/shipping filters
+    
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log('My Account address fields after modification: ' . print_r($fields, true));
+    }
+    
+    return $fields;
+}
+
+/**
+ * Make phone field required in My Account billing address form
+ */
+function apw_woo_make_myaccount_billing_phone_required($fields) {
+    // Only apply on My Account address pages
+    if (!is_account_page() || !is_wc_endpoint_url('edit-address')) {
+        return $fields;
+    }
+    
+    // Get the address type from the URL
+    $load_address = isset($_GET['address']) ? wc_clean(wp_unslash($_GET['address'])) : 'billing';
+    
+    // Only proceed if we're on the billing address page
+    if ($load_address !== 'billing') {
+        return $fields;
+    }
+    
+    if (isset($fields['billing_phone'])) {
+        $fields['billing_phone']['required'] = true;
         
         // Add required class
-        if (!isset($fields[$phone_key]['class'])) {
-            $fields[$phone_key]['class'] = array();
+        if (!isset($fields['billing_phone']['class'])) {
+            $fields['billing_phone']['class'] = array();
         }
-        if (!in_array('validate-required', $fields[$phone_key]['class'])) {
-            $fields[$phone_key]['class'][] = 'validate-required';
+        if (!in_array('validate-required', $fields['billing_phone']['class'])) {
+            $fields['billing_phone']['class'][] = 'validate-required';
+        }
+    }
+    
+    return $fields;
+}
+
+/**
+ * Make phone field required in My Account shipping address form
+ */
+function apw_woo_make_myaccount_shipping_phone_required($fields) {
+    // Only apply on My Account address pages
+    if (!is_account_page() || !is_wc_endpoint_url('edit-address')) {
+        return $fields;
+    }
+    
+    // Get the address type from the URL
+    $load_address = isset($_GET['address']) ? wc_clean(wp_unslash($_GET['address'])) : 'billing';
+    
+    // Only proceed if we're on the shipping address page
+    if ($load_address !== 'shipping') {
+        return $fields;
+    }
+    
+    if (isset($fields['shipping_phone'])) {
+        $fields['shipping_phone']['required'] = true;
+        
+        // Add required class
+        if (!isset($fields['shipping_phone']['class'])) {
+            $fields['shipping_phone']['class'] = array();
+        }
+        if (!in_array('validate-required', $fields['shipping_phone']['class'])) {
+            $fields['shipping_phone']['class'][] = 'validate-required';
         }
     }
     
@@ -408,38 +482,29 @@ function apw_woo_validate_address_fields() {
     }
 }
 
-// Make fields required in My Account address forms
+// Make fields required in checkout forms
 add_filter('woocommerce_default_address_fields', 'apw_woo_make_company_required', 999);
 add_filter('woocommerce_billing_fields', 'apw_woo_make_phone_required', 999);
 add_filter('woocommerce_shipping_fields', 'apw_woo_make_phone_required', 999);
-add_filter('woocommerce_billing_fields', 'apw_woo_make_myaccount_fields_required', 999);
-add_filter('woocommerce_shipping_fields', 'apw_woo_make_myaccount_fields_required', 999);
+
+// Make fields required in My Account address forms
+add_filter('woocommerce_default_address_fields', 'apw_woo_make_myaccount_address_fields_required', 999);
+add_filter('woocommerce_billing_fields', 'apw_woo_make_myaccount_billing_phone_required', 999);
+add_filter('woocommerce_shipping_fields', 'apw_woo_make_myaccount_shipping_phone_required', 999);
+
+// Server-side validation and saving
 add_action('template_redirect', 'apw_woo_validate_address_fields');
 add_action('woocommerce_customer_save_address', 'apw_woo_save_shipping_phone_field', 20, 2);
 
-/**
- * Add JavaScript to ensure required fields are properly marked
- */
-function apw_woo_add_required_fields_script() {
-    if (is_account_page() && is_wc_endpoint_url('edit-address')) {
-        ?>
-        <script type="text/javascript">
-        jQuery(document).ready(function($) {
-            // Force company field to be required
-            $('input[name$="_company"]').prop('required', true);
-            $('label[for$="_company"]').append('<abbr class="required" title="required">*</abbr>');
-            
-            // Force phone field to be required
-            $('input[name$="_phone"]').prop('required', true);
-            $('label[for$="_phone"]').append('<abbr class="required" title="required">*</abbr>');
-            
-            console.log("APW: Applied required attributes to company and phone fields");
-        });
-        </script>
-        <?php
-    }
+// Debug logging for address pages
+if (APW_WOO_DEBUG_MODE) {
+    add_action('init', function() {
+        if (is_account_page() && is_wc_endpoint_url('edit-address') && function_exists('apw_woo_log')) {
+            $load_address = isset($_GET['address']) ? wc_clean(wp_unslash($_GET['address'])) : 'billing';
+            apw_woo_log('On edit-address page for ' . $load_address . ' address - using dedicated field modification functions');
+        }
+    }, 999);
 }
-add_action('wp_footer', 'apw_woo_add_required_fields_script');
 
 // Debug logging for address pages
 if (APW_WOO_DEBUG_MODE) {
