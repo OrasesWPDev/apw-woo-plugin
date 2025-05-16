@@ -288,8 +288,42 @@ function apw_woo_validate_conditional_shipping_fields_on_submit()
 
 add_action('woocommerce_checkout_process', 'apw_woo_validate_conditional_shipping_fields_on_submit');
 
-// Functions for making company and phone fields required on My Account edit address pages
-// have been removed as they are now handled directly in the form-edit-address.php template
+/**
+ * Make company field required in address forms
+ */
+function apw_woo_make_company_required($fields) {
+    if (isset($fields['company'])) {
+        $fields['company']['required'] = true;
+        
+        // Add required class
+        if (!isset($fields['company']['class'])) {
+            $fields['company']['class'] = array();
+        }
+        $fields['company']['class'][] = 'validate-required';
+    }
+    return $fields;
+}
+
+/**
+ * Make phone field required in address forms
+ */
+function apw_woo_make_phone_required($fields) {
+    if (isset($fields['phone']) || isset($fields['billing_phone']) || isset($fields['shipping_phone'])) {
+        // Handle different possible field keys
+        foreach (array('phone', 'billing_phone', 'shipping_phone') as $key) {
+            if (isset($fields[$key])) {
+                $fields[$key]['required'] = true;
+                
+                // Add required class
+                if (!isset($fields[$key]['class'])) {
+                    $fields[$key]['class'] = array();
+                }
+                $fields[$key]['class'][] = 'validate-required';
+            }
+        }
+    }
+    return $fields;
+}
 
 /**
  * Save shipping phone field from My Account edit address form
@@ -301,11 +335,37 @@ function apw_woo_save_shipping_phone_field($customer_id, $posted_data) {
 }
 
 /**
- * Server-side validation for address fields is now handled by WooCommerce's built-in validation
- * since we're marking the fields as required in the template
+ * Validate required address fields on My Account page
  */
+function apw_woo_validate_address_fields() {
+    // Only run on the edit address page
+    if (!is_wc_endpoint_url('edit-address')) {
+        return;
+    }
+    
+    // Check if form was submitted
+    if (!isset($_POST['action']) || $_POST['action'] !== 'edit_address') {
+        return;
+    }
+    
+    $load_address = isset($_GET['address']) ? wc_clean(wp_unslash($_GET['address'])) : 'billing';
+    
+    // Validate company field
+    if (empty($_POST[$load_address . '_company'])) {
+        wc_add_notice(__('Company is a required field.', 'apw-woo-plugin'), 'error');
+    }
+    
+    // Validate phone field
+    if (empty($_POST[$load_address . '_phone'])) {
+        wc_add_notice(__('Phone is a required field.', 'apw-woo-plugin'), 'error');
+    }
+}
 
-// Only keep the shipping phone save hook, remove all other hooks that are no longer needed
+// Make fields required in My Account address forms
+add_filter('woocommerce_default_address_fields', 'apw_woo_make_company_required', 999);
+add_filter('woocommerce_billing_fields', 'apw_woo_make_phone_required', 999);
+add_filter('woocommerce_shipping_fields', 'apw_woo_make_phone_required', 999);
+add_action('template_redirect', 'apw_woo_validate_address_fields');
 add_action('woocommerce_customer_save_address', 'apw_woo_save_shipping_phone_field', 20, 2);
 
 // Debug logging for address pages

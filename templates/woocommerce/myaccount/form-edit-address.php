@@ -7,7 +7,7 @@
  *
  * @see https://woocommerce.com/document/template-structure/
  * @package APW_Woo_Plugin/Templates
- * @version 3.6.0-apw.1
+ * @version 3.6.0-apw.2
  *
  * Original WooCommerce template version: 3.6.0
  */
@@ -53,25 +53,6 @@ do_action('woocommerce_before_edit_account_address_form'); ?>
         </div>
 
     </form>
-
-    <script type="text/javascript">
-        jQuery(function ($) {
-            // Get the address type
-            var addressType = '<?php echo esc_js($load_address); ?>';
-
-            // Make company field required
-            $("#" + addressType + "_company").prop("required", true);
-            $("label[for='" + addressType + "_company']").append("<abbr class='required' title='required'>*</abbr>");
-
-            // Make phone field required
-            $("#" + addressType + "_phone").prop("required", true);
-            $("label[for='" + addressType + "_phone']").append("<abbr class='required' title='required'>*</abbr>");
-
-            if (window.console && window.console.log) {
-                console.log("APW: Made " + addressType + " company and phone fields required");
-            }
-        });
-    </script>
 
 <?php endif; ?>
 
