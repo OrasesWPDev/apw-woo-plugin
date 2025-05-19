@@ -35,6 +35,19 @@ do_action('woocommerce_before_edit_account_address_form'); ?>
                     // Mark company and phone fields as required
                     if ($key === $load_address . '_company' || $key === $load_address . '_phone') {
                         $field['required'] = true;
+                        
+                        // Add required class to ensure proper styling
+                        if (!isset($field['class'])) {
+                            $field['class'] = array();
+                        }
+                        if (!in_array('required', $field['class'])) {
+                            $field['class'][] = 'required';
+                        }
+                        
+                        // Log if in debug mode
+                        if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                            apw_woo_log('EDIT ADDRESS: Marking field as required: ' . $key);
+                        }
                     }
 
                     woocommerce_form_field($key, $field, wc_get_post_data_by_key($key, $field['value']));

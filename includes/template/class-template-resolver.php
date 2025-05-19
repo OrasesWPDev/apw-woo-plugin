@@ -57,6 +57,39 @@ class APW_Woo_Template_Resolver
     {
         $this->template_path = APW_WOO_PLUGIN_DIR . self::TEMPLATE_DIRECTORY;
         $this->template_loader = $template_loader;
+        
+        // Add filter to ensure our edit address template is used
+        add_filter('woocommerce_locate_template', array($this, 'locate_edit_address_template'), 10, 3);
+    }
+    
+    /**
+     * Locate our custom edit address template
+     *
+     * @param string $template      Template path
+     * @param string $template_name Template name
+     * @param string $template_path Template path
+     * @return string
+     */
+    public function locate_edit_address_template($template, $template_name, $template_path)
+    {
+        // Only modify form-edit-address.php
+        if ($template_name !== 'myaccount/form-edit-address.php') {
+            return $template;
+        }
+        
+        // Check if our custom template exists
+        $plugin_template = APW_WOO_PLUGIN_DIR . 'templates/woocommerce/' . $template_name;
+        
+        if (file_exists($plugin_template)) {
+            $template = $plugin_template;
+            
+            // Debug log if enabled
+            if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                apw_woo_log('TEMPLATE OVERRIDE: Using custom edit address template: ' . $plugin_template);
+            }
+        }
+        
+        return $template;
     }
 
     /**
@@ -196,7 +229,8 @@ class APW_Woo_Template_Resolver
                 },
                 'template' => self::EDIT_ADDRESS_TEMPLATE,
                 'page_type' => 'myaccount',
-                'description' => 'edit address'
+                'description' => 'edit address',
+                'setup_context' => true // Add this flag to ensure context is properly set up
             ],
             // Now check archives (order matters if URLs overlap, e.g., /shop/category/)
             'category' => [
@@ -230,8 +264,9 @@ class APW_Woo_Template_Resolver
                     apw_woo_log("RESOLVER: Condition met for '{$settings['description']}'. Checking for custom template.");
                 }
 
-                // --- Context Setup for Standard Pages (Cart, Checkout, Account) ---
-                if (in_array($type, ['cart', 'checkout', 'account'])) {
+                // --- Context Setup for Standard Pages (Cart, Checkout, Account, Edit Address) ---
+                if (in_array($type, ['cart', 'checkout', 'account']) || 
+                    (isset($settings['setup_context']) && $settings['setup_context'] === true)) {
                     $page_id = 0;
                     if (function_exists('wc_get_page_id') && $settings['page_type']) {
                         $page_id = wc_get_page_id($settings['page_type']);
