@@ -32,7 +32,8 @@ do_action('woocommerce_before_edit_account_address_form'); ?>
             <div class="woocommerce-address-fields__field-wrapper">
                 <?php
                 foreach ($address as $key => $field) {
-                    // Mark company and phone fields as required
+                    // Fields are already marked as required by our filters
+                    // This is just an additional check to ensure they're properly displayed
                     if ($key === $load_address . '_company' || $key === $load_address . '_phone') {
                         $field['required'] = true;
                         
@@ -46,7 +47,7 @@ do_action('woocommerce_before_edit_account_address_form'); ?>
                         
                         // Log if in debug mode
                         if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
-                            apw_woo_log('EDIT ADDRESS: Marking field as required: ' . $key);
+                            apw_woo_log('EDIT ADDRESS TEMPLATE: Marking field as required: ' . $key);
                         }
                     }
 
