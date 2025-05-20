@@ -134,7 +134,7 @@ if ($product) :
                                 <div class="apw-woo-product-summary">
                                     <!-- Product Title -->
                                     <!--                                    <div class="apw-woo-product-title-wrapper">-->
-                                    <!--                                        --><?php //the_title('<h1 class="apw-woo-product-title">', '</h1>');
+                                    <!--                                        --><?php //the_title('<h2 class="apw-woo-product-title">', '</h2>');
                                     ?>
                                     <!--                                    </div>-->
                                     <!-- Product Description -->
