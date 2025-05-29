@@ -10,7 +10,7 @@
  *
  * @see     https://woocommerce.com/document/template-structure/
  * @package APW_Woo_Plugin/Templates
- * @version 7.9.0-apw.8 // Increment version
+ * @version 7.9.0-apw.10 // Increment version
  *
  * Original WooCommerce template version: 7.9.0
  */
@@ -233,6 +233,7 @@ $correct_cart_title = $cart_page_id ? get_the_title($cart_page_id) : __('Cart', 
                                         <?php
                                         // Added wrapper span with class
                                         echo '<span class="apw-woo-cart-item-price">';
+                                        // FIXED: Use WooCommerce cart method with proper cart context for dynamic pricing filter
                                         echo apply_filters('woocommerce_cart_item_price', WC()->cart->get_product_price($_product), $cart_item, $cart_item_key); // PHPCS: XSS ok.
                                         echo '</span>';
                                         ?>
