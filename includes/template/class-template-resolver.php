@@ -32,6 +32,7 @@ class APW_Woo_Template_Resolver
     private const CART_TOTALS_TEMPLATE = 'woocommerce/cart/cart-totals.php';
     private const CHECKOUT_TEMPLATE = 'woocommerce/checkout/form-checkout.php';
     private const MY_ACCOUNT_TEMPLATE = 'woocommerce/myaccount/my-account.php';
+    private const EDIT_ADDRESS_TEMPLATE = 'woocommerce/myaccount/form-edit-address.php';
 
     /**
      * Template directory path
@@ -56,6 +57,39 @@ class APW_Woo_Template_Resolver
     {
         $this->template_path = APW_WOO_PLUGIN_DIR . self::TEMPLATE_DIRECTORY;
         $this->template_loader = $template_loader;
+        
+        // Add filter to ensure our edit address template is used
+        add_filter('woocommerce_locate_template', array($this, 'locate_edit_address_template'), 10, 3);
+    }
+    
+    /**
+     * Locate our custom edit address template
+     *
+     * @param string $template      Template path
+     * @param string $template_name Template name
+     * @param string $template_path Template path
+     * @return string
+     */
+    public function locate_edit_address_template($template, $template_name, $template_path)
+    {
+        // Only modify form-edit-address.php
+        if ($template_name !== 'myaccount/form-edit-address.php') {
+            return $template;
+        }
+        
+        // Check if our custom template exists
+        $plugin_template = APW_WOO_PLUGIN_DIR . 'templates/woocommerce/' . $template_name;
+        
+        if (file_exists($plugin_template)) {
+            $template = $plugin_template;
+            
+            // Debug log if enabled
+            if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                apw_woo_log('TEMPLATE OVERRIDE: Using custom edit address template: ' . $plugin_template);
+            }
+        }
+        
+        return $template;
     }
 
     /**
@@ -90,6 +124,7 @@ class APW_Woo_Template_Resolver
             apw_woo_log("RESOLVER CONTEXT: is_cart(): " . (function_exists('is_cart') && is_cart() ? 'true' : 'false'));
             apw_woo_log("RESOLVER CONTEXT: is_checkout(): " . (function_exists('is_checkout') && is_checkout() ? 'true' : 'false'));
             apw_woo_log("RESOLVER CONTEXT: is_account_page(): " . (function_exists('is_account_page') && is_account_page() ? 'true' : 'false'));
+            apw_woo_log("RESOLVER CONTEXT: is_wc_endpoint_url('edit-address'): " . (function_exists('is_wc_endpoint_url') && is_wc_endpoint_url('edit-address') ? 'true' : 'false'));
             apw_woo_log("RESOLVER CONTEXT: is_shop(): " . (function_exists('is_shop') && is_shop() ? 'true' : 'false'));
             apw_woo_log("RESOLVER CONTEXT: is_product_category(): " . (function_exists('is_product_category') && is_product_category() ? 'true' : 'false'));
             apw_woo_log("RESOLVER CONTEXT: is_product(): " . (function_exists('is_product') && is_product() ? 'true' : 'false'));
@@ -188,6 +223,15 @@ class APW_Woo_Template_Resolver
                 'page_type' => 'myaccount', // For context setup ('myaccount' is key for wc_get_page_id)
                 'description' => 'account'
             ],
+            'edit_address' => [
+                'condition' => function () {
+                    return is_account_page() && is_wc_endpoint_url('edit-address');
+                },
+                'template' => self::EDIT_ADDRESS_TEMPLATE,
+                'page_type' => 'myaccount',
+                'description' => 'edit address',
+                'setup_context' => true // Add this flag to ensure context is properly set up
+            ],
             // Now check archives (order matters if URLs overlap, e.g., /shop/category/)
             'category' => [
                 'condition' => 'is_product_category', // WooCommerce conditional
@@ -220,8 +264,9 @@ class APW_Woo_Template_Resolver
                     apw_woo_log("RESOLVER: Condition met for '{$settings['description']}'. Checking for custom template.");
                 }
 
-                // --- Context Setup for Standard Pages (Cart, Checkout, Account) ---
-                if (in_array($type, ['cart', 'checkout', 'account'])) {
+                // --- Context Setup for Standard Pages (Cart, Checkout, Account, Edit Address) ---
+                if (in_array($type, ['cart', 'checkout', 'account']) || 
+                    (isset($settings['setup_context']) && $settings['setup_context'] === true)) {
                     $page_id = 0;
                     if (function_exists('wc_get_page_id') && $settings['page_type']) {
                         $page_id = wc_get_page_id($settings['page_type']);

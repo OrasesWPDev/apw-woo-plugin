@@ -420,14 +420,24 @@ function apw_woo_ajax_get_dynamic_price()
         apw_woo_log("Dynamic pricing AJAX response: Unit price: {$unit_price}, Formatted: {$formatted_unit_price}");
     }
 
-    // Send back both unit price and total
+    // Get original price for comparison
+    $original_price = $product->get_price();
+    
+    // Send back both unit price and total with debug info
     wp_send_json_success(array(
         'unit_price' => $unit_price,
         'total_price' => $total_price,
         'formatted_price' => $formatted_unit_price,
         'formatted_total' => $formatted_total_price,
         'quantity' => $quantity,
-        'product_id' => $product_id
+        'product_id' => $product_id,
+        'original_price' => $original_price,
+        'price_changed' => (abs($unit_price - $original_price) > 0.01),
+        'debug_info' => APW_WOO_DEBUG_MODE ? array(
+            'product_name' => $product->get_name(),
+            'has_pricing_rules' => apw_woo_product_has_pricing_rules($product),
+            'is_dynamic_pricing_active' => apw_woo_is_dynamic_pricing_active()
+        ) : null
     ));
 }
 
@@ -476,11 +486,10 @@ function apw_woo_replace_price_display()
         apw_woo_log("Displaying price for product {$product->get_id()} with unit price {$unit_price}");
     }
 
-    // Display the price with data attribute for JS to update
-    echo '<div class="apw-woo-price-display" data-product-id="' . esc_attr($product->get_id()) . '">'
-        . wc_price($unit_price)
-        . '</div>';
-    echo '</div><!-- End quantity row -->';
+    // Display the price with data attributes for JS to update
+    echo '<div class="apw-woo-price-display price" data-product-id="' . esc_attr($product->get_id()) . '" data-quantity="' . esc_attr($quantity) . '">';
+    echo '<span class="woocommerce-Price-amount amount">' . wc_price($unit_price) . '</span>';
+    echo '</div>';
 }
 
 /**
@@ -547,7 +556,6 @@ function apw_woo_enqueue_dynamic_pricing_scripts()
                 'ajax_url' => admin_url('admin-ajax.php'),
                 'nonce' => wp_create_nonce('apw_woo_dynamic_pricing'),
                 'price_selector' => '.apw-woo-price-display, .woocommerce-Price-amount, .price .amount', // Expanded selectors
-                // Removed is_cart and is_checkout as they are irrelevant here
                 'is_product' => true, // Script only loads on product pages now
                 'debug_mode' => APW_WOO_DEBUG_MODE // Pass debug mode status
             )
@@ -572,6 +580,117 @@ function apw_woo_enqueue_dynamic_pricing_scripts()
         }
         return; // Explicitly return to prevent further execution
     }
+}
+
+/**
+ * Filter cart item price display to apply dynamic pricing discounts
+ *
+ * This function hooks into WooCommerce's cart item price display to ensure
+ * that individual line items show the correct discounted price based on quantity,
+ * matching the subtotal calculations.
+ *
+ * @param string $price_html The formatted price HTML from WooCommerce
+ * @param array $cart_item The cart item data
+ * @param string $cart_item_key The cart item key
+ * @return string Modified price HTML with dynamic pricing applied
+ */
+function apw_woo_filter_cart_item_price($price_html, $cart_item, $cart_item_key)
+{
+    // PERFORMANCE: Early exit if dynamic pricing is not active
+    if (!apw_woo_is_dynamic_pricing_active()) {
+        return $price_html;
+    }
+
+    // PERFORMANCE: Static cache to prevent repeated calls for the same cart item
+    static $price_cache = array();
+    $cache_key = $cart_item_key . '_' . $cart_item['quantity'];
+    
+    if (isset($price_cache[$cache_key])) {
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log("CART ITEM PRICE FILTER: Using cached price for {$cache_key}");
+        }
+        return $price_cache[$cache_key];
+    }
+
+    // Debug logging for cart item price filtering
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log("CART ITEM PRICE FILTER: Processing cart item key: {$cart_item_key} | Product ID: {$cart_item['product_id']} | Quantity: {$cart_item['quantity']}");
+    }
+
+    // Ensure we have valid cart item data
+    if (!isset($cart_item['data']) || !isset($cart_item['quantity']) || !isset($cart_item['product_id'])) {
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log("CART ITEM PRICE FILTER: Invalid cart item data, returning original price");
+        }
+        return $price_html;
+    }
+
+    // Get the product object from cart item
+    $product = $cart_item['data'];
+    if (!$product || !is_a($product, 'WC_Product')) {
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log("CART ITEM PRICE FILTER: Invalid product object, returning original price");
+        }
+        return $price_html;
+    }
+
+    // Get the quantity for this cart item
+    $quantity = (int) $cart_item['quantity'];
+    if ($quantity < 1) {
+        $quantity = 1;
+    }
+
+    // PERFORMANCE: Check if this product has pricing rules before expensive calculation
+    if (!apw_woo_product_has_pricing_rules($product)) {
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log("CART ITEM PRICE FILTER: No pricing rules for product #{$cart_item['product_id']}, skipping");
+        }
+        // Cache the original price
+        $price_cache[$cache_key] = $price_html;
+        return $price_html;
+    }
+
+    // Calculate the dynamic price for this quantity using our existing function
+    $dynamic_unit_price = apw_woo_get_price_by_quantity($product, $quantity);
+
+    // Get the regular price for comparison
+    $regular_price = (float) $product->get_regular_price();
+    $original_price = (float) $product->get_price();
+
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log("CART ITEM PRICE FILTER: Product #{$cart_item['product_id']} | Regular: {$regular_price} | Original: {$original_price} | Dynamic: {$dynamic_unit_price} | Qty: {$quantity}");
+    }
+
+    // Only modify the price if dynamic pricing is different from the original
+    if (abs($dynamic_unit_price - $original_price) > 0.01) { // Use small tolerance for float comparison
+        // POTENTIAL ISSUE FIX: Check if dynamic price is valid before applying
+        if ($dynamic_unit_price <= 0) {
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log("CART ITEM PRICE FILTER: Invalid dynamic price ({$dynamic_unit_price}), returning original price");
+            }
+            return $price_html;
+        }
+
+        // Format the new price using WooCommerce's price formatting
+        $new_price_html = wc_price($dynamic_unit_price);
+
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log("CART ITEM PRICE FILTER: Applied dynamic pricing | Original HTML: {$price_html} | New HTML: {$new_price_html}");
+        }
+
+        // Cache the new price before returning
+        $price_cache[$cache_key] = $new_price_html;
+        return $new_price_html;
+    }
+
+    // No dynamic pricing applies, return original price
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log("CART ITEM PRICE FILTER: No dynamic pricing change needed for product #{$cart_item['product_id']}");
+    }
+
+    // Cache the original price before returning
+    $price_cache[$cache_key] = $price_html;
+    return $price_html;
 }
 
 /**
@@ -616,6 +735,15 @@ function apw_woo_init_dynamic_pricing()
         return $is_purchasable;
     }, 10, 2);
 
+    // CART ITEM PRICE FIX: Hook into cart item price display to apply dynamic pricing
+    // This ensures that individual cart line items show the correct discounted price
+    // to match the subtotal calculations
+    add_filter('woocommerce_cart_item_price', 'apw_woo_filter_cart_item_price', 10, 3);
+
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log('Dynamic Pricing: Added cart item price filter hook');
+    }
+
     // Include the integration class if needed
     $class_file = APW_WOO_PLUGIN_DIR . 'includes/class-apw-woo-dynamic-pricing.php';
     if (file_exists($class_file)) {
@@ -637,8 +765,9 @@ function apw_woo_init_dynamic_pricing()
     add_action('wp_ajax_apw_woo_get_dynamic_price', 'apw_woo_ajax_get_dynamic_price');
     add_action('wp_ajax_nopriv_apw_woo_get_dynamic_price', 'apw_woo_ajax_get_dynamic_price');
 
-    // Replace the default price display with our dynamic version
-    add_action('woocommerce_after_add_to_cart_quantity', 'apw_woo_replace_price_display', 9);
+    // Replace the default price display with our dynamic version - place it in quantity row
+    // Priority 10 to run before apw_woo_close_quantity_row (priority 15)
+    add_action('woocommerce_after_add_to_cart_quantity', 'apw_woo_replace_price_display', 10);
 
     // Remove the original price display function
     remove_action('woocommerce_after_add_to_cart_quantity', 'apw_woo_add_price_display');
@@ -766,3 +895,114 @@ function apw_woo_debug_dynamic_pricing_rules($product_id)
         apw_woo_log("DYNAMIC PRICING DEBUG: Found global wc_dynamic_pricing object");
     }
 }
+
+/**
+ * Apply role-based bulk discounts as cart fees
+ * 
+ * Configurable discount system that applies discounts based on:
+ * - Product ID and quantity thresholds
+ * - User roles (optional)
+ * - Priority system for multiple matching rules
+ */
+function apw_woo_apply_role_based_bulk_discounts($cart) {
+    if (is_admin() && !defined('DOING_AJAX')) {
+        return;
+    }
+
+    // Configurable rules array - can be filtered by other plugins/themes
+    $rules = array(
+        array(
+            'product_id' => 80,
+            'discount_amount' => 10, // $10 off per item
+            'priority' => 100,
+            'min_quantity' => 1, // at least 1 in cart
+            'role' => 'distro10', // Only for distro10 role
+            'discount_name' => 'VIP Discount',
+        ),
+        array(
+            'product_id' => 80,
+            'discount_amount' => 10, // $10 off per item
+            'priority' => 50,
+            'min_quantity' => 5, // at least 5 in cart
+            'role' => '', // For anyone else (no role requirement)
+            'discount_name' => 'Bulk Discount',
+        ),
+    );
+
+    /**
+     * Filter the bulk discount rules
+     *
+     * @param array $rules Array of discount rules
+     */
+    $rules = apply_filters('apw_woo_bulk_discount_rules', $rules);
+
+    $user = wp_get_current_user();
+    $cart_items_by_product = array();
+
+    // Step 1: Collect cart item quantities by product
+    foreach ($cart->get_cart() as $cart_item) {
+        $product_id = $cart_item['product_id'];
+        $parent_id = wp_get_post_parent_id($product_id) ?: $product_id;
+        $cart_items_by_product[$parent_id]['qty'] = ($cart_items_by_product[$parent_id]['qty'] ?? 0) + $cart_item['quantity'];
+        $cart_items_by_product[$parent_id]['cart_items'][] = $cart_item;
+    }
+
+    // Step 2: For each product, find highest priority matching rule
+    foreach ($cart_items_by_product as $product_id => $data) {
+        $qty = $data['qty'];
+        $matching_rule = null;
+        $matched_priority = -INF;
+
+        foreach ($rules as $rule) {
+            if ((int)$rule['product_id'] !== (int)$product_id) {
+                continue;
+            }
+            
+            if ($qty < (int)($rule['min_quantity'] ?? 1)) {
+                continue;
+            }
+
+            // Role logic
+            $apply_for_role = true;
+            if (!empty($rule['role'])) {
+                $rule_roles = is_array($rule['role']) ? $rule['role'] : array($rule['role']);
+                $apply_for_role = false;
+                foreach ($rule_roles as $role) {
+                    if (in_array($role, (array)$user->roles)) {
+                        $apply_for_role = true;
+                        break;
+                    }
+                }
+            }
+
+            // Skip if rule is for a role and user does not have it
+            if (!$apply_for_role) {
+                continue;
+            }
+
+            if ($rule['priority'] > $matched_priority) {
+                $matching_rule = $rule;
+                $matched_priority = $rule['priority'];
+            }
+        }
+
+        // Step 3: Apply the rule as a fee (negative amount = discount)
+        if ($matching_rule && $qty > 0) {
+            $product = wc_get_product($product_id);
+            $product_name = $product ? $product->get_name() : '';
+            $label = $matching_rule['discount_name'];
+            if ($product_name) {
+                $label .= " (" . $product_name . ")";
+            }
+            $discount = $matching_rule['discount_amount'] * $qty;
+            $cart->add_fee($label, -$discount, true);
+
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log("Applied bulk discount: $" . number_format($discount, 2) . " for {$qty} x {$product_name} (Rule: {$matching_rule['discount_name']})");
+            }
+        }
+    }
+}
+
+// Hook into WooCommerce cart fee calculation
+add_action('woocommerce_cart_calculate_fees', 'apw_woo_apply_role_based_bulk_discounts');

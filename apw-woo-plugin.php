@@ -11,7 +11,7 @@
  * Plugin Name:       APW WooCommerce Plugin
  * Plugin URI:        https://github.com/OrasesWPDev/apw-woo-plugin
  * Description:       Custom WooCommerce enhancements for displaying products across shop, category, and product pages.
- * Version:           1.15.6
+ * Version:           1.17.5
  * Requires at least: 5.3
  * Requires PHP:      7.2
  * Author:            Orases
@@ -33,7 +33,7 @@ if (!defined('ABSPATH')) {
 /**
  * Plugin constants
  */
-define('APW_WOO_VERSION', '1.15.6');
+define('APW_WOO_VERSION', '1.17.5');
 define('APW_WOO_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('APW_WOO_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('APW_WOO_PLUGIN_FILE', __FILE__);
@@ -491,6 +491,15 @@ function apw_woo_autoload_files()
         }
     }
 
+    // The account fields JS file is no longer needed as the JS is now in the template
+    // This code is kept for backward compatibility but doesn't do anything important
+    $account_fields_js_file = $includes_dir . '/apw-woo-account-fields-js.php';
+    if (file_exists($account_fields_js_file) && !isset($loaded_files[$account_fields_js_file])) {
+        require_once $account_fields_js_file;
+        $loaded_files[$account_fields_js_file] = true;
+        apw_woo_log('Loaded account fields JS file (deprecated)');
+    }
+
     apw_woo_log('Starting to autoload files.');
 
     // First, load core logger class to ensure logging functions are available
@@ -750,6 +759,13 @@ function apw_woo_init()
     // Initialize Recurring Billing Field functionality
     apw_woo_initialize_recurring_billing();
 
+    // Initialize Account Fields customization
+    if (file_exists(APW_WOO_PLUGIN_DIR . 'includes/apw-woo-account-functions.php')) {
+        require_once APW_WOO_PLUGIN_DIR . 'includes/apw-woo-account-functions.php';
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('Account functions loaded successfully');
+        }
+    }
 
     // Initialize RMA Form functionality
 //    apw_woo_initialize_rma_form();

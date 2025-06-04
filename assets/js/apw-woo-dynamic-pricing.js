@@ -7,9 +7,8 @@
     
     // Debug logging function that only logs when debug is enabled
     function debugLog() {
-        if (typeof apwWooDynamicPricing !== 'undefined' && apwWooDynamicPricing.debug_mode === true) {
-            console.log.apply(console, arguments);
-        }
+        // Always log for debugging dynamic pricing issues
+        console.log('[APW Dynamic Pricing]', ...arguments);
     }
     
     // Error logging function that always logs errors
@@ -48,13 +47,19 @@
         if ($('form.cart .quantity input').length) debugLog('Found qty input with form.cart .quantity input selector');
         if ($('.quantity input[type="number"]').length) debugLog('Found qty input with .quantity input[type="number"] selector');
 
-        // Find price elements with expanded selectors
+        // Find price elements with expanded selectors for single product pages
         let $priceDisplay = $(apwWooDynamicPricing.price_selector);
 
-        // If no price elements found, try alternative selectors
+        // If no price elements found, try comprehensive alternative selectors
         if (!$priceDisplay.length) {
-            $priceDisplay = $('.woocommerce-Price-amount, .price .amount, .product p.price, .product-info .price-wrapper .amount');
-            console.log('Using fallback price selectors, found: ' + $priceDisplay.length + ' elements');
+            $priceDisplay = $('.woocommerce-Price-amount, .price .amount, .product p.price, .product-info .price-wrapper .amount, .apw-woo-price-display, .single-product .price, .product-summary .price .amount, .woocommerce-variation-price .amount');
+            debugLog('Using fallback price selectors, found: ' + $priceDisplay.length + ' elements');
+        }
+
+        // Additional fallback for APW-specific price displays
+        if (!$priceDisplay.length) {
+            $priceDisplay = $('.apw-woo-add-to-cart-wrapper .price, .apw-woo-product-summary .price, .woocommerce div.product p.price');
+            debugLog('Using APW-specific price selectors, found: ' + $priceDisplay.length + ' elements');
         }
 
         // Log detailed information for debugging
@@ -103,15 +108,35 @@
             return;
         }
 
-        // Get product ID from multiple possible sources
+        // Get product ID from multiple possible sources with enhanced detection
         let productId = $priceDisplay.data('product-id');
 
         // If not found in price display, try multiple fallbacks
         if (!productId) {
+            // Try form data attributes and inputs
             productId = $('form.cart').data('product_id') ||
+                $('form.cart').data('product-id') ||
                 $('form.cart input[name="product_id"]').val() ||
                 $('input[name="add-to-cart"]').val() ||
-                $('button.single_add_to_cart_button').val();
+                $('button.single_add_to_cart_button').val() ||
+                $('.single_add_to_cart_button').val();
+        }
+
+        // Enhanced product ID detection from page context
+        if (!productId) {
+            // Try to get from global WooCommerce data if available
+            if (typeof wc_add_to_cart_params !== 'undefined' && wc_add_to_cart_params.product_id) {
+                productId = wc_add_to_cart_params.product_id;
+            }
+            // Try body class detection
+            else {
+                const bodyClasses = $('body').attr('class');
+                const productMatch = bodyClasses.match(/postid-(\d+)/);
+                if (productMatch) {
+                    productId = productMatch[1];
+                    debugLog('Extracted product ID from body class: ' + productId);
+                }
+            }
         }
 
         // If still no product ID, try to get from URL
@@ -142,11 +167,18 @@
         function updatePrice(quantity) {
             // Don't update if quantity hasn't changed
             if (quantity === currentQuantity) {
+                debugLog('Quantity unchanged, skipping update: ' + quantity);
                 return;
             }
 
-            debugLog('Updating price for quantity: ' + quantity);
+            debugLog('Updating price for quantity: ' + quantity + ', Product ID: ' + productId);
             currentQuantity = quantity;
+
+            // Validate we have necessary data
+            if (!productId && !window.usingProductSlug) {
+                errorLog('Cannot update price: No product ID available');
+                return;
+            }
 
             // Show loading indicator on all price elements
             $priceDisplay.addClass('updating');
@@ -176,11 +208,47 @@
                 url: apwWooDynamicPricing.ajax_url,
                 data: requestData,
                 success: function (response) {
+                    debugLog('AJAX response received:', response);
+                    
                     if (response.success && response.data) {
-                        debugLog('Price updated successfully', response.data);
+                        debugLog('Price updated successfully from ' + (response.data.original_price || 'unknown') + ' to ' + response.data.formatted_price, response.data);
 
+                        // Re-query price elements in case DOM changed
+                        const $allPriceElements = $('.apw-woo-price-display, .woocommerce-Price-amount, .price .amount');
+                        debugLog('Found ' + $allPriceElements.length + ' price elements to update');
+                        
                         // Update all price elements with new price
-                        $priceDisplay.html(response.data.formatted_price);
+                        // Handle both simple price displays and those with nested .amount elements
+                        let priceUpdated = false;
+                        $allPriceElements.each(function() {
+                            const $element = $(this);
+                            
+                            // Skip if this is inside the cart form (to avoid updating wrong prices)
+                            if ($element.closest('.woocommerce-variation-price').length) {
+                                return true; // continue to next element
+                            }
+                            
+                            if ($element.hasClass('apw-woo-price-display')) {
+                                // This is our custom price display
+                                $element.find('.amount').html(response.data.formatted_price);
+                                priceUpdated = true;
+                                debugLog('Updated APW price display');
+                            } else if ($element.find('.amount').length) {
+                                // Update the nested amount element
+                                $element.find('.amount').html(response.data.formatted_price);
+                                priceUpdated = true;
+                                debugLog('Updated nested .amount element');
+                            } else {
+                                // Update the entire element
+                                $element.html(response.data.formatted_price);
+                                priceUpdated = true;
+                                debugLog('Updated entire price element');
+                            }
+                        });
+
+                        if (!priceUpdated) {
+                            errorLog('No price elements were updated - check selectors');
+                        }
 
                         // If we didn't have a product ID before but received one, store it
                         if (!productId && response.data.product_id) {
@@ -194,6 +262,9 @@
                         $(document).trigger('apw_price_updated', [response.data]);
                     } else {
                         errorLog('Price update failed: Invalid response', response);
+                        if (response.data && response.data.message) {
+                            errorLog('Server message: ' + response.data.message);
+                        }
                     }
                 },
                 error: function (xhr, status, error) {
@@ -224,13 +295,15 @@
             }, 300);
         });
 
-        // Enhanced detection for quantity button clicks
-        $(document).on('click', '.quantity .plus, .quantity .minus, .quantity button.plus, .quantity button.minus', function (e) {
-            debugLog('Quantity button clicked: ' + ($(this).hasClass('plus') ? 'plus' : 'minus'));
+        // Enhanced detection for quantity button clicks - including Flatsome theme buttons
+        $(document).on('click', '.quantity .plus, .quantity .minus, .quantity button.plus, .quantity button.minus, .ux-quantity__button, input[type="button"].plus, input[type="button"].minus', function (e) {
+            debugLog('Quantity button clicked: ' + ($(this).hasClass('plus') || $(this).hasClass('ux-quantity__button--plus') ? 'plus' : 'minus'));
 
             // Wait a brief moment for the quantity to update
             setTimeout(function () {
-                const newQty = parseInt($quantityInput.val(), 10) || 1;
+                // Re-query the input in case it's been replaced
+                const $currentQtyInput = $('input.qty, [name="quantity"]').first();
+                const newQty = parseInt($currentQtyInput.val(), 10) || 1;
                 debugLog('New quantity after button click: ' + newQty);
 
                 if (newQty !== currentQuantity) {
@@ -297,7 +370,27 @@
 
         // Initial price update on page load with small delay to ensure DOM is ready
         setTimeout(function () {
+            // Force re-check current quantity in case it was changed before script loaded
+            const actualQty = parseInt($quantityInput.val(), 10) || 1;
+            if (actualQty !== currentQuantity) {
+                debugLog('Initial quantity mismatch - updating from ' + currentQuantity + ' to ' + actualQty);
+                currentQuantity = actualQty;
+            }
             updatePrice(currentQuantity);
         }, 300);
+
+        // Also check after full page load in case of slow loading
+        $(window).on('load', function() {
+            setTimeout(function() {
+                const currentQtyValue = parseInt($quantityInput.val(), 10) || 1;
+                if (currentQtyValue !== currentQuantity) {
+                    debugLog('Window load quantity check - updating to: ' + currentQtyValue);
+                    updatePrice(currentQtyValue);
+                }
+            }, 500);
+        });
+
+        // Focus only on single product page functionality
+        debugLog('Single product page dynamic pricing initialized');
     });
 })(jQuery);

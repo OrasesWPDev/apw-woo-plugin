@@ -52,11 +52,23 @@ function apw_woo_add_quantity_section()
 add_action('woocommerce_before_add_to_cart_quantity', 'apw_woo_add_quantity_section', 5);
 
 /**
- * Close purchase section after add to cart button
+ * Close quantity row and start button row after quantity input and price display
+ */
+function apw_woo_close_quantity_row()
+{
+    echo '</div><!-- End quantity row -->'; // Close the .apw-woo-quantity-row div
+    echo '<div class="apw-woo-button-row">'; // Start button row
+}
+
+// Hook AFTER the price display to ensure proper structure
+add_action('woocommerce_after_add_to_cart_quantity', 'apw_woo_close_quantity_row', 15);
+
+/**
+ * Close button row and purchase section after add to cart button
  */
 function apw_woo_close_purchase_section()
 {
-    echo '</div><!-- End quantity row -->'; // Close the .apw-woo-quantity-row div
+    echo '</div><!-- End button row -->'; // Close the .apw-woo-button-row div
     echo '</div><!-- End purchase section -->'; // Close the .apw-woo-purchase-section div
 }
 
@@ -134,7 +146,7 @@ if ($product) :
                                 <div class="apw-woo-product-summary">
                                     <!-- Product Title -->
                                     <!--                                    <div class="apw-woo-product-title-wrapper">-->
-                                    <!--                                        --><?php //the_title('<h1 class="apw-woo-product-title">', '</h1>');
+                                    <!--                                        --><?php //the_title('<h2 class="apw-woo-product-title">', '</h2>');
                                     ?>
                                     <!--                                    </div>-->
                                     <!-- Product Description -->

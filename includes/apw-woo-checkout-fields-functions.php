@@ -288,4 +288,284 @@ function apw_woo_validate_conditional_shipping_fields_on_submit()
 
 add_action('woocommerce_checkout_process', 'apw_woo_validate_conditional_shipping_fields_on_submit');
 
+/**
+ * Make company field required in checkout forms
+ */
+function apw_woo_make_company_required($fields) {
+    // Skip if we're on My Account page (handled by dedicated functions)
+    if (is_account_page() && is_wc_endpoint_url('edit-address')) {
+        return $fields;
+    }
+    
+    if (isset($fields['company'])) {
+        $fields['company']['required'] = true;
+        
+        // Add required class
+        if (!isset($fields['company']['class'])) {
+            $fields['company']['class'] = array();
+        }
+        if (!in_array('validate-required', $fields['company']['class'])) {
+            $fields['company']['class'][] = 'validate-required';
+        }
+        
+        // Add a custom data attribute for JavaScript to recognize
+        $fields['company']['custom_attributes'] = isset($fields['company']['custom_attributes']) ? $fields['company']['custom_attributes'] : array();
+        $fields['company']['custom_attributes']['data-required'] = 'true';
+    }
+    return $fields;
+}
+
+/**
+ * Make phone field required in checkout forms
+ */
+function apw_woo_make_phone_required($fields) {
+    // Skip if we're on My Account page (handled by dedicated functions)
+    if (is_account_page() && is_wc_endpoint_url('edit-address')) {
+        return $fields;
+    }
+    
+    // Handle different possible field keys
+    foreach (array('phone', 'billing_phone', 'shipping_phone') as $key) {
+        if (isset($fields[$key])) {
+            $fields[$key]['required'] = true;
+            
+            // Add required class
+            if (!isset($fields[$key]['class'])) {
+                $fields[$key]['class'] = array();
+            }
+            if (!in_array('validate-required', $fields[$key]['class'])) {
+                $fields[$key]['class'][] = 'validate-required';
+            }
+            
+            // Add a custom data attribute for JavaScript to recognize
+            $fields[$key]['custom_attributes'] = isset($fields[$key]['custom_attributes']) ? $fields[$key]['custom_attributes'] : array();
+            $fields[$key]['custom_attributes']['data-required'] = 'true';
+        }
+    }
+    return $fields;
+}
+
+/**
+ * Make fields required specifically in My Account address forms
+ * This function only runs on My Account pages
+ */
+function apw_woo_make_myaccount_address_fields_required($fields) {
+    // Only apply on My Account address pages
+    if (!is_account_page() || !is_wc_endpoint_url('edit-address')) {
+        return $fields;
+    }
+    
+    // Debug log the fields we're modifying
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log('My Account address fields before modification: ' . print_r(array_keys($fields), true));
+    }
+    
+    // Company field (note: in My Account forms, it's just 'company' without prefix)
+    if (isset($fields['company'])) {
+        $fields['company']['required'] = true;
+        
+        // Add required class
+        if (!isset($fields['company']['class'])) {
+            $fields['company']['class'] = array();
+        }
+        if (!in_array('validate-required', $fields['company']['class'])) {
+            $fields['company']['class'][] = 'validate-required';
+        }
+    }
+    
+    // Phone field handling is done in the specific billing/shipping filters
+    
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log('My Account address fields after modification: ' . print_r($fields, true));
+    }
+    
+    return $fields;
+}
+
+/**
+ * Make phone field required in My Account billing address form
+ */
+function apw_woo_make_myaccount_billing_phone_required($fields) {
+    // Only apply on My Account address pages
+    if (!is_account_page() || !is_wc_endpoint_url('edit-address')) {
+        return $fields;
+    }
+    
+    // Get the address type from the URL
+    $load_address = isset($_GET['address']) ? wc_clean(wp_unslash($_GET['address'])) : 'billing';
+    
+    // Only proceed if we're on the billing address page
+    if ($load_address !== 'billing') {
+        return $fields;
+    }
+    
+    if (isset($fields['billing_phone'])) {
+        $fields['billing_phone']['required'] = true;
+        
+        // Add required class
+        if (!isset($fields['billing_phone']['class'])) {
+            $fields['billing_phone']['class'] = array();
+        }
+        if (!in_array('validate-required', $fields['billing_phone']['class'])) {
+            $fields['billing_phone']['class'][] = 'validate-required';
+        }
+    }
+    
+    return $fields;
+}
+
+/**
+ * Make phone field required in My Account shipping address form
+ */
+function apw_woo_make_myaccount_shipping_phone_required($fields) {
+    // Only apply on My Account address pages
+    if (!is_account_page() || !is_wc_endpoint_url('edit-address')) {
+        return $fields;
+    }
+    
+    // Get the address type from the URL
+    $load_address = isset($_GET['address']) ? wc_clean(wp_unslash($_GET['address'])) : 'billing';
+    
+    // Only proceed if we're on the shipping address page
+    if ($load_address !== 'shipping') {
+        return $fields;
+    }
+    
+    if (isset($fields['shipping_phone'])) {
+        $fields['shipping_phone']['required'] = true;
+        
+        // Add required class
+        if (!isset($fields['shipping_phone']['class'])) {
+            $fields['shipping_phone']['class'] = array();
+        }
+        if (!in_array('validate-required', $fields['shipping_phone']['class'])) {
+            $fields['shipping_phone']['class'][] = 'validate-required';
+        }
+    }
+    
+    return $fields;
+}
+
+/**
+ * Save shipping phone field from My Account edit address form
+ */
+function apw_woo_save_shipping_phone_field($customer_id, $posted_data) {
+    if (isset($posted_data['shipping_phone'])) {
+        update_user_meta($customer_id, 'shipping_phone', sanitize_text_field($posted_data['shipping_phone']));
+    }
+}
+
+/**
+ * Validate required address fields on My Account page
+ */
+function apw_woo_validate_address_fields() {
+    // Only run on the edit address page
+    if (!is_wc_endpoint_url('edit-address')) {
+        return;
+    }
+    
+    // Check if form was submitted
+    if (!isset($_POST['action']) || $_POST['action'] !== 'edit_address') {
+        return;
+    }
+    
+    $load_address = isset($_GET['address']) ? wc_clean(wp_unslash($_GET['address'])) : 'billing';
+    
+    // Validate company field
+    if (empty($_POST[$load_address . '_company'])) {
+        wc_add_notice(__('Company is a required field.', 'apw-woo-plugin'), 'error');
+    }
+    
+    // Validate phone field
+    if (empty($_POST[$load_address . '_phone'])) {
+        wc_add_notice(__('Phone is a required field.', 'apw-woo-plugin'), 'error');
+    }
+}
+
+// Make fields required in checkout forms
+add_filter('woocommerce_default_address_fields', 'apw_woo_make_company_required', 999);
+add_filter('woocommerce_billing_fields', 'apw_woo_make_phone_required', 999);
+add_filter('woocommerce_shipping_fields', 'apw_woo_make_phone_required', 999);
+
+// Make fields required in My Account address forms
+add_filter('woocommerce_default_address_fields', 'apw_woo_make_myaccount_address_fields_required', 999);
+add_filter('woocommerce_billing_fields', 'apw_woo_make_myaccount_billing_phone_required', 999);
+add_filter('woocommerce_shipping_fields', 'apw_woo_make_myaccount_shipping_phone_required', 999);
+
+// Server-side validation and saving
+add_action('template_redirect', 'apw_woo_validate_address_fields');
+add_action('woocommerce_customer_save_address', 'apw_woo_save_shipping_phone_field', 20, 2);
+
+// Debug logging for address pages
+if (APW_WOO_DEBUG_MODE) {
+    add_action('init', function() {
+        if (is_account_page() && is_wc_endpoint_url('edit-address') && function_exists('apw_woo_log')) {
+            $load_address = isset($_GET['address']) ? wc_clean(wp_unslash($_GET['address'])) : 'billing';
+            apw_woo_log('On edit-address page for ' . $load_address . ' address - using dedicated field modification functions');
+        }
+    }, 999);
+}
+
+// Debug logging for address pages
+if (APW_WOO_DEBUG_MODE) {
+    add_action('init', function() {
+        if (is_account_page() && is_wc_endpoint_url('edit-address') && function_exists('apw_woo_log')) {
+            $load_address = isset($_GET['address']) ? wc_clean(wp_unslash($_GET['address'])) : 'billing';
+            apw_woo_log('On edit-address page for ' . $load_address . ' address - using custom template');
+        }
+    }, 999);
+}
+
+/**
+ * Enqueue checkout scripts for payment method handling
+ * 
+ * Loads JavaScript for checkout page interactions including:
+ * - Payment method change triggers
+ * - Cart/checkout totals updates
+ */
+function apw_woo_enqueue_checkout_payment_scripts() {
+    // Only enqueue on checkout and cart pages
+    if (!is_checkout() && !is_cart()) {
+        return;
+    }
+
+    $js_file = 'apw-woo-checkout.js';
+    $js_path = APW_WOO_PLUGIN_DIR . 'assets/js/' . $js_file;
+
+    // Check if the file exists
+    if (!file_exists($js_path)) {
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('Checkout script file not found: ' . $js_path, 'warning');
+        }
+        return;
+    }
+
+    // Enqueue the JavaScript file
+    wp_enqueue_script(
+        'apw-woo-checkout',
+        APW_WOO_PLUGIN_URL . 'assets/js/' . $js_file,
+        array('jquery', 'wc-checkout'), // Dependencies
+        filemtime($js_path), // Cache busting
+        true // Load in footer
+    );
+
+    // Localize script with data
+    wp_localize_script(
+        'apw-woo-checkout',
+        'apwWooCheckoutData',
+        array(
+            'debug_mode' => APW_WOO_DEBUG_MODE,
+            'is_checkout' => is_checkout(),
+            'is_cart' => is_cart()
+        )
+    );
+
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log('Enqueued checkout payment scripts on ' . (is_checkout() ? 'checkout' : 'cart') . ' page');
+    }
+}
+
+// Hook to enqueue checkout scripts
+add_action('wp_enqueue_scripts', 'apw_woo_enqueue_checkout_payment_scripts');
+
 ?>
