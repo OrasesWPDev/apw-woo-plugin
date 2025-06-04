@@ -516,4 +516,56 @@ if (APW_WOO_DEBUG_MODE) {
     }, 999);
 }
 
+/**
+ * Enqueue checkout scripts for payment method handling
+ * 
+ * Loads JavaScript for checkout page interactions including:
+ * - Payment method change triggers
+ * - Cart/checkout totals updates
+ */
+function apw_woo_enqueue_checkout_payment_scripts() {
+    // Only enqueue on checkout and cart pages
+    if (!is_checkout() && !is_cart()) {
+        return;
+    }
+
+    $js_file = 'apw-woo-checkout.js';
+    $js_path = APW_WOO_PLUGIN_DIR . 'assets/js/' . $js_file;
+
+    // Check if the file exists
+    if (!file_exists($js_path)) {
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('Checkout script file not found: ' . $js_path, 'warning');
+        }
+        return;
+    }
+
+    // Enqueue the JavaScript file
+    wp_enqueue_script(
+        'apw-woo-checkout',
+        APW_WOO_PLUGIN_URL . 'assets/js/' . $js_file,
+        array('jquery', 'wc-checkout'), // Dependencies
+        filemtime($js_path), // Cache busting
+        true // Load in footer
+    );
+
+    // Localize script with data
+    wp_localize_script(
+        'apw-woo-checkout',
+        'apwWooCheckoutData',
+        array(
+            'debug_mode' => APW_WOO_DEBUG_MODE,
+            'is_checkout' => is_checkout(),
+            'is_cart' => is_cart()
+        )
+    );
+
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log('Enqueued checkout payment scripts on ' . (is_checkout() ? 'checkout' : 'cart') . ' page');
+    }
+}
+
+// Hook to enqueue checkout scripts
+add_action('wp_enqueue_scripts', 'apw_woo_enqueue_checkout_payment_scripts');
+
 ?>

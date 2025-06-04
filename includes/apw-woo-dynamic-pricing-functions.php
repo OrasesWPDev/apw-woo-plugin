@@ -895,3 +895,114 @@ function apw_woo_debug_dynamic_pricing_rules($product_id)
         apw_woo_log("DYNAMIC PRICING DEBUG: Found global wc_dynamic_pricing object");
     }
 }
+
+/**
+ * Apply role-based bulk discounts as cart fees
+ * 
+ * Configurable discount system that applies discounts based on:
+ * - Product ID and quantity thresholds
+ * - User roles (optional)
+ * - Priority system for multiple matching rules
+ */
+function apw_woo_apply_role_based_bulk_discounts($cart) {
+    if (is_admin() && !defined('DOING_AJAX')) {
+        return;
+    }
+
+    // Configurable rules array - can be filtered by other plugins/themes
+    $rules = array(
+        array(
+            'product_id' => 80,
+            'discount_amount' => 10, // $10 off per item
+            'priority' => 100,
+            'min_quantity' => 1, // at least 1 in cart
+            'role' => 'distro10', // Only for distro10 role
+            'discount_name' => 'VIP Discount',
+        ),
+        array(
+            'product_id' => 80,
+            'discount_amount' => 10, // $10 off per item
+            'priority' => 50,
+            'min_quantity' => 5, // at least 5 in cart
+            'role' => '', // For anyone else (no role requirement)
+            'discount_name' => 'Bulk Discount',
+        ),
+    );
+
+    /**
+     * Filter the bulk discount rules
+     *
+     * @param array $rules Array of discount rules
+     */
+    $rules = apply_filters('apw_woo_bulk_discount_rules', $rules);
+
+    $user = wp_get_current_user();
+    $cart_items_by_product = array();
+
+    // Step 1: Collect cart item quantities by product
+    foreach ($cart->get_cart() as $cart_item) {
+        $product_id = $cart_item['product_id'];
+        $parent_id = wp_get_post_parent_id($product_id) ?: $product_id;
+        $cart_items_by_product[$parent_id]['qty'] = ($cart_items_by_product[$parent_id]['qty'] ?? 0) + $cart_item['quantity'];
+        $cart_items_by_product[$parent_id]['cart_items'][] = $cart_item;
+    }
+
+    // Step 2: For each product, find highest priority matching rule
+    foreach ($cart_items_by_product as $product_id => $data) {
+        $qty = $data['qty'];
+        $matching_rule = null;
+        $matched_priority = -INF;
+
+        foreach ($rules as $rule) {
+            if ((int)$rule['product_id'] !== (int)$product_id) {
+                continue;
+            }
+            
+            if ($qty < (int)($rule['min_quantity'] ?? 1)) {
+                continue;
+            }
+
+            // Role logic
+            $apply_for_role = true;
+            if (!empty($rule['role'])) {
+                $rule_roles = is_array($rule['role']) ? $rule['role'] : array($rule['role']);
+                $apply_for_role = false;
+                foreach ($rule_roles as $role) {
+                    if (in_array($role, (array)$user->roles)) {
+                        $apply_for_role = true;
+                        break;
+                    }
+                }
+            }
+
+            // Skip if rule is for a role and user does not have it
+            if (!$apply_for_role) {
+                continue;
+            }
+
+            if ($rule['priority'] > $matched_priority) {
+                $matching_rule = $rule;
+                $matched_priority = $rule['priority'];
+            }
+        }
+
+        // Step 3: Apply the rule as a fee (negative amount = discount)
+        if ($matching_rule && $qty > 0) {
+            $product = wc_get_product($product_id);
+            $product_name = $product ? $product->get_name() : '';
+            $label = $matching_rule['discount_name'];
+            if ($product_name) {
+                $label .= " (" . $product_name . ")";
+            }
+            $discount = $matching_rule['discount_amount'] * $qty;
+            $cart->add_fee($label, -$discount, true);
+
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log("Applied bulk discount: $" . number_format($discount, 2) . " for {$qty} x {$product_name} (Rule: {$matching_rule['discount_name']})");
+            }
+        }
+    }
+}
+
+// Hook into WooCommerce cart fee calculation
+add_action('woocommerce_cart_calculate_fees', 'apw_woo_apply_role_based_bulk_discounts');

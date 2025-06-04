@@ -192,3 +192,38 @@ function apw_woo_preserve_intuit_fields($data) {
     
     return $data;
 }
+
+/**
+ * Add Intuit credit card surcharge fee on checkout only
+ * 
+ * Applies a 3% surcharge when Intuit credit card payment method is selected.
+ * Only applies on the checkout page to avoid affecting cart calculations.
+ */
+function apw_woo_add_intuit_surcharge_fee() {
+    if (is_admin() && !defined('DOING_AJAX')) {
+        return;
+    }
+
+    // Only run on the checkout page (not cart or elsewhere)
+    if (!is_checkout()) {
+        return;
+    }
+
+    $chosen_gateway = WC()->session->get('chosen_payment_method');
+    if ($chosen_gateway === 'intuit_payments_credit_card') {
+        $subtotal = WC()->cart->get_subtotal();
+        $shipping = WC()->cart->get_shipping_total();
+        $surcharge = ($subtotal + $shipping) * 0.03;
+
+        if ($surcharge > 0) {
+            WC()->cart->add_fee(__('Credit Card Surcharge (3%)', 'apw-woo-plugin'), $surcharge, true);
+            
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log("Applied Intuit surcharge: $" . number_format($surcharge, 2));
+            }
+        }
+    }
+}
+
+// Add the surcharge calculation hook
+add_action('woocommerce_cart_calculate_fees', 'apw_woo_add_intuit_surcharge_fee');
