@@ -4,35 +4,35 @@
  */
 (function ($) {
     'use strict';
-    
+
     // Debug logging function with timestamp
     function logWithTimestamp(message) {
         if (typeof apwWooDynamicPricing !== 'undefined' && apwWooDynamicPricing.debug_mode) {
             console.log('[' + new Date().toLocaleTimeString() + '] DYNAMIC PRICING: ' + message);
         }
     }
-    
+
     // Debug logging function that only logs when debug is enabled
     function debugLog() {
         if (typeof apwWooDynamicPricing !== 'undefined' && apwWooDynamicPricing.debug_mode) {
             console.log('[APW Dynamic Pricing]', ...arguments);
         }
     }
-    
+
     // Error logging function that always logs errors
     function errorLog() {
         console.error.apply(console, arguments);
     }
-    
+
     // Function to update threshold messages based on actual discount rules
     function updateThresholdMessages(messages) {
         // Find or create message container
         let $messageContainer = $('.apw-woo-threshold-messages');
-        
+
         if (!$messageContainer.length) {
             // Create container between quantity/price and add to cart button
             $messageContainer = $('<div class="apw-woo-threshold-messages"></div>');
-            
+
             // Try to insert after quantity row or price display
             let $insertAfter = $('.quantity').last();
             if (!$insertAfter.length) {
@@ -41,7 +41,7 @@
             if (!$insertAfter.length) {
                 $insertAfter = $('.price').last();
             }
-            
+
             if ($insertAfter.length) {
                 $insertAfter.after($messageContainer);
                 debugLog('Created threshold messages container after: ' + $insertAfter[0].className);
@@ -57,43 +57,43 @@
                 }
             }
         }
-        
+
         // Clear existing messages
         $messageContainer.empty();
-        
+
         if (messages && messages.length > 0) {
             logWithTimestamp('Displaying ' + messages.length + ' threshold messages');
-            
-            messages.forEach(function(messageData) {
+
+            messages.forEach(function (messageData) {
                 const messageClass = 'apw-threshold-message apw-threshold-' + messageData.type;
                 const messageHtml = '<div class="' + messageClass + '">' +
                     '<span class="message-icon">✓</span> ' +
                     '<span class="message-text">' + messageData.message + '</span>' +
                     '</div>';
-                
+
                 $messageContainer.append(messageHtml);
-                
+
                 logWithTimestamp('Added ' + messageData.type + ' message: ' + messageData.message);
             });
-            
+
             // Show container with animation
-            $messageContainer.fadeIn(300);
+            $messageContainer.fadeIn(450);
         } else {
             // Hide container if no messages
-            $messageContainer.fadeOut(200);
+            $messageContainer.fadeOut(100);
             logWithTimestamp('No threshold messages to display - hiding container');
         }
     }
-    
+
     // Function to check threshold messages via AJAX
     function checkThresholdMessages(productId, quantity) {
         if (!productId || quantity < 1) {
             debugLog('Invalid product ID or quantity for threshold check');
             return;
         }
-        
+
         debugLog('Checking threshold messages for product ' + productId + ' with quantity ' + quantity);
-        
+
         $.ajax({
             type: 'POST',
             url: apwWooDynamicPricing.ajax_url,
@@ -103,9 +103,9 @@
                 product_id: productId,
                 quantity: quantity
             },
-            success: function(response) {
+            success: function (response) {
                 debugLog('Threshold AJAX response received:', response);
-                
+
                 if (response.success && response.data) {
                     logWithTimestamp('Threshold check successful for qty ' + quantity);
                     updateThresholdMessages(response.data.threshold_messages || []);
@@ -114,7 +114,7 @@
                     updateThresholdMessages([]); // Clear messages on failure
                 }
             },
-            error: function(xhr, status, error) {
+            error: function (xhr, status, error) {
                 errorLog('Threshold AJAX error:', error);
                 updateThresholdMessages([]); // Clear messages on error
             }
@@ -314,7 +314,7 @@
                 data: requestData,
                 success: function (response) {
                     debugLog('AJAX response received:', response);
-                    
+
                     if (response.success && response.data) {
                         logWithTimestamp('Price updated successfully from ' + (response.data.original_price || 'unknown') + ' to ' + response.data.formatted_price);
                         debugLog('Full response data:', response.data);
@@ -322,37 +322,37 @@
                         // Get all potential price elements using the configured selector
                         var priceElements = $(apwWooDynamicPricing.price_selector);
                         logWithTimestamp('Found ' + priceElements.length + ' potential price elements');
-                        
+
                         // Filter out addon-related elements if addon exclusion selector is available
                         var mainPriceElements = priceElements;
                         if (apwWooDynamicPricing.addon_exclusion_selector) {
                             mainPriceElements = priceElements.not(apwWooDynamicPricing.addon_exclusion_selector + ' *');
                             logWithTimestamp('After excluding addons: ' + mainPriceElements.length + ' main price elements');
                         }
-                        
+
                         // Log each element being updated
                         var priceUpdated = false;
-                        mainPriceElements.each(function(index) {
+                        mainPriceElements.each(function (index) {
                             var element = $(this);
                             var oldPrice = element.html();
-                            logWithTimestamp('Updating element ' + (index + 1) + ': ' + element.prop('tagName') + 
-                                            ' with classes: ' + (element.attr('class') || 'none') + 
-                                            ' | Old: ' + oldPrice + ' | New: ' + response.data.formatted_price);
-                            
+                            logWithTimestamp('Updating element ' + (index + 1) + ': ' + element.prop('tagName') +
+                                ' with classes: ' + (element.attr('class') || 'none') +
+                                ' | Old: ' + oldPrice + ' | New: ' + response.data.formatted_price);
+
                             element.html(response.data.formatted_price);
                             priceUpdated = true;
                         });
-                        
+
                         // Log addon elements that were specifically excluded
                         if (apwWooDynamicPricing.addon_exclusion_selector) {
                             var addonElements = $(apwWooDynamicPricing.addon_exclusion_selector + ' .woocommerce-Price-amount, ' +
-                                                apwWooDynamicPricing.addon_exclusion_selector + ' .amount');
+                                apwWooDynamicPricing.addon_exclusion_selector + ' .amount');
                             if (addonElements.length > 0) {
                                 logWithTimestamp('Preserved ' + addonElements.length + ' addon price elements from dynamic pricing updates');
-                                addonElements.each(function(index) {
+                                addonElements.each(function (index) {
                                     var element = $(this);
-                                    logWithTimestamp('Preserved addon element ' + (index + 1) + ': ' + 
-                                                   element.html() + ' (classes: ' + (element.attr('class') || 'none') + ')');
+                                    logWithTimestamp('Preserved addon element ' + (index + 1) + ': ' +
+                                        element.html() + ' (classes: ' + (element.attr('class') || 'none') + ')');
                                 });
                             }
                         }
@@ -497,8 +497,8 @@
         }, 300);
 
         // Also check after full page load in case of slow loading
-        $(window).on('load', function() {
-            setTimeout(function() {
+        $(window).on('load', function () {
+            setTimeout(function () {
                 const currentQtyValue = parseInt($quantityInput.val(), 10) || 1;
                 if (currentQtyValue !== currentQuantity) {
                     debugLog('Window load quantity check - updating to: ' + currentQtyValue);
