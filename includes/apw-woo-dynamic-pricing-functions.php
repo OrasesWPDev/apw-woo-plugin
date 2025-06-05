@@ -771,8 +771,17 @@ function apw_woo_init_dynamic_pricing()
     // to match the subtotal calculations
     add_filter('woocommerce_cart_item_price', 'apw_woo_filter_cart_item_price', 10, 3);
 
+    // CART INITIALIZATION FIX: Force cart recalculation on cart page load
+    add_action('wp', 'apw_woo_force_cart_recalculation', 5);
+    
+    // CART LOADED FIX: Ensure dynamic pricing is applied when cart is loaded
+    add_action('woocommerce_cart_loaded_from_session', 'apw_woo_recalculate_cart_on_load', 10);
+    
+    // CART ITEM LOADED FIX: Apply dynamic pricing to cart items as they're loaded
+    add_action('woocommerce_get_cart_item_from_session', 'apw_woo_apply_dynamic_pricing_to_cart_item', 10, 3);
+
     if (APW_WOO_DEBUG_MODE) {
-        apw_woo_log('Dynamic Pricing: Added cart item price filter hook');
+        apw_woo_log('Dynamic Pricing: Added cart item price filter hook and cart initialization hooks');
     }
 
     // Include the integration class if needed
@@ -939,6 +948,19 @@ function apw_woo_apply_role_based_bulk_discounts($cart) {
     if (is_admin() && !defined('DOING_AJAX')) {
         return;
     }
+    
+    // Prevent multiple executions on the same request
+    static $already_applied = false;
+    if ($already_applied) {
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('BULK DISCOUNT: Already applied in this request, skipping duplicate');
+        }
+        return;
+    }
+    
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log('BULK DISCOUNT: Starting bulk discount calculation');
+    }
 
     // Configurable rules array - can be filtered by other plugins/themes
     $rules = array(
@@ -1032,6 +1054,13 @@ function apw_woo_apply_role_based_bulk_discounts($cart) {
                 apw_woo_log("Applied bulk discount: $" . number_format($discount, 2) . " for {$qty} x {$product_name} (Rule: {$matching_rule['discount_name']})");
             }
         }
+    }
+    
+    // Mark as applied to prevent duplicate execution
+    $already_applied = true;
+    
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log('BULK DISCOUNT: Bulk discount calculation completed');
     }
 }
 
@@ -1144,6 +1173,112 @@ function apw_woo_get_active_threshold_messages($product, $quantity) {
     }
 
     return $active_messages;
+}
+
+/**
+ * Force cart recalculation on cart page load
+ * 
+ * This ensures that dynamic pricing and bulk discounts are applied
+ * immediately when the cart page is loaded, not just when quantities change.
+ */
+function apw_woo_force_cart_recalculation() {
+    // Only run on cart page
+    if (!is_cart()) {
+        return;
+    }
+    
+    // Skip if this is an AJAX request or admin
+    if (wp_doing_ajax() || is_admin()) {
+        return;
+    }
+    
+    // Get WooCommerce cart
+    if (!WC()->cart || WC()->cart->is_empty()) {
+        return;
+    }
+    
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log('CART INITIALIZATION: Forcing cart recalculation on cart page load');
+    }
+    
+    // Force recalculation of cart totals to apply dynamic pricing
+    WC()->cart->calculate_totals();
+    
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log('CART INITIALIZATION: Cart totals recalculated');
+    }
+}
+
+/**
+ * Recalculate cart when loaded from session
+ * 
+ * This ensures dynamic pricing is applied when cart is restored from session
+ */
+function apw_woo_recalculate_cart_on_load($cart) {
+    if (!$cart || $cart->is_empty()) {
+        return;
+    }
+    
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log('CART SESSION: Cart loaded from session, recalculating for dynamic pricing');
+    }
+    
+    // Mark cart for recalculation
+    $cart->set_session();
+    
+    // Force fee recalculation
+    if (method_exists($cart, 'calculate_fees')) {
+        $cart->calculate_fees();
+    }
+    
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log('CART SESSION: Dynamic pricing recalculation completed');
+    }
+}
+
+/**
+ * Apply dynamic pricing to individual cart items when loaded from session
+ * 
+ * This ensures that cart items have the correct price applied based on quantity
+ * when they are restored from the session.
+ */
+function apw_woo_apply_dynamic_pricing_to_cart_item($cart_item, $values, $key) {
+    // Skip if no product data
+    if (!isset($cart_item['data']) || !isset($cart_item['quantity'])) {
+        return $cart_item;
+    }
+    
+    $product = $cart_item['data'];
+    $quantity = (int) $cart_item['quantity'];
+    
+    // Skip if not a valid product or quantity
+    if (!is_a($product, 'WC_Product') || $quantity < 1) {
+        return $cart_item;
+    }
+    
+    // Check if this product has dynamic pricing rules
+    if (!apw_woo_product_has_pricing_rules($product)) {
+        return $cart_item;
+    }
+    
+    // Calculate the dynamic price for this quantity
+    $dynamic_price = apw_woo_get_price_by_quantity($product, $quantity);
+    $original_price = (float) $product->get_price();
+    
+    // Only update if price is different
+    if (abs($dynamic_price - $original_price) > 0.01) {
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log("CART ITEM SESSION: Applying dynamic price to cart item - Product #{$product->get_id()}, Qty: {$quantity}, Original: {$original_price}, Dynamic: {$dynamic_price}");
+        }
+        
+        // Set the new price on the product object
+        $product->set_price($dynamic_price);
+        
+        // Update the cart item data
+        $cart_item['data'] = $product;
+    }
+    
+    return $cart_item;
 }
 
 // Hook into WooCommerce cart fee calculation
