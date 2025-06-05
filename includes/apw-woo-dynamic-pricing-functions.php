@@ -392,6 +392,16 @@ function apw_woo_ajax_get_dynamic_price()
 
     // Log request details in debug mode
     if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log("=== DYNAMIC PRICING AJAX DEBUG ===");
+        apw_woo_log("Product ID: {$product_id} | Quantity: {$quantity}");
+        apw_woo_log("Request from: " . ($_SERVER['HTTP_REFERER'] ?? 'unknown'));
+        apw_woo_log("User Agent: " . ($_SERVER['HTTP_USER_AGENT'] ?? 'unknown'));
+        
+        // Check if this might be an addon-related request
+        $is_addon_request = isset($_POST['addon_data']) || 
+                           strpos($_SERVER['HTTP_REFERER'] ?? '', 'addon') !== false;
+        apw_woo_log("Potential addon request: " . ($is_addon_request ? 'YES' : 'NO'));
+        
         apw_woo_log("Dynamic pricing AJAX request: Product ID: {$product_id}, Quantity: {$quantity}");
     }
 
@@ -548,6 +558,21 @@ function apw_woo_enqueue_dynamic_pricing_scripts()
             true // Load in footer
         );
 
+        // Create specific selector that excludes addon areas
+        $main_price_selectors = array(
+            '.apw-woo-price-display',
+            '.summary .price:not(.addon-wrap .price)',
+            '.summary .woocommerce-Price-amount:not(.addon-wrap .woocommerce-Price-amount)',
+            '.product .price .amount:not(.addon-wrap .amount)',
+            '.woocommerce-product-details__short-description + .price .amount'
+        );
+
+        // Log the selectors being used
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('Dynamic pricing selectors: ' . implode(', ', $main_price_selectors));
+            apw_woo_log('Excluding addon price elements from dynamic pricing updates');
+        }
+
         // Localize script with data needed for AJAX
         wp_localize_script(
             'apw-woo-dynamic-pricing',
@@ -555,7 +580,8 @@ function apw_woo_enqueue_dynamic_pricing_scripts()
             array(
                 'ajax_url' => admin_url('admin-ajax.php'),
                 'nonce' => wp_create_nonce('apw_woo_dynamic_pricing'),
-                'price_selector' => '.apw-woo-price-display, .woocommerce-Price-amount, .price .amount', // Expanded selectors
+                'price_selector' => implode(', ', $main_price_selectors),
+                'addon_exclusion_selector' => '.addon-wrap, .apw-woo-product-addons, .wc-pao-addon-wrap',
                 'is_product' => true, // Script only loads on product pages now
                 'debug_mode' => APW_WOO_DEBUG_MODE // Pass debug mode status
             )
@@ -1002,6 +1028,31 @@ function apw_woo_apply_role_based_bulk_discounts($cart) {
             }
         }
     }
+}
+
+/**
+ * Check if current request should exclude addon price updates
+ *
+ * @param int $product_id The product ID to check
+ * @return bool True if addon prices should be protected
+ */
+function apw_woo_should_exclude_addon_prices($product_id) {
+    // Check if product has addons
+    if (!function_exists('apw_woo_product_has_addons')) {
+        return false;
+    }
+    
+    $has_addons = apw_woo_product_has_addons($product_id);
+    
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log("Product #{$product_id} has addons: " . ($has_addons ? 'YES' : 'NO'));
+        
+        if ($has_addons) {
+            apw_woo_log("ADDON PROTECTION: Dynamic pricing should avoid updating addon price elements");
+        }
+    }
+    
+    return $has_addons;
 }
 
 // Hook into WooCommerce cart fee calculation

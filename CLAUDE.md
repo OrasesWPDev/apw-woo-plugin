@@ -5,8 +5,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 
 This is a custom WordPress plugin (`apw-woo-plugin`) that extends WooCommerce functionality with enhanced product
-displays, custom templates, dynamic pricing integration, and FAQ systems. The plugin is designed to work with the
-Flatsome theme and provides custom URL structures for WooCommerce pages.
+displays, custom templates, dynamic pricing integration, FAQ systems, Intuit payment gateway integration, recurring
+billing management, and cart quantity indicators. The plugin is designed to work with the Flatsome theme and provides
+custom URL structures for WooCommerce pages.
 
 ## Core Architecture
 
@@ -25,6 +26,8 @@ Flatsome theme and provides custom URL structures for WooCommerce pages.
 - `APW_Woo_Logger` - Centralized logging system (only active when `APW_WOO_DEBUG_MODE` is true)
 - `APW_Woo_Page_Detector` - Custom URL structure detection for products/categories
 - `APW_Woo_Template_Resolver` - Template resolution logic for WordPress template system
+- `APW_Woo_Product_Addons` - Enhanced Product Add-ons integration and customization
+- `APW_Woo_Recurring_Billing` - Manages recurring product billing method preferences
 
 ### Template System
 
@@ -74,6 +77,36 @@ enabled:
 - Custom address form handling
 - Login/registration enhancements
 
+### Intuit Payment Gateway Integration
+
+- Integration with WooCommerce Intuit QBMS payment gateway
+- JavaScript enhancements for payment processing
+- Credit card surcharge calculation (3% fee)
+- Functions in `includes/apw-woo-intuit-payment-functions.php`
+- JavaScript handling in `assets/js/apw-woo-intuit-integration.js`
+
+### Recurring Billing Management
+
+- Checkout field for preferred monthly billing method selection
+- Automatic display for products tagged with 'recurring'
+- Order meta storage and admin display
+- Class-based implementation in `APW_Woo_Recurring_Billing`
+
+### Cart Quantity Indicators
+
+- Dynamic cart count display system
+- CSS pseudo-element based quantity indicators
+- Real-time updates via AJAX and WooCommerce cart fragments
+- Functions in `includes/apw-woo-cart-indicator-functions.php`
+- Note: CSS file `assets/css/apw-woo-cart-indicator.css` is referenced but missing
+
+### Checkout and Shipping Enhancements
+
+- Custom checkout form fields and validation
+- Enhanced cross-sells functionality
+- Specialized shipping calculations and options
+- WooCommerce tabs customization
+
 ## Development Guidelines
 
 ### File Organization
@@ -115,6 +148,7 @@ enabled:
 
 - **WooCommerce Dynamic Pricing**: Enhanced pricing functionality
 - **WooCommerce Product Add-ons**: Extended product options
+- **WooCommerce Intuit QBMS**: Payment gateway with surcharge and JavaScript enhancements
 
 ### Theme Requirements
 
@@ -133,16 +167,22 @@ enabled:
 ### Extending Functionality
 
 1. Use appropriate hooks throughout the codebase (`apw_woo_*` prefix for custom hooks)
-2. Follow class-based architecture for complex features
-3. Add logging for debug mode when appropriate
+2. Follow class-based architecture for complex features (see `APW_Woo_Recurring_Billing` as example)
+3. Add logging for debug mode when appropriate using `apw_woo_log()` function
 4. Maintain backward compatibility for existing functionality
+5. Use singleton pattern for main feature classes
+6. Initialize features through dedicated initialization functions (e.g., `apw_woo_initialize_*`)
+7. Include proper dependency checks before feature activation
 
 ### Asset Development
 
 1. Place CSS files in `assets/css/` (auto-discovered)
 2. Place JS files in `assets/js/` (auto-discovered)
-3. Use semantic naming for page-specific assets
+3. Use semantic naming for page-specific assets (e.g., `apw-woo-intuit-integration.js`)
 4. Test cache busting during development
+5. Include proper dependency declarations in `wp_enqueue_script()` calls
+6. Use `wp_localize_script()` for passing PHP data to JavaScript
+7. Implement proper error handling for missing asset files
 
 ### Troubleshooting
 

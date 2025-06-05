@@ -5,10 +5,18 @@
 (function ($) {
     'use strict';
     
+    // Debug logging function with timestamp
+    function logWithTimestamp(message) {
+        if (typeof apwWooDynamicPricing !== 'undefined' && apwWooDynamicPricing.debug_mode) {
+            console.log('[' + new Date().toLocaleTimeString() + '] DYNAMIC PRICING: ' + message);
+        }
+    }
+    
     // Debug logging function that only logs when debug is enabled
     function debugLog() {
-        // Always log for debugging dynamic pricing issues
-        console.log('[APW Dynamic Pricing]', ...arguments);
+        if (typeof apwWooDynamicPricing !== 'undefined' && apwWooDynamicPricing.debug_mode) {
+            console.log('[APW Dynamic Pricing]', ...arguments);
+        }
     }
     
     // Error logging function that always logs errors
@@ -211,40 +219,46 @@
                     debugLog('AJAX response received:', response);
                     
                     if (response.success && response.data) {
-                        debugLog('Price updated successfully from ' + (response.data.original_price || 'unknown') + ' to ' + response.data.formatted_price, response.data);
+                        logWithTimestamp('Price updated successfully from ' + (response.data.original_price || 'unknown') + ' to ' + response.data.formatted_price);
+                        debugLog('Full response data:', response.data);
 
-                        // Re-query price elements in case DOM changed
-                        const $allPriceElements = $('.apw-woo-price-display, .woocommerce-Price-amount, .price .amount');
-                        debugLog('Found ' + $allPriceElements.length + ' price elements to update');
+                        // Get all potential price elements using the configured selector
+                        var priceElements = $(apwWooDynamicPricing.price_selector);
+                        logWithTimestamp('Found ' + priceElements.length + ' potential price elements');
                         
-                        // Update all price elements with new price
-                        // Handle both simple price displays and those with nested .amount elements
-                        let priceUpdated = false;
-                        $allPriceElements.each(function() {
-                            const $element = $(this);
+                        // Filter out addon-related elements if addon exclusion selector is available
+                        var mainPriceElements = priceElements;
+                        if (apwWooDynamicPricing.addon_exclusion_selector) {
+                            mainPriceElements = priceElements.not(apwWooDynamicPricing.addon_exclusion_selector + ' *');
+                            logWithTimestamp('After excluding addons: ' + mainPriceElements.length + ' main price elements');
+                        }
+                        
+                        // Log each element being updated
+                        var priceUpdated = false;
+                        mainPriceElements.each(function(index) {
+                            var element = $(this);
+                            var oldPrice = element.html();
+                            logWithTimestamp('Updating element ' + (index + 1) + ': ' + element.prop('tagName') + 
+                                            ' with classes: ' + (element.attr('class') || 'none') + 
+                                            ' | Old: ' + oldPrice + ' | New: ' + response.data.formatted_price);
                             
-                            // Skip if this is inside the cart form (to avoid updating wrong prices)
-                            if ($element.closest('.woocommerce-variation-price').length) {
-                                return true; // continue to next element
-                            }
-                            
-                            if ($element.hasClass('apw-woo-price-display')) {
-                                // This is our custom price display
-                                $element.find('.amount').html(response.data.formatted_price);
-                                priceUpdated = true;
-                                debugLog('Updated APW price display');
-                            } else if ($element.find('.amount').length) {
-                                // Update the nested amount element
-                                $element.find('.amount').html(response.data.formatted_price);
-                                priceUpdated = true;
-                                debugLog('Updated nested .amount element');
-                            } else {
-                                // Update the entire element
-                                $element.html(response.data.formatted_price);
-                                priceUpdated = true;
-                                debugLog('Updated entire price element');
-                            }
+                            element.html(response.data.formatted_price);
+                            priceUpdated = true;
                         });
+                        
+                        // Log addon elements that were specifically excluded
+                        if (apwWooDynamicPricing.addon_exclusion_selector) {
+                            var addonElements = $(apwWooDynamicPricing.addon_exclusion_selector + ' .woocommerce-Price-amount, ' +
+                                                apwWooDynamicPricing.addon_exclusion_selector + ' .amount');
+                            if (addonElements.length > 0) {
+                                logWithTimestamp('Preserved ' + addonElements.length + ' addon price elements from dynamic pricing updates');
+                                addonElements.each(function(index) {
+                                    var element = $(this);
+                                    logWithTimestamp('Preserved addon element ' + (index + 1) + ': ' + 
+                                                   element.html() + ' (classes: ' + (element.attr('class') || 'none') + ')');
+                                });
+                            }
+                        }
 
                         if (!priceUpdated) {
                             errorLog('No price elements were updated - check selectors');
