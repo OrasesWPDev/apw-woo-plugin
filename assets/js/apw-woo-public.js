@@ -249,9 +249,12 @@
         });
         
         // --- Cart Quantity Indicator ---
-        function updateCartQuantityIndicators() {
+        function updateCartQuantityIndicators(forceUpdate = false) {
             // Get cart count from WooCommerce fragments or data attribute
             let cartCount = 0;
+            let foundCount = false;
+            
+            apwWooLog('Updating cart quantity indicators (force: ' + forceUpdate + ')');
             
             // Check if user is logged in (using WordPress body class)
             // Try to get count from WC fragments first
@@ -261,82 +264,23 @@
                     if (fragments && fragments['div.widget_shopping_cart_content']) {
                         const $content = $(fragments['div.widget_shopping_cart_content']);
                         
-                        // IMPORTANT: Count total quantity, not just number of items
-                        let totalQuantity = 0;
-                        
-                        // First try to get quantities from cart fragments
-                        const $cartItems = $content.find('.cart_list li:not(.empty)');
-                        $cartItems.each(function() {
-                            // Look for quantity in the item
-                            const qtyText = $(this).find('.quantity').text();
-                            const qtyMatch = qtyText.match(/(\d+)\s*×/); // Match "2 ×" format
-                            if (qtyMatch && qtyMatch[1]) {
-                                totalQuantity += parseInt(qtyMatch[1], 10);
+                        // Check if cart is explicitly empty
+                        const $emptyMessage = $content.find('.woocommerce-mini-cart__empty-message, .empty');
+                        if ($emptyMessage.length > 0) {
+                            cartCount = 0;
+                            foundCount = true;
+                            apwWooLog('Cart is explicitly empty from fragments');
+                        } else {
+                            // IMPORTANT: Count total quantity, not just number of items
+                            let totalQuantity = 0;
+                            
+                            // First try to get quantities from cart fragments
+                            const $cartItems = $content.find('.cart_list li:not(.empty)');
+                            if ($cartItems.length === 0) {
+                                cartCount = 0;
+                                foundCount = true;
+                                apwWooLog('No cart items found in fragments');
                             } else {
-                                // If no quantity found, count as 1
-                                totalQuantity += 1;
-                            }
-                        });
-                        
-                        cartCount = totalQuantity;
-                        apwWooLog('Cart count from fragments (total quantity): ' + cartCount);
-                    }
-                } catch (e) {
-                    apwWooLog('Error parsing fragments: ' + e.message);
-                }
-            }
-            
-            // If fragments didn't work, try the cart counter in the DOM
-            if (cartCount === 0) {
-                const $miniCart = $('.widget_shopping_cart_content');
-                if ($miniCart.length) {
-                    const $cartItems = $miniCart.find('.cart_list li:not(.empty)');
-                    cartCount = $cartItems.length;
-                    apwWooLog('Cart count from DOM: ' + cartCount);
-                }
-            }
-            
-            // If we still don't have a count, check for WC data
-            if (cartCount === 0 && typeof window.wc_cart_fragments_params !== 'undefined') {
-                // Try to get from any visible counter
-                const $visibleCounter = $('.cart-contents-count, .cart-count');
-                if ($visibleCounter.length) {
-                    const textCount = $visibleCounter.first().text().trim();
-                    if (textCount && !isNaN(parseInt(textCount))) {
-                        cartCount = parseInt(textCount);
-                        apwWooLog('Cart count from visible counter: ' + cartCount);
-                    }
-                }
-            }
-            
-            // Try to get count from cart page if we're on it
-            if ($('.woocommerce-cart-form').length) {
-                let itemCount = 0;
-                $('.woocommerce-cart-form .cart_item').each(function() {
-                    const qty = parseInt($(this).find('input.qty').val()) || 0;
-                    itemCount += qty;
-                });
-                if (itemCount > 0) {
-                    cartCount = itemCount;
-                    apwWooLog('Cart count from cart form: ' + cartCount);
-                }
-            }
-            
-            // Last resort - try to get from WC AJAX endpoint
-            if (cartCount === 0 && typeof wc_cart_fragments_params !== 'undefined') {
-                $.ajax({
-                    type: 'GET',
-                    url: wc_cart_fragments_params.wc_ajax_url.toString().replace('%%endpoint%%', 'get_refreshed_fragments'),
-                    success: function(data) {
-                        if (data && data.fragments) {
-                            try {
-                                const $content = $(data.fragments['div.widget_shopping_cart_content']);
-                                
-                                // Count total quantity, not just number of items
-                                let totalQuantity = 0;
-                                
-                                // First try to get quantities from cart fragments
-                                const $cartItems = $content.find('.cart_list li:not(.empty)');
                                 $cartItems.each(function() {
                                     // Look for quantity in the item
                                     const qtyText = $(this).find('.quantity').text();
@@ -349,23 +293,130 @@
                                     }
                                 });
                                 
-                                if (totalQuantity > 0) {
-                                    cartCount = totalQuantity;
-                                    apwWooLog('Cart count from AJAX (total quantity): ' + cartCount);
-                                    $('.cart-quantity-indicator').attr('data-cart-count', cartCount);
-                                }
-                            } catch (e) {
-                                apwWooLog('Error processing AJAX fragments: ' + e.message);
+                                cartCount = totalQuantity;
+                                foundCount = true;
+                                apwWooLog('Cart count from fragments (total quantity): ' + cartCount);
                             }
                         }
                     }
-                });
+                } catch (e) {
+                    apwWooLog('Error parsing fragments: ' + e.message);
+                }
+            }
+            
+            // If fragments didn't work, try the cart counter in the DOM
+            if (!foundCount) {
+                const $miniCart = $('.widget_shopping_cart_content');
+                if ($miniCart.length) {
+                    // Check for empty message first
+                    const $emptyMessage = $miniCart.find('.woocommerce-mini-cart__empty-message, .empty');
+                    if ($emptyMessage.length > 0) {
+                        cartCount = 0;
+                        foundCount = true;
+                        apwWooLog('Cart is explicitly empty from DOM');
+                    } else {
+                        const $cartItems = $miniCart.find('.cart_list li:not(.empty)');
+                        cartCount = $cartItems.length;
+                        foundCount = true;
+                        apwWooLog('Cart count from DOM: ' + cartCount);
+                    }
+                }
+            }
+            
+            // If we still don't have a count, check for WC data
+            if (!foundCount && typeof window.wc_cart_fragments_params !== 'undefined') {
+                // Try to get from any visible counter
+                const $visibleCounter = $('.cart-contents-count, .cart-count');
+                if ($visibleCounter.length) {
+                    const textCount = $visibleCounter.first().text().trim();
+                    if (textCount !== '' && !isNaN(parseInt(textCount))) {
+                        cartCount = parseInt(textCount);
+                        foundCount = true;
+                        apwWooLog('Cart count from visible counter: ' + cartCount);
+                    }
+                }
+            }
+            
+            // Try to get count from cart page if we're on it
+            if (!foundCount && $('.woocommerce-cart-form').length) {
+                const $cartItems = $('.woocommerce-cart-form .cart_item');
+                if ($cartItems.length === 0) {
+                    cartCount = 0;
+                    foundCount = true;
+                    apwWooLog('Cart page has no items');
+                } else {
+                    let itemCount = 0;
+                    $cartItems.each(function() {
+                        const qty = parseInt($(this).find('input.qty').val()) || 0;
+                        itemCount += qty;
+                    });
+                    cartCount = itemCount;
+                    foundCount = true;
+                    apwWooLog('Cart count from cart form: ' + cartCount);
+                }
             }
             
             // Check if we have a WC cart count from PHP
-            if (typeof window.apwWooCartCount !== 'undefined' && window.apwWooCartCount > 0 && cartCount === 0) {
+            if (!foundCount && typeof window.apwWooCartCount !== 'undefined') {
                 cartCount = window.apwWooCartCount;
+                foundCount = true;
                 apwWooLog('Using WC cart count from PHP: ' + cartCount);
+            }
+            
+            // If we still haven't found a count or if forcing update, try AJAX endpoint
+            if (!foundCount || forceUpdate) {
+                if (typeof wc_cart_fragments_params !== 'undefined') {
+                    $.ajax({
+                        type: 'GET',
+                        url: wc_cart_fragments_params.wc_ajax_url.toString().replace('%%endpoint%%', 'get_refreshed_fragments'),
+                        success: function(data) {
+                            if (data && data.fragments) {
+                                try {
+                                    const $content = $(data.fragments['div.widget_shopping_cart_content']);
+                                    
+                                    // Check if cart is explicitly empty
+                                    const $emptyMessage = $content.find('.woocommerce-mini-cart__empty-message, .empty');
+                                    if ($emptyMessage.length > 0) {
+                                        $('.cart-quantity-indicator').attr('data-cart-count', 0);
+                                        apwWooLog('AJAX: Cart is explicitly empty');
+                                        return;
+                                    }
+                                    
+                                    // Count total quantity, not just number of items
+                                    let totalQuantity = 0;
+                                    
+                                    // First try to get quantities from cart fragments
+                                    const $cartItems = $content.find('.cart_list li:not(.empty)');
+                                    if ($cartItems.length === 0) {
+                                        $('.cart-quantity-indicator').attr('data-cart-count', 0);
+                                        apwWooLog('AJAX: No cart items found');
+                                        return;
+                                    }
+                                    
+                                    $cartItems.each(function() {
+                                        // Look for quantity in the item
+                                        const qtyText = $(this).find('.quantity').text();
+                                        const qtyMatch = qtyText.match(/(\d+)\s*×/); // Match "2 ×" format
+                                        if (qtyMatch && qtyMatch[1]) {
+                                            totalQuantity += parseInt(qtyMatch[1], 10);
+                                        } else {
+                                            // If no quantity found, count as 1
+                                            totalQuantity += 1;
+                                        }
+                                    });
+                                    
+                                    $('.cart-quantity-indicator').attr('data-cart-count', totalQuantity);
+                                    apwWooLog('AJAX: Cart count updated to: ' + totalQuantity);
+                                } catch (e) {
+                                    apwWooLog('Error processing AJAX fragments: ' + e.message);
+                                }
+                            }
+                        },
+                        error: function() {
+                            apwWooLog('AJAX error getting cart fragments');
+                        }
+                    });
+                }
             }
             
             // Update all cart quantity indicators with the count
@@ -377,18 +428,64 @@
         updateCartQuantityIndicators();
         
         // Update when cart fragments are refreshed
-        $(document.body).on('wc_fragments_refreshed wc_fragments_loaded added_to_cart removed_from_cart updated_cart_totals', function() {
-            apwWooLog('Cart updated, refreshing quantity indicators');
-            updateCartQuantityIndicators();
+        $(document.body).on('wc_fragments_refreshed wc_fragments_loaded added_to_cart removed_from_cart updated_cart_totals', function(event) {
+            apwWooLog('Cart updated (' + event.type + '), refreshing quantity indicators');
+            
+            // Use delayed updates to ensure WooCommerce has fully processed the changes
+            setTimeout(function() {
+                updateCartQuantityIndicators(true);
+            }, 150);
+            
+            // Additional delayed update for empty cart scenarios
+            setTimeout(function() {
+                updateCartQuantityIndicators(true);
+            }, 500);
         });
         
         // Additional listener for cart quantity changes
         $(document).on('change', '.woocommerce-cart-form input.qty', function() {
-            setTimeout(function() {
-                apwWooLog('Cart quantity changed, refreshing indicators');
-                updateCartQuantityIndicators();
-            }, 300);
+            const newQty = parseInt($(this).val()) || 0;
+            apwWooLog('Cart quantity changed to: ' + newQty);
+            
+            // Check if quantity was set to 0 (item removal)
+            if (newQty === 0) {
+                // Use multiple delayed updates for item removal
+                setTimeout(function() { updateCartQuantityIndicators(true); }, 200);
+                setTimeout(function() { updateCartQuantityIndicators(true); }, 600);
+                setTimeout(function() { updateCartQuantityIndicators(true); }, 1200);
+            } else {
+                setTimeout(function() {
+                    updateCartQuantityIndicators(true);
+                }, 300);
+            }
         });
+        
+        // Enhanced cart emptying detection
+        function detectCartEmptying() {
+            // Check if cart form exists and has no items
+            const $cartForm = $('.woocommerce-cart-form');
+            if ($cartForm.length) {
+                const $cartItems = $cartForm.find('.cart_item');
+                if ($cartItems.length === 0) {
+                    apwWooLog('Cart form is empty, updating indicators');
+                    $('.cart-quantity-indicator').attr('data-cart-count', 0);
+                    return true;
+                }
+            }
+            
+            // Check mini cart for empty state
+            const $miniCart = $('.widget_shopping_cart_content');
+            if ($miniCart.length) {
+                const $emptyMessage = $miniCart.find('.woocommerce-mini-cart__empty-message, .empty');
+                if ($emptyMessage.length > 0) {
+                    apwWooLog('Mini cart shows empty message, updating indicators');
+                    $('.cart-quantity-indicator').attr('data-cart-count', 0);
+                    return true;
+                }
+            }
+            
+            return false;
+        }
         
         // Listen for clicks on remove buttons in cart
         $(document).on('click', '.woocommerce-cart-form .product-remove a.remove, .cart_item .remove, .apw-woo-product-remove a.apw-woo-remove', function(e) {
@@ -397,6 +494,10 @@
             // Store the clicked button to check if it's our custom remove button
             const $removeButton = $(this);
             const isCustomRemove = $removeButton.hasClass('apw-woo-remove');
+            
+            // Check if this is the last item in the cart
+            const $cartItems = $('.woocommerce-cart-form .cart_item, .cart_list li:not(.empty)');
+            const isLastItem = $cartItems.length <= 1;
             
             if (isCustomRemove) {
                 // For our custom remove buttons, we need to handle the AJAX update manually
@@ -408,6 +509,12 @@
                 
                 if (cartItemKey) {
                     apwWooLog('Removing item with key: ' + cartItemKey);
+                    
+                    // If this is the last item, immediately set count to 0
+                    if (isLastItem) {
+                        $('.cart-quantity-indicator').attr('data-cart-count', 0);
+                        apwWooLog('Last item removed, setting count to 0');
+                    }
                     
                     // Show loading state
                     $removeButton.closest('tr').addClass('processing').block({
@@ -438,13 +545,24 @@
                     });
                 }
             } else {
-                // For standard WooCommerce remove buttons, use multiple timeouts
-                // Multiple timeouts to catch the update at different stages
-                setTimeout(updateCartQuantityIndicators, 100);
-                setTimeout(updateCartQuantityIndicators, 500);
-                setTimeout(updateCartQuantityIndicators, 1000);
+                // For standard WooCommerce remove buttons
+                // If this is the last item, immediately set count to 0
+                if (isLastItem) {
+                    $('.cart-quantity-indicator').attr('data-cart-count', 0);
+                    apwWooLog('Last item being removed, setting count to 0 immediately');
+                }
                 
-                // Also force a fragment refresh to ensure the cart count updates
+                // Use multiple timeouts to catch the update at different stages
+                setTimeout(function() { updateCartQuantityIndicators(true); }, 100);
+                setTimeout(function() { updateCartQuantityIndicators(true); }, 400);
+                setTimeout(function() { updateCartQuantityIndicators(true); }, 800);
+                setTimeout(function() { updateCartQuantityIndicators(true); }, 1500);
+                
+                // Also detect cart emptying explicitly
+                setTimeout(detectCartEmptying, 600);
+                setTimeout(detectCartEmptying, 1200);
+                
+                // Force a fragment refresh to ensure the cart count updates
                 setTimeout(function() {
                     $(document.body).trigger('wc_fragment_refresh');
                 }, 300);
@@ -462,7 +580,11 @@
                 settings.url.indexOf('update_item_quantity') > -1
             )) {
                 apwWooLog('Cart-related AJAX completed, refreshing indicators');
-                setTimeout(updateCartQuantityIndicators, 100);
+                
+                // Multiple updates with increasing delays for empty cart scenarios
+                setTimeout(function() { updateCartQuantityIndicators(true); }, 100);
+                setTimeout(function() { updateCartQuantityIndicators(true); }, 300);
+                setTimeout(detectCartEmptying, 500);
                 
                 // Force a fragment refresh to ensure the cart count updates properly
                 setTimeout(function() {
