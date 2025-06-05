@@ -1,6 +1,7 @@
 /**
  * APW WooCommerce Threshold Messages Styling
  * Styles for quantity discount and shipping threshold notifications
+ * Based on actual discount rules from bulk discount system
  */
 
 .apw-woo-threshold-messages {
@@ -158,4 +159,32 @@
 .apw-woo-threshold-messages + .single_add_to_cart_button,
 .apw-woo-threshold-messages + .add_to_cart_button {
     margin-top: 15px;
+}
+
+/* VIP user specific styling */
+.apw-threshold-message.vip-discount {
+    background-color: #fff3e0;
+    border: 1px solid #ff9800;
+    color: #e65100;
+}
+
+.apw-threshold-message.vip-discount .message-icon {
+    color: #ff9800;
+    background-color: rgba(255, 152, 0, 0.1);
+}
+
+/* Success states for achieved thresholds */
+.apw-threshold-message.achieved {
+    border-width: 2px;
+    font-weight: 600;
+}
+
+.apw-threshold-discount.achieved {
+    background-color: #c8e6c9;
+    border-color: #2e7d32;
+}
+
+.apw-threshold-shipping.achieved {
+    background-color: #bbdefb;
+    border-color: #1565c0;
 }

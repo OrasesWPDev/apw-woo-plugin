@@ -24,7 +24,7 @@
         console.error.apply(console, arguments);
     }
     
-    // Function to update threshold messages
+    // Function to update threshold messages based on actual discount rules
     function updateThresholdMessages(messages) {
         // Find or create message container
         let $messageContainer = $('.apw-woo-threshold-messages');
@@ -64,7 +64,7 @@
         if (messages && messages.length > 0) {
             logWithTimestamp('Displaying ' + messages.length + ' threshold messages');
             
-            messages.forEach(function(messageData, index) {
+            messages.forEach(function(messageData) {
                 const messageClass = 'apw-threshold-message apw-threshold-' + messageData.type;
                 const messageHtml = '<div class="' + messageClass + '">' +
                     '<span class="message-icon">✓</span> ' +
@@ -83,6 +83,42 @@
             $messageContainer.fadeOut(200);
             logWithTimestamp('No threshold messages to display - hiding container');
         }
+    }
+    
+    // Function to check threshold messages via AJAX
+    function checkThresholdMessages(productId, quantity) {
+        if (!productId || quantity < 1) {
+            debugLog('Invalid product ID or quantity for threshold check');
+            return;
+        }
+        
+        debugLog('Checking threshold messages for product ' + productId + ' with quantity ' + quantity);
+        
+        $.ajax({
+            type: 'POST',
+            url: apwWooDynamicPricing.ajax_url,
+            data: {
+                action: 'apw_woo_get_threshold_messages',
+                nonce: apwWooDynamicPricing.threshold_nonce,
+                product_id: productId,
+                quantity: quantity
+            },
+            success: function(response) {
+                debugLog('Threshold AJAX response received:', response);
+                
+                if (response.success && response.data) {
+                    logWithTimestamp('Threshold check successful for qty ' + quantity);
+                    updateThresholdMessages(response.data.threshold_messages || []);
+                } else {
+                    errorLog('Threshold check failed:', response);
+                    updateThresholdMessages([]); // Clear messages on failure
+                }
+            },
+            error: function(xhr, status, error) {
+                errorLog('Threshold AJAX error:', error);
+                updateThresholdMessages([]); // Clear messages on error
+            }
+        });
     }
 
     // Initialize when document is ready
@@ -325,9 +361,6 @@
                             errorLog('No price elements were updated - check selectors');
                         }
 
-                        // Update threshold messages
-                        updateThresholdMessages(response.data.threshold_messages || []);
-
                         // If we didn't have a product ID before but received one, store it
                         if (!productId && response.data.product_id) {
                             productId = response.data.product_id;
@@ -370,6 +403,8 @@
                 if (newQty !== currentQuantity) {
                     updatePrice(newQty);
                 }
+                // Check threshold messages for any quantity change
+                checkThresholdMessages(productId, newQty);
             }, 300);
         });
 
@@ -387,6 +422,8 @@
                 if (newQty !== currentQuantity) {
                     updatePrice(newQty);
                 }
+                // Check threshold messages after button click
+                checkThresholdMessages(productId, newQty);
             }, 100);
         });
 
@@ -446,7 +483,7 @@
             debugLog('Quantity mutation observer initialized');
         }
 
-        // Initial price update on page load with small delay to ensure DOM is ready
+        // Initial price update and threshold check on page load
         setTimeout(function () {
             // Force re-check current quantity in case it was changed before script loaded
             const actualQty = parseInt($quantityInput.val(), 10) || 1;
@@ -455,6 +492,8 @@
                 currentQuantity = actualQty;
             }
             updatePrice(currentQuantity);
+            // Check initial threshold messages
+            checkThresholdMessages(productId, actualQty);
         }, 300);
 
         // Also check after full page load in case of slow loading

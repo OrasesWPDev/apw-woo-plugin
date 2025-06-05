@@ -433,9 +433,6 @@ function apw_woo_ajax_get_dynamic_price()
     // Get original price for comparison
     $original_price = $product->get_price();
     
-    // Get active threshold messages for current quantity
-    $threshold_messages = apw_woo_get_active_threshold_messages($product, $quantity);
-    
     // Send back both unit price and total with debug info
     wp_send_json_success(array(
         'unit_price' => $unit_price,
@@ -446,12 +443,10 @@ function apw_woo_ajax_get_dynamic_price()
         'product_id' => $product_id,
         'original_price' => $original_price,
         'price_changed' => (abs($unit_price - $original_price) > 0.01),
-        'threshold_messages' => $threshold_messages,
         'debug_info' => APW_WOO_DEBUG_MODE ? array(
             'product_name' => $product->get_name(),
             'has_pricing_rules' => apw_woo_product_has_pricing_rules($product),
-            'is_dynamic_pricing_active' => apw_woo_is_dynamic_pricing_active(),
-            'thresholds_found' => count($threshold_messages)
+            'is_dynamic_pricing_active' => apw_woo_is_dynamic_pricing_active()
         ) : null
     ));
 }
@@ -585,6 +580,7 @@ function apw_woo_enqueue_dynamic_pricing_scripts()
             array(
                 'ajax_url' => admin_url('admin-ajax.php'),
                 'nonce' => wp_create_nonce('apw_woo_dynamic_pricing'),
+                'threshold_nonce' => wp_create_nonce('apw_woo_threshold_check'),
                 'price_selector' => implode(', ', $main_price_selectors),
                 'addon_exclusion_selector' => '.addon-wrap, .apw-woo-product-addons, .wc-pao-addon-wrap',
                 'is_product' => true, // Script only loads on product pages now
@@ -771,17 +767,8 @@ function apw_woo_init_dynamic_pricing()
     // to match the subtotal calculations
     add_filter('woocommerce_cart_item_price', 'apw_woo_filter_cart_item_price', 10, 3);
 
-    // CART INITIALIZATION FIX: Force cart recalculation on cart page load
-    add_action('wp', 'apw_woo_force_cart_recalculation', 5);
-    
-    // CART LOADED FIX: Ensure dynamic pricing is applied when cart is loaded
-    add_action('woocommerce_cart_loaded_from_session', 'apw_woo_recalculate_cart_on_load', 10);
-    
-    // CART ITEM LOADED FIX: Apply dynamic pricing to cart items as they're loaded
-    add_action('woocommerce_get_cart_item_from_session', 'apw_woo_apply_dynamic_pricing_to_cart_item', 10, 3);
-
     if (APW_WOO_DEBUG_MODE) {
-        apw_woo_log('Dynamic Pricing: Added cart item price filter hook and cart initialization hooks');
+        apw_woo_log('Dynamic Pricing: Added cart item price filter hook');
     }
 
     // Include the integration class if needed
@@ -804,6 +791,10 @@ function apw_woo_init_dynamic_pricing()
     // Register AJAX handlers
     add_action('wp_ajax_apw_woo_get_dynamic_price', 'apw_woo_ajax_get_dynamic_price');
     add_action('wp_ajax_nopriv_apw_woo_get_dynamic_price', 'apw_woo_ajax_get_dynamic_price');
+    
+    // Register threshold message AJAX handlers
+    add_action('wp_ajax_apw_woo_get_threshold_messages', 'apw_woo_ajax_get_threshold_messages');
+    add_action('wp_ajax_nopriv_apw_woo_get_threshold_messages', 'apw_woo_ajax_get_threshold_messages');
 
     // Replace the default price display with our dynamic version - place it in quantity row
     // Priority 10 to run before apw_woo_close_quantity_row (priority 15)
@@ -1050,6 +1041,10 @@ function apw_woo_apply_role_based_bulk_discounts($cart) {
             $discount = $matching_rule['discount_amount'] * $qty;
             $cart->add_fee($label, -$discount, true);
 
+            // Fire action hooks for discount qualification and application
+            do_action('apw_woo_bulk_discount_qualified', $matching_rule, $product_id, $qty);
+            do_action('apw_woo_bulk_discount_applied', $matching_rule, $discount, $product_id, $qty);
+
             if (APW_WOO_DEBUG_MODE) {
                 apw_woo_log("Applied bulk discount: $" . number_format($discount, 2) . " for {$qty} x {$product_name} (Rule: {$matching_rule['discount_name']})");
             }
@@ -1090,195 +1085,138 @@ function apw_woo_should_exclude_addon_prices($product_id) {
 }
 
 /**
- * Get quantity thresholds and messages for a product
- *
- * @param int|WC_Product $product Product ID or product object
- * @return array Array of thresholds with messages
+ * Simulate bulk discount calculation without actually applying fees
+ * 
+ * This function simulates what would happen if a product/quantity was added to cart
+ * and returns threshold messages without modifying the actual cart.
  */
-function apw_woo_get_quantity_thresholds($product) {
-    // Convert to product object if needed
-    if (is_numeric($product)) {
-        $product = wc_get_product($product);
-    }
+function apw_woo_simulate_bulk_discount_thresholds($product_id, $quantity) {
+    // Get the same rules array as the actual discount function
+    $rules = array(
+        array(
+            'product_id' => 80,
+            'discount_amount' => 10, // $10 off per item
+            'priority' => 100,
+            'min_quantity' => 1, // at least 1 in cart
+            'role' => 'distro10', // Only for distro10 role
+            'discount_name' => 'VIP Discount',
+            'threshold_message' => 'VIP discount active - savings applied at cart'
+        ),
+        array(
+            'product_id' => 80,
+            'discount_amount' => 10, // $10 off per item
+            'priority' => 50,
+            'min_quantity' => 5, // at least 5 in cart
+            'role' => '', // For anyone else (no role requirement)
+            'discount_name' => 'Bulk Discount',
+            'threshold_message' => 'Quantity discount achieved - will be applied at cart'
+        ),
+    );
 
-    if (!$product || !is_a($product, 'WC_Product')) {
-        return array();
-    }
-
-    $product_id = $product->get_id();
-    $thresholds = array();
-
-    // Get pricing rules to extract discount thresholds
-    $pricing_rules = apw_woo_get_product_pricing_rules($product);
+    // Apply the same filter as the real function
+    $rules = apply_filters('apw_woo_bulk_discount_rules', $rules);
     
-    foreach ($pricing_rules as $rule) {
-        if (isset($rule['rules']) && is_array($rule['rules'])) {
-            foreach ($rule['rules'] as $price_rule) {
-                if (isset($price_rule['from']) && $price_rule['from'] > 1) {
-                    $threshold_qty = (int)$price_rule['from'];
-                    
-                    // Add discount threshold message
-                    $thresholds[] = array(
-                        'quantity' => $threshold_qty,
-                        'type' => 'discount',
-                        'message' => 'Quantity discount achieved - will be applied at cart',
-                        'rule_data' => $price_rule
-                    );
+    $user = wp_get_current_user();
+    $messages = array();
+    $matching_rule = null;
+    $matched_priority = -INF;
+
+    // Find the highest priority matching rule (same logic as real function)
+    foreach ($rules as $rule) {
+        if ((int)$rule['product_id'] !== (int)$product_id) {
+            continue;
+        }
+        
+        if ($quantity < (int)($rule['min_quantity'] ?? 1)) {
+            continue;
+        }
+
+        // Role logic (same as real function)
+        $apply_for_role = true;
+        if (!empty($rule['role'])) {
+            $rule_roles = is_array($rule['role']) ? $rule['role'] : array($rule['role']);
+            $apply_for_role = false;
+            foreach ($rule_roles as $role) {
+                if (in_array($role, (array)$user->roles)) {
+                    $apply_for_role = true;
+                    break;
                 }
             }
         }
+
+        // Skip if rule is for a role and user does not have it
+        if (!$apply_for_role) {
+            continue;
+        }
+
+        if ($rule['priority'] > $matched_priority) {
+            $matching_rule = $rule;
+            $matched_priority = $rule['priority'];
+        }
     }
 
-    // Add fixed shipping threshold (can be filtered)
-    $shipping_threshold = apply_filters('apw_woo_free_shipping_threshold', 10, $product_id);
-    if ($shipping_threshold > 0) {
-        $thresholds[] = array(
-            'quantity' => $shipping_threshold,
-            'type' => 'shipping',
-            'message' => 'Free ground shipping at qty ' . $shipping_threshold
+    // Add messages for qualifying discounts
+    if ($matching_rule) {
+        $messages[] = array(
+            'type' => 'discount',
+            'message' => $matching_rule['threshold_message'] ?? $matching_rule['discount_name'],
+            'rule_name' => $matching_rule['discount_name'],
+            'threshold' => $matching_rule['min_quantity']
         );
     }
 
-    // Sort by quantity ascending
-    usort($thresholds, function($a, $b) {
-        return $a['quantity'] - $b['quantity'];
-    });
-
-    if (APW_WOO_DEBUG_MODE) {
-        apw_woo_log("Found " . count($thresholds) . " quantity thresholds for product #{$product_id}");
+    // Add shipping threshold if quantity is 10+
+    $shipping_threshold = apply_filters('apw_woo_free_shipping_threshold', 10, $product_id);
+    if ($quantity >= $shipping_threshold) {
+        $messages[] = array(
+            'type' => 'shipping',
+            'message' => 'Free ground shipping at qty ' . $shipping_threshold,
+            'threshold' => $shipping_threshold
+        );
     }
 
-    return $thresholds;
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log("THRESHOLD SIMULATION: Product #{$product_id}, Qty: {$quantity}, Messages: " . count($messages));
+    }
+
+    return $messages;
 }
 
 /**
- * Get active threshold messages for a given quantity
- *
- * @param int|WC_Product $product Product ID or product object
- * @param int $quantity Current quantity
- * @return array Array of active messages
+ * AJAX handler to simulate threshold messages for product page
  */
-function apw_woo_get_active_threshold_messages($product, $quantity) {
-    $thresholds = apw_woo_get_quantity_thresholds($product);
-    $active_messages = array();
+function apw_woo_ajax_get_threshold_messages() {
+    // Security check
+    check_ajax_referer('apw_woo_threshold_check', 'nonce');
 
-    foreach ($thresholds as $threshold) {
-        if ($quantity >= $threshold['quantity']) {
-            $active_messages[] = array(
-                'type' => $threshold['type'],
-                'message' => $threshold['message'],
-                'threshold' => $threshold['quantity']
-            );
-        }
-    }
+    $product_id = isset($_POST['product_id']) ? absint($_POST['product_id']) : 0;
+    $quantity = isset($_POST['quantity']) ? absint($_POST['quantity']) : 1;
 
-    return $active_messages;
-}
-
-/**
- * Force cart recalculation on cart page load
- * 
- * This ensures that dynamic pricing and bulk discounts are applied
- * immediately when the cart page is loaded, not just when quantities change.
- */
-function apw_woo_force_cart_recalculation() {
-    // Only run on cart page
-    if (!is_cart()) {
+    if (!$product_id) {
+        wp_send_json_error(array('message' => 'Invalid product ID'));
         return;
     }
-    
-    // Skip if this is an AJAX request or admin
-    if (wp_doing_ajax() || is_admin()) {
-        return;
-    }
-    
-    // Get WooCommerce cart
-    if (!WC()->cart || WC()->cart->is_empty()) {
-        return;
-    }
-    
-    if (APW_WOO_DEBUG_MODE) {
-        apw_woo_log('CART INITIALIZATION: Forcing cart recalculation on cart page load');
-    }
-    
-    // Force recalculation of cart totals to apply dynamic pricing
-    WC()->cart->calculate_totals();
-    
-    if (APW_WOO_DEBUG_MODE) {
-        apw_woo_log('CART INITIALIZATION: Cart totals recalculated');
-    }
-}
 
-/**
- * Recalculate cart when loaded from session
- * 
- * This ensures dynamic pricing is applied when cart is restored from session
- */
-function apw_woo_recalculate_cart_on_load($cart) {
-    if (!$cart || $cart->is_empty()) {
-        return;
+    if ($quantity < 1) {
+        $quantity = 1;
     }
-    
-    if (APW_WOO_DEBUG_MODE) {
-        apw_woo_log('CART SESSION: Cart loaded from session, recalculating for dynamic pricing');
-    }
-    
-    // Mark cart for recalculation
-    $cart->set_session();
-    
-    // Force fee recalculation
-    if (method_exists($cart, 'calculate_fees')) {
-        $cart->calculate_fees();
-    }
-    
-    if (APW_WOO_DEBUG_MODE) {
-        apw_woo_log('CART SESSION: Dynamic pricing recalculation completed');
-    }
-}
 
-/**
- * Apply dynamic pricing to individual cart items when loaded from session
- * 
- * This ensures that cart items have the correct price applied based on quantity
- * when they are restored from the session.
- */
-function apw_woo_apply_dynamic_pricing_to_cart_item($cart_item, $values, $key) {
-    // Skip if no product data
-    if (!isset($cart_item['data']) || !isset($cart_item['quantity'])) {
-        return $cart_item;
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log("THRESHOLD AJAX: Checking thresholds for Product #{$product_id}, Qty: {$quantity}");
     }
-    
-    $product = $cart_item['data'];
-    $quantity = (int) $cart_item['quantity'];
-    
-    // Skip if not a valid product or quantity
-    if (!is_a($product, 'WC_Product') || $quantity < 1) {
-        return $cart_item;
-    }
-    
-    // Check if this product has dynamic pricing rules
-    if (!apw_woo_product_has_pricing_rules($product)) {
-        return $cart_item;
-    }
-    
-    // Calculate the dynamic price for this quantity
-    $dynamic_price = apw_woo_get_price_by_quantity($product, $quantity);
-    $original_price = (float) $product->get_price();
-    
-    // Only update if price is different
-    if (abs($dynamic_price - $original_price) > 0.01) {
-        if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log("CART ITEM SESSION: Applying dynamic price to cart item - Product #{$product->get_id()}, Qty: {$quantity}, Original: {$original_price}, Dynamic: {$dynamic_price}");
-        }
-        
-        // Set the new price on the product object
-        $product->set_price($dynamic_price);
-        
-        // Update the cart item data
-        $cart_item['data'] = $product;
-    }
-    
-    return $cart_item;
+
+    // Simulate what would happen if this product/quantity was in cart
+    $threshold_messages = apw_woo_simulate_bulk_discount_thresholds($product_id, $quantity);
+
+    wp_send_json_success(array(
+        'product_id' => $product_id,
+        'quantity' => $quantity,
+        'threshold_messages' => $threshold_messages,
+        'debug_info' => APW_WOO_DEBUG_MODE ? array(
+            'user_roles' => wp_get_current_user()->roles,
+            'messages_found' => count($threshold_messages)
+        ) : null
+    ));
 }
 
 // Hook into WooCommerce cart fee calculation
