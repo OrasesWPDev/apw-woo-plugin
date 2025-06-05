@@ -398,14 +398,14 @@
                 clearTimeout(updateTimeout);
             }
 
-            // Reduced delay for faster user feedback
+            // Faster response time - reduced from 150ms to 75ms
             updateTimeout = setTimeout(function () {
                 if (newQty !== currentQuantity) {
                     updatePrice(newQty);
+                    // Check threshold messages only once per price update
+                    checkThresholdMessages(productId, newQty);
                 }
-                // Check threshold messages for any quantity change
-                checkThresholdMessages(productId, newQty);
-            }, 150);
+            }, 75);
         });
 
         // Enhanced detection for quantity button clicks - including Flatsome theme buttons
