@@ -398,14 +398,14 @@
                 clearTimeout(updateTimeout);
             }
 
-            // Set a small delay before updating to prevent excessive requests
+            // Reduced delay for faster user feedback
             updateTimeout = setTimeout(function () {
                 if (newQty !== currentQuantity) {
                     updatePrice(newQty);
                 }
                 // Check threshold messages for any quantity change
                 checkThresholdMessages(productId, newQty);
-            }, 300);
+            }, 150);
         });
 
         // Enhanced detection for quantity button clicks - including Flatsome theme buttons

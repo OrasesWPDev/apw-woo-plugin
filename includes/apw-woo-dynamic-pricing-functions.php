@@ -1221,3 +1221,20 @@ function apw_woo_ajax_get_threshold_messages() {
 
 // Hook into WooCommerce cart fee calculation
 add_action('woocommerce_cart_calculate_fees', 'apw_woo_apply_role_based_bulk_discounts');
+
+/**
+ * Ensure cart is calculated on cart page load to show discounts immediately
+ */
+function apw_woo_ensure_cart_calculated_on_load() {
+    if (is_cart() && !is_admin() && !defined('DOING_AJAX')) {
+        // Force cart calculation to ensure fees are applied
+        if (WC()->cart && !WC()->cart->is_empty()) {
+            WC()->cart->calculate_totals();
+            
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log('CART LOAD: Forced cart calculation to ensure bulk discounts display immediately');
+            }
+        }
+    }
+}
+add_action('wp', 'apw_woo_ensure_cart_calculated_on_load', 20);
