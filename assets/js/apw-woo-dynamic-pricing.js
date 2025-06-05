@@ -23,6 +23,67 @@
     function errorLog() {
         console.error.apply(console, arguments);
     }
+    
+    // Function to update threshold messages
+    function updateThresholdMessages(messages) {
+        // Find or create message container
+        let $messageContainer = $('.apw-woo-threshold-messages');
+        
+        if (!$messageContainer.length) {
+            // Create container between quantity/price and add to cart button
+            $messageContainer = $('<div class="apw-woo-threshold-messages"></div>');
+            
+            // Try to insert after quantity row or price display
+            let $insertAfter = $('.quantity').last();
+            if (!$insertAfter.length) {
+                $insertAfter = $('.apw-woo-price-display').last();
+            }
+            if (!$insertAfter.length) {
+                $insertAfter = $('.price').last();
+            }
+            
+            if ($insertAfter.length) {
+                $insertAfter.after($messageContainer);
+                debugLog('Created threshold messages container after: ' + $insertAfter[0].className);
+            } else {
+                // Fallback: insert before add to cart button
+                const $addToCartButton = $('.single_add_to_cart_button, .add_to_cart_button').first();
+                if ($addToCartButton.length) {
+                    $addToCartButton.before($messageContainer);
+                    debugLog('Created threshold messages container before add to cart button');
+                } else {
+                    debugLog('Could not find suitable location for threshold messages container');
+                    return;
+                }
+            }
+        }
+        
+        // Clear existing messages
+        $messageContainer.empty();
+        
+        if (messages && messages.length > 0) {
+            logWithTimestamp('Displaying ' + messages.length + ' threshold messages');
+            
+            messages.forEach(function(messageData, index) {
+                const messageClass = 'apw-threshold-message apw-threshold-' + messageData.type;
+                const messageHtml = '<div class="' + messageClass + '">' +
+                    '<span class="message-icon">✓</span> ' +
+                    '<span class="message-text">' + messageData.message + '</span>' +
+                    '</div>';
+                
+                $messageContainer.append(messageHtml);
+                
+                logWithTimestamp('Added ' + messageData.type + ' message: ' + messageData.message);
+            });
+            
+            // Show container with animation
+            $messageContainer.fadeIn(300);
+        } else {
+            // Hide container if no messages
+            $messageContainer.fadeOut(200);
+            logWithTimestamp('No threshold messages to display - hiding container');
+        }
+    }
 
     // Initialize when document is ready
     $(document).ready(function () {
@@ -263,6 +324,9 @@
                         if (!priceUpdated) {
                             errorLog('No price elements were updated - check selectors');
                         }
+
+                        // Update threshold messages
+                        updateThresholdMessages(response.data.threshold_messages || []);
 
                         // If we didn't have a product ID before but received one, store it
                         if (!productId && response.data.product_id) {

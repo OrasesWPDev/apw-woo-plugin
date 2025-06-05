@@ -433,6 +433,9 @@ function apw_woo_ajax_get_dynamic_price()
     // Get original price for comparison
     $original_price = $product->get_price();
     
+    // Get active threshold messages for current quantity
+    $threshold_messages = apw_woo_get_active_threshold_messages($product, $quantity);
+    
     // Send back both unit price and total with debug info
     wp_send_json_success(array(
         'unit_price' => $unit_price,
@@ -443,10 +446,12 @@ function apw_woo_ajax_get_dynamic_price()
         'product_id' => $product_id,
         'original_price' => $original_price,
         'price_changed' => (abs($unit_price - $original_price) > 0.01),
+        'threshold_messages' => $threshold_messages,
         'debug_info' => APW_WOO_DEBUG_MODE ? array(
             'product_name' => $product->get_name(),
             'has_pricing_rules' => apw_woo_product_has_pricing_rules($product),
-            'is_dynamic_pricing_active' => apw_woo_is_dynamic_pricing_active()
+            'is_dynamic_pricing_active' => apw_woo_is_dynamic_pricing_active(),
+            'thresholds_found' => count($threshold_messages)
         ) : null
     ));
 }
@@ -1053,6 +1058,92 @@ function apw_woo_should_exclude_addon_prices($product_id) {
     }
     
     return $has_addons;
+}
+
+/**
+ * Get quantity thresholds and messages for a product
+ *
+ * @param int|WC_Product $product Product ID or product object
+ * @return array Array of thresholds with messages
+ */
+function apw_woo_get_quantity_thresholds($product) {
+    // Convert to product object if needed
+    if (is_numeric($product)) {
+        $product = wc_get_product($product);
+    }
+
+    if (!$product || !is_a($product, 'WC_Product')) {
+        return array();
+    }
+
+    $product_id = $product->get_id();
+    $thresholds = array();
+
+    // Get pricing rules to extract discount thresholds
+    $pricing_rules = apw_woo_get_product_pricing_rules($product);
+    
+    foreach ($pricing_rules as $rule) {
+        if (isset($rule['rules']) && is_array($rule['rules'])) {
+            foreach ($rule['rules'] as $price_rule) {
+                if (isset($price_rule['from']) && $price_rule['from'] > 1) {
+                    $threshold_qty = (int)$price_rule['from'];
+                    
+                    // Add discount threshold message
+                    $thresholds[] = array(
+                        'quantity' => $threshold_qty,
+                        'type' => 'discount',
+                        'message' => 'Quantity discount achieved - will be applied at cart',
+                        'rule_data' => $price_rule
+                    );
+                }
+            }
+        }
+    }
+
+    // Add fixed shipping threshold (can be filtered)
+    $shipping_threshold = apply_filters('apw_woo_free_shipping_threshold', 10, $product_id);
+    if ($shipping_threshold > 0) {
+        $thresholds[] = array(
+            'quantity' => $shipping_threshold,
+            'type' => 'shipping',
+            'message' => 'Free ground shipping at qty ' . $shipping_threshold
+        );
+    }
+
+    // Sort by quantity ascending
+    usort($thresholds, function($a, $b) {
+        return $a['quantity'] - $b['quantity'];
+    });
+
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log("Found " . count($thresholds) . " quantity thresholds for product #{$product_id}");
+    }
+
+    return $thresholds;
+}
+
+/**
+ * Get active threshold messages for a given quantity
+ *
+ * @param int|WC_Product $product Product ID or product object
+ * @param int $quantity Current quantity
+ * @return array Array of active messages
+ */
+function apw_woo_get_active_threshold_messages($product, $quantity) {
+    $thresholds = apw_woo_get_quantity_thresholds($product);
+    $active_messages = array();
+
+    foreach ($thresholds as $threshold) {
+        if ($quantity >= $threshold['quantity']) {
+            $active_messages[] = array(
+                'type' => $threshold['type'],
+                'message' => $threshold['message'],
+                'threshold' => $threshold['quantity']
+            );
+        }
+    }
+
+    return $active_messages;
 }
 
 // Hook into WooCommerce cart fee calculation
