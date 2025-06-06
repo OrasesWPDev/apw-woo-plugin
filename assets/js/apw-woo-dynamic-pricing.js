@@ -155,6 +155,28 @@
     // Initialize when document is ready
     $(document).ready(function () {
         debugLog('APW WooCommerce Dynamic Pricing JS file loaded');
+        
+        // Global form submission prevention for cart forms when Enter is pressed in quantity fields
+        $(document).on('submit', 'form.cart', function (e) {
+            // Check if the form submission was triggered by Enter key in a quantity input
+            const activeElement = document.activeElement;
+            if (activeElement && 
+                (activeElement.type === 'number' || 
+                 activeElement.classList.contains('qty') ||
+                 activeElement.name === 'quantity' ||
+                 $(activeElement).closest('.quantity').length > 0)) {
+                
+                debugLog('Form submission prevented - triggered by quantity input');
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Trigger price update instead
+                const qty = parseInt($(activeElement).val(), 10) || 1;
+                debugLog('Triggering price update for quantity: ' + qty);
+                
+                return false;
+            }
+        });
         // Add this near the top of the document ready function
         debugLog('Analyzing DOM structure for quantity inputs:');
         debugLog('- form.cart exists: ' + ($('form.cart').length > 0));
@@ -209,8 +231,28 @@
             // Try one more approach - add a quantity change listener to any elements that might be quantity inputs
             debugLog('Adding global quantity change listeners as fallback');
 
+            // Add global Enter key prevention for quantity inputs
+            $(document).on('keydown', 'input[type="number"], .quantity input, input.qty, [name="quantity"]', function (e) {
+                if (e.which === 13 || e.keyCode === 13) { // Enter key
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const newQty = parseInt($(this).val(), 10) || 1;
+                    debugLog('Global Enter key handler - quantity input with value: ' + newQty);
+                    
+                    // Trigger price update instead of form submission
+                    updatePrice(newQty);
+                    return false;
+                }
+            });
+
             // Add listeners to any input that might be a quantity input
-            $(document).on('change keyup input', 'input[type="number"], .quantity input', function () {
+            $(document).on('change keyup input', 'input[type="number"], .quantity input', function (e) {
+                // Skip if this was triggered by Enter key
+                if (e.which === 13 || e.keyCode === 13) {
+                    return;
+                }
+                
                 debugLog('Potential quantity input changed: ' + $(this).val());
                 const newQty = parseInt($(this).val(), 10) || 1;
                 updatePrice(newQty);
@@ -434,8 +476,35 @@
             });
         }
 
+        // Prevent Enter key from submitting the form on quantity input
+        $quantityInput.on('keydown', function (e) {
+            if (e.which === 13 || e.keyCode === 13) { // Enter key
+                e.preventDefault(); // Prevent form submission
+                e.stopPropagation(); // Stop event bubbling
+                
+                const newQty = parseInt($(this).val(), 10) || 1;
+                debugLog('Enter key pressed on quantity input with value: ' + newQty);
+                
+                // Trigger immediate price update instead of form submission
+                if (newQty !== currentQuantity) {
+                    // Clear any pending timeout
+                    if (updateTimeout) {
+                        clearTimeout(updateTimeout);
+                    }
+                    updatePrice(newQty);
+                }
+                
+                return false; // Additional prevention of default behavior
+            }
+        });
+
         // Update when quantity changes (with small delay for better UX)
-        $quantityInput.on('change keyup input', function () {
+        $quantityInput.on('change keyup input', function (e) {
+            // Skip if this was triggered by Enter key (already handled above)
+            if (e.which === 13 || e.keyCode === 13) {
+                return;
+            }
+            
             const newQty = parseInt($(this).val(), 10) || 1;
             debugLog('Quantity input changed to: ' + newQty);
 

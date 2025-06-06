@@ -387,6 +387,9 @@ $(document.body).on('wc_fragments_refreshed', function() {
 - **Improved**: Request cancellation to prevent overlapping AJAX calls
 - **Reduced**: Response delays from 150ms to 50ms for faster threshold display
 - **Faster**: Animation timing reduced from 450ms to 200ms for immediate visibility
+- **Fixed**: Enter key on quantity input now triggers price updates instead of adding to cart
+- **Enhanced**: Global form submission prevention for quantity inputs with Enter key
+- **Improved**: Users must explicitly click "Add to Cart" button to add items to cart
 
 ### Version 1.17.11
 - **Fixed**: Cart quantity indicator bubble not updating to "0" when cart is emptied
