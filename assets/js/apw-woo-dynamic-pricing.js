@@ -76,8 +76,8 @@
                 logWithTimestamp('Added ' + messageData.type + ' message: ' + messageData.message);
             });
 
-            // Show container with animation
-            $messageContainer.fadeIn(450);
+            // Show container with faster animation for immediate visibility
+            $messageContainer.fadeIn(200);
         } else {
             // Hide container if no messages
             $messageContainer.fadeOut(100);
@@ -85,16 +85,43 @@
         }
     }
 
-    // Function to check threshold messages via AJAX
+    // Function to check threshold messages via AJAX with debouncing
+    let thresholdCheckTimeout = null;
+    let pendingThresholdRequest = null;
+    let lastCheckedQuantity = null;
+    let lastCheckedProductId = null;
+    
     function checkThresholdMessages(productId, quantity) {
         if (!productId || quantity < 1) {
             debugLog('Invalid product ID or quantity for threshold check');
             return;
         }
 
+        // Prevent duplicate calls for same product/quantity
+        if (productId === lastCheckedProductId && quantity === lastCheckedQuantity) {
+            debugLog('Skipping duplicate threshold check for product ' + productId + ', qty ' + quantity);
+            return;
+        }
+
         debugLog('Checking threshold messages for product ' + productId + ' with quantity ' + quantity);
 
-        $.ajax({
+        // Cancel any pending threshold check
+        if (thresholdCheckTimeout) {
+            clearTimeout(thresholdCheckTimeout);
+        }
+
+        // Abort any pending AJAX request
+        if (pendingThresholdRequest) {
+            pendingThresholdRequest.abort();
+            pendingThresholdRequest = null;
+        }
+
+        // Store current values to prevent duplicates
+        lastCheckedProductId = productId;
+        lastCheckedQuantity = quantity;
+
+        // Make immediate request for faster response
+        pendingThresholdRequest = $.ajax({
             type: 'POST',
             url: apwWooDynamicPricing.ajax_url,
             data: {
@@ -113,10 +140,14 @@
                     errorLog('Threshold check failed:', response);
                     updateThresholdMessages([]); // Clear messages on failure
                 }
+                pendingThresholdRequest = null;
             },
             error: function (xhr, status, error) {
-                errorLog('Threshold AJAX error:', error);
-                updateThresholdMessages([]); // Clear messages on error
+                if (xhr.statusText !== 'abort') {
+                    errorLog('Threshold AJAX error:', error);
+                    updateThresholdMessages([]); // Clear messages on error
+                }
+                pendingThresholdRequest = null;
             }
         });
     }
@@ -267,6 +298,7 @@
         // Initialize with current quantity
         let currentQuantity = parseInt($quantityInput.val(), 10) || 1;
         let updateTimeout = null;
+        let pendingPriceRequest = null;
 
         // Function to update price via AJAX
         function updatePrice(quantity) {
@@ -277,6 +309,13 @@
             }
 
             debugLog('Updating price for quantity: ' + quantity + ', Product ID: ' + productId);
+            
+            // Cancel any pending AJAX request
+            if (pendingPriceRequest) {
+                pendingPriceRequest.abort();
+                pendingPriceRequest = null;
+            }
+            
             currentQuantity = quantity;
 
             // Validate we have necessary data
@@ -308,7 +347,7 @@
             }
 
             // Make AJAX request
-            $.ajax({
+            pendingPriceRequest = $.ajax({
                 type: 'POST',
                 url: apwWooDynamicPricing.ajax_url,
                 data: requestData,
@@ -369,6 +408,9 @@
                             window.usingProductSlug = false;
                         }
 
+                        // Check threshold messages after successful price update
+                        checkThresholdMessages(productId, quantity);
+
                         // Trigger custom event for other scripts to react
                         $(document).trigger('apw_price_updated', [response.data]);
                     } else {
@@ -377,9 +419,13 @@
                             errorLog('Server message: ' + response.data.message);
                         }
                     }
+                    pendingPriceRequest = null;
                 },
                 error: function (xhr, status, error) {
-                    errorLog('Price update failed:', error);
+                    if (xhr.statusText !== 'abort') {
+                        errorLog('Price update failed:', error);
+                    }
+                    pendingPriceRequest = null;
                 },
                 complete: function () {
                     // Remove loading indicator from all price elements
@@ -398,14 +444,13 @@
                 clearTimeout(updateTimeout);
             }
 
-            // Faster response time - reduced from 150ms to 75ms
+            // Faster response time - reduced from 150ms to 50ms for immediate threshold display
             updateTimeout = setTimeout(function () {
                 if (newQty !== currentQuantity) {
                     updatePrice(newQty);
-                    // Check threshold messages only once per price update
-                    checkThresholdMessages(productId, newQty);
+                    // Threshold messages are now checked automatically after price update
                 }
-            }, 75);
+            }, 50);
         });
 
         // Enhanced detection for quantity button clicks - including Flatsome theme buttons
@@ -421,10 +466,9 @@
 
                 if (newQty !== currentQuantity) {
                     updatePrice(newQty);
+                    // Threshold messages are now checked automatically after price update
                 }
-                // Check threshold messages after button click
-                checkThresholdMessages(productId, newQty);
-            }, 100);
+            }, 50); // Reduced delay for faster response
         });
 
         // Ensure price updates when variations are changed
@@ -492,9 +536,8 @@
                 currentQuantity = actualQty;
             }
             updatePrice(currentQuantity);
-            // Check initial threshold messages
-            checkThresholdMessages(productId, actualQty);
-        }, 300);
+            // Threshold messages are now checked automatically after price update
+        }, 200); // Reduced delay for faster initial load
 
         // Also check after full page load in case of slow loading
         $(window).on('load', function () {

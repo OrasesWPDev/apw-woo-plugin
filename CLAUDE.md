@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The **APW WooCommerce Plugin** is a comprehensive WordPress plugin that extends WooCommerce functionality with advanced e-commerce features. Built specifically for the **Flatsome theme**, this plugin provides enhanced product displays, custom checkout processes, dynamic pricing integration, payment gateway enhancements, and sophisticated cart management systems.
 
-**Current Version**: 1.17.11
+**Current Version**: 1.17.12
 
 ### What This Plugin Does
 
@@ -380,7 +380,15 @@ $(document.body).on('wc_fragments_refreshed', function() {
 
 ## Recent Updates & Changelog
 
-### Version 1.17.11 (Latest)
+### Version 1.17.12 (Latest)
+- **Optimized**: Dynamic pricing threshold message timing for instant display
+- **Fixed**: Multiple simultaneous AJAX calls causing delayed threshold messages
+- **Enhanced**: Duplicate call prevention for price and threshold updates
+- **Improved**: Request cancellation to prevent overlapping AJAX calls
+- **Reduced**: Response delays from 150ms to 50ms for faster threshold display
+- **Faster**: Animation timing reduced from 450ms to 200ms for immediate visibility
+
+### Version 1.17.11
 - **Fixed**: Cart quantity indicator bubble not updating to "0" when cart is emptied
 - **Enhanced**: Cart indicator JavaScript with comprehensive empty cart detection
 - **Improved**: Multi-layered update system for better cart state synchronization
