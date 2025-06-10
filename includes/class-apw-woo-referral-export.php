@@ -647,17 +647,34 @@ class APW_Woo_Referral_Export {
     /**
      * Format price for CSV export (remove HTML formatting)
      *
-     * @param float $amount Raw price amount
-     * @return string Formatted price for CSV
+     * @param mixed $amount Raw price amount (could be float, string, or WooCommerce formatted price)
+     * @return string Plain text formatted price for CSV
      */
     private function format_price_for_csv($amount) {
+        // Handle case where amount might already be a formatted price string
+        if (is_string($amount)) {
+            // Strip all HTML tags and decode HTML entities
+            $amount = html_entity_decode(strip_tags($amount), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            // Extract numeric value from formatted string
+            $amount = preg_replace('/[^0-9.,]/', '', $amount);
+            // Convert to float, handling potential comma as decimal separator
+            $amount = (float) str_replace(',', '.', $amount);
+        }
+        
         if (empty($amount) || !is_numeric($amount)) {
             $amount = 0;
         }
         
-        // Format as decimal with 2 places and add currency symbol
-        $currency_symbol = get_woocommerce_currency_symbol();
+        // Get currency symbol and ensure it's decoded
+        $currency_symbol = html_entity_decode(get_woocommerce_currency_symbol(), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        
+        // Format as decimal with 2 places
         $formatted_amount = number_format((float)$amount, 2, '.', '');
+        
+        // Debug logging if enabled
+        if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+            apw_woo_log("CSV Price formatting - Original: {$amount}, Symbol: {$currency_symbol}, Final: {$currency_symbol}{$formatted_amount}");
+        }
         
         return $currency_symbol . $formatted_amount;
     }
