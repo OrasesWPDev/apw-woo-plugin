@@ -762,6 +762,9 @@ function apw_woo_init()
     // Initialize Registration Fields functionality
     apw_woo_initialize_registration_fields();
 
+    // Initialize Referral Export functionality
+    apw_woo_initialize_referral_export();
+
     // Initialize Account Fields customization
     if (file_exists(APW_WOO_PLUGIN_DIR . 'includes/apw-woo-account-functions.php')) {
         require_once APW_WOO_PLUGIN_DIR . 'includes/apw-woo-account-functions.php';
@@ -906,6 +909,27 @@ function apw_woo_initialize_registration_fields()
     } else {
         if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
             apw_woo_log('APW_Woo_Registration_Fields class not found', 'warning');
+        }
+    }
+}
+
+/**
+ * Initialize Referral Export functionality
+ *
+ * @return void
+ * @since 1.18.0
+ */
+function apw_woo_initialize_referral_export()
+{
+    if (class_exists('APW_Woo_Referral_Export')) {
+        APW_Woo_Referral_Export::get_instance();
+        
+        if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+            apw_woo_log('Referral Export functionality initialized');
+        }
+    } else {
+        if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+            apw_woo_log('APW_Woo_Referral_Export class not found', 'warning');
         }
     }
 }
