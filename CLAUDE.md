@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The **APW WooCommerce Plugin** is a comprehensive WordPress plugin that extends WooCommerce functionality with advanced e-commerce features. Built specifically for the **Flatsome theme**, this plugin provides enhanced product displays, custom checkout processes, dynamic pricing integration, payment gateway enhancements, and sophisticated cart management systems.
 
-**Current Version**: 1.17.12
+**Current Version**: 1.18.0
 
 ### What This Plugin Does
 
@@ -22,6 +22,8 @@ This plugin transforms a standard WooCommerce store into a feature-rich e-commer
 8. **Enhanced Checkout Process** - Custom fields, shipping enhancements, and form validation
 9. **Product Add-ons Integration** - Extended compatibility with WooCommerce Product Add-ons plugin
 10. **Account Customizations** - Enhanced My Account page with custom styling and functionality
+11. **Custom Registration Fields** - Extended user registration with required fields (First/Last Name, Company, Phone) and optional referral tracking
+12. **Referral Export System** - Comprehensive export functionality for tracking and analyzing user referrals with CSV exports and admin dashboard
 
 ### Target Use Case
 
@@ -34,6 +36,8 @@ This plugin is designed for **medium to large e-commerce stores** that need:
 - SEO-optimized product URLs
 - Context-aware customer support (FAQ system)
 - Subscription or recurring product management
+- Enhanced user registration and customer data collection
+- Referral tracking and export capabilities for marketing analysis
 
 ## Developer Roadmap
 
@@ -182,6 +186,44 @@ enabled:
 - Enhanced cross-sells functionality
 - Specialized shipping calculations and options
 - WooCommerce tabs customization
+
+### Custom Registration Fields
+
+- **Extended WooCommerce registration** with additional required fields
+- **Required Fields**: First Name, Last Name, Company Name, Phone Number
+- **Optional Field**: Referred By (for referral tracking)
+- **Hook-based implementation** - No template overrides required for maintainability
+- **Client-side validation** with real-time feedback and phone number formatting
+- **Admin integration** - Custom user list columns and profile editor fields
+- **WooCommerce sync** - Automatic population of billing fields during first checkout
+- Main class: `APW_Woo_Registration_Fields`
+- CSS styling: `assets/css/apw-registration-fields.css`
+- JavaScript validation: `assets/js/apw-registration-validation.js`
+
+**Usage**: Fields automatically appear on WooCommerce registration form when plugin is active.
+
+### Referral Export System
+
+- **Comprehensive export functionality** for users with referral data
+- **Multiple export options**: All referrals, by specific referrer, date range filtering
+- **CSV export format** with user details, registration info, and WooCommerce order data
+- **Admin dashboard** with export statistics and recent exports management
+- **Bulk actions** on Users list page for selective exports
+- **User list filtering** by referral status (with/without referrals)
+- **Secure file handling** with automatic cleanup (7-day retention)
+- **Background processing** for large exports to prevent timeouts
+- Main class: `APW_Woo_Referral_Export`
+- Admin interface: `Users > Referral Export`
+- CSS styling: `assets/css/apw-referral-export-admin.css`
+- JavaScript interface: `assets/js/apw-referral-export.js`
+
+**Usage**: Access via WordPress Admin → Users → Referral Export or use bulk actions on Users list.
+
+**Export Data Includes**:
+- User ID, Username, Email
+- Registration fields (First/Last Name, Company, Phone, Referred By)
+- Registration date and last login
+- WooCommerce order count and total spent (optional)
 
 ## Development Guidelines
 
@@ -380,7 +422,23 @@ $(document.body).on('wc_fragments_refreshed', function() {
 
 ## Recent Updates & Changelog
 
-### Version 1.17.12 (Latest)
+### Version 1.18.0 (Latest)
+- **NEW**: Custom Registration Fields - Extended WooCommerce registration with required fields (First/Last Name, Company, Phone) and optional Referred By field
+- **NEW**: Referral Export System - Comprehensive export functionality for tracking and analyzing user referrals
+- **Added**: Hook-based registration field implementation with no template overrides required
+- **Added**: Client-side validation with real-time feedback and phone number formatting
+- **Added**: Admin user list columns and profile editor integration for new fields
+- **Added**: Automatic sync of registration data to WooCommerce billing fields during first checkout
+- **Added**: CSV export functionality with multiple filtering options (all, by referrer, date range)
+- **Added**: Admin dashboard for referral exports with statistics and file management
+- **Added**: Bulk actions on Users list page for selective referral exports
+- **Added**: User list filtering by referral status
+- **Added**: Secure file handling with automatic cleanup and access protection
+- **Enhanced**: Plugin architecture with proper initialization functions for new features
+- **Security**: All user inputs properly sanitized and validated
+- **Compatibility**: Flatsome theme integration and responsive design
+
+### Version 1.17.12
 - **Optimized**: Dynamic pricing threshold message timing for instant display
 - **Fixed**: Multiple simultaneous AJAX calls causing delayed threshold messages
 - **Enhanced**: Duplicate call prevention for price and threshold updates
