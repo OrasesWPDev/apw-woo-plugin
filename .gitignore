@@ -42,3 +42,7 @@ aider*
 # Output files
 *-output.txt
 /dynamic-prcing-refactor.txt
+
+# CSV test files and review directories
+/assets/csv files for review/
+*.csv
