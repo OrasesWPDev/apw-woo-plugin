@@ -2,7 +2,7 @@
 
 A comprehensive WordPress plugin that extends WooCommerce functionality with advanced e-commerce features. Built specifically for the **Flatsome theme**, this plugin provides enhanced product displays, custom checkout processes, dynamic pricing integration, payment gateway enhancements, and sophisticated cart management systems.
 
-**Current Version**: 1.18.0
+**Current Version**: 1.18.1
 
 ## 🚀 Features
 
@@ -235,11 +235,25 @@ When debug mode is enabled:
 
 ### Common Issues
 
+#### Company Field Not Showing on Address Forms
+1. Ensure WooCommerce is active and updated
+2. Check WooCommerce → Settings → General that company field is enabled
+3. Verify plugin is properly activated
+4. Enable debug mode to check logs for field enforcement messages
+5. Clear any caching plugins that might interfere with address forms
+6. Check for theme conflicts by temporarily switching to a default theme
+
 #### Registration Fields Not Showing
 1. Ensure WooCommerce is active and updated
 2. Check if registration is enabled in WooCommerce settings
 3. Verify plugin is properly activated
 4. Enable debug mode to check logs
+
+#### Export Showing HTML in CSV
+1. Ensure you're using version 1.18.1 or later
+2. Re-export your data to get properly formatted currency values
+3. Check that CSV opens correctly in spreadsheet applications
+4. Verify export files in uploads/apw-referral-exports/ directory
 
 #### Export Not Working
 1. Verify user has 'manage_woocommerce' capability
@@ -283,7 +297,15 @@ Log files will be created in the `logs/` directory.
 
 ## 📝 Changelog
 
-### Version 1.18.0 (Latest)
+### Version 1.18.1 (Latest)
+- **FIXED**: Company name field not displaying on billing/shipping address edit forms
+- **FIXED**: CSV export showing HTML markup in Total Spent column instead of plain text
+- **Enhanced**: Address field enforcement with multiple priority hooks for better compatibility
+- **Enhanced**: Template-level fallback mechanisms for missing company fields
+- **Added**: Comprehensive debug logging for address field modifications
+- **Improved**: CSV export formatting with proper currency symbol handling
+
+### Version 1.18.0
 - **NEW**: Custom Registration Fields with required fields and referral tracking
 - **NEW**: Referral Export System with comprehensive CSV export functionality
 - **Added**: Hook-based registration implementation with client-side validation
