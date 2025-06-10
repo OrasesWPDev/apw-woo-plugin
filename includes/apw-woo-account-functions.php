@@ -131,4 +131,83 @@ function apw_woo_validate_required_address_fields($address_fields, $load_address
     
     return $address_fields;
 }
-add_filter('woocommerce_address_to_edit', 'apw_woo_validate_required_address_fields', 10, 2);
+add_filter('woocommerce_address_to_edit', 'apw_woo_validate_required_address_fields', 9999, 2);
+
+/**
+ * Enhanced company field enforcement with higher priority
+ * Ensures company field appears on address edit forms
+ *
+ * @param array $fields Address fields
+ * @return array Modified fields
+ */
+function apw_woo_enforce_company_field_display($fields) {
+    // Ensure company field exists and is properly configured
+    if (!isset($fields['company'])) {
+        $fields['company'] = array(
+            'label'        => __('Company name', 'woocommerce'),
+            'required'     => true,
+            'class'        => array('form-row-wide', 'required'),
+            'autocomplete' => 'organization',
+            'priority'     => 30,
+        );
+        
+        if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+            apw_woo_log('ACCOUNT FIELDS: Added missing company field to default address fields');
+        }
+    } else {
+        // Ensure existing company field is required
+        $fields['company']['required'] = true;
+        if (!isset($fields['company']['class'])) {
+            $fields['company']['class'] = array();
+        }
+        if (!in_array('required', $fields['company']['class'])) {
+            $fields['company']['class'][] = 'required';
+        }
+        
+        if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+            apw_woo_log('ACCOUNT FIELDS: Updated existing company field in default address fields');
+        }
+    }
+    
+    return $fields;
+}
+add_filter('woocommerce_default_address_fields', 'apw_woo_enforce_company_field_display', 9999);
+
+/**
+ * Force company field visibility with even higher priority
+ * Last resort to ensure field appears
+ */
+function apw_woo_force_address_field_requirements($address_fields, $load_address) {
+    $field_keys = array(
+        $load_address . '_company',
+        $load_address . '_phone'
+    );
+    
+    foreach ($field_keys as $field_key) {
+        if (isset($address_fields[$field_key])) {
+            $address_fields[$field_key]['required'] = true;
+            
+            // Ensure proper CSS classes
+            if (!isset($address_fields[$field_key]['class'])) {
+                $address_fields[$field_key]['class'] = array();
+            }
+            if (!in_array('required', $address_fields[$field_key]['class'])) {
+                $address_fields[$field_key]['class'][] = 'required';
+            }
+            if (!in_array('validate-required', $address_fields[$field_key]['class'])) {
+                $address_fields[$field_key]['class'][] = 'validate-required';
+            }
+            
+            if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                apw_woo_log("ACCOUNT FIELDS: Enforced requirements for field: {$field_key}");
+            }
+        } else {
+            if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                apw_woo_log("ACCOUNT FIELDS: WARNING - Field {$field_key} not found in address fields array");
+            }
+        }
+    }
+    
+    return $address_fields;
+}
+add_filter('woocommerce_address_to_edit', 'apw_woo_force_address_field_requirements', 99999, 2);

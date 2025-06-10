@@ -514,7 +514,7 @@ class APW_Woo_Referral_Export {
             if ($include_order_data && function_exists('wc_get_customer_order_count')) {
                 $customer = new WC_Customer($user_id);
                 $row[] = wc_get_customer_order_count($user_id);
-                $row[] = wc_price($customer->get_total_spent());
+                $row[] = $this->format_price_for_csv($customer->get_total_spent());
             }
             
             fputcsv($file, $row);
@@ -642,6 +642,24 @@ class APW_Woo_Referral_Export {
                 }
             }
         }
+    }
+
+    /**
+     * Format price for CSV export (remove HTML formatting)
+     *
+     * @param float $amount Raw price amount
+     * @return string Formatted price for CSV
+     */
+    private function format_price_for_csv($amount) {
+        if (empty($amount) || !is_numeric($amount)) {
+            $amount = 0;
+        }
+        
+        // Format as decimal with 2 places and add currency symbol
+        $currency_symbol = get_woocommerce_currency_symbol();
+        $formatted_amount = number_format((float)$amount, 2, '.', '');
+        
+        return $currency_symbol . $formatted_amount;
     }
 
     /**
