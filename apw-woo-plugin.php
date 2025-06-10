@@ -11,7 +11,7 @@
  * Plugin Name:       APW WooCommerce Plugin
  * Plugin URI:        https://github.com/OrasesWPDev/apw-woo-plugin
  * Description:       Custom WooCommerce enhancements for displaying products across shop, category, and product pages.
- * Version:           1.17.12
+ * Version:           1.18.0
  * Requires at least: 5.3
  * Requires PHP:      7.2
  * Author:            Orases
@@ -33,7 +33,7 @@ if (!defined('ABSPATH')) {
 /**
  * Plugin constants
  */
-define('APW_WOO_VERSION', '1.17.10');
+define('APW_WOO_VERSION', '1.18.0');
 define('APW_WOO_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('APW_WOO_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('APW_WOO_PLUGIN_FILE', __FILE__);
@@ -759,6 +759,9 @@ function apw_woo_init()
     // Initialize Recurring Billing Field functionality
     apw_woo_initialize_recurring_billing();
 
+    // Initialize Registration Fields functionality
+    apw_woo_initialize_registration_fields();
+
     // Initialize Account Fields customization
     if (file_exists(APW_WOO_PLUGIN_DIR . 'includes/apw-woo-account-functions.php')) {
         require_once APW_WOO_PLUGIN_DIR . 'includes/apw-woo-account-functions.php';
@@ -883,6 +886,27 @@ function apw_woo_initialize_product_addons()
         }
     } else {
         apw_woo_log('Product Add-ons functions file not found.', 'warning');
+    }
+}
+
+/**
+ * Initialize Registration Fields functionality
+ *
+ * @return void
+ * @since 1.18.0
+ */
+function apw_woo_initialize_registration_fields()
+{
+    if (class_exists('APW_Woo_Registration_Fields')) {
+        APW_Woo_Registration_Fields::get_instance();
+        
+        if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+            apw_woo_log('Registration Fields functionality initialized');
+        }
+    } else {
+        if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+            apw_woo_log('APW_Woo_Registration_Fields class not found', 'warning');
+        }
     }
 }
 

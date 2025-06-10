@@ -1,0 +1,144 @@
+/**
+ * APW Registration Fields Styles
+ * 
+ * Styles for custom registration fields on WooCommerce registration form
+ * Designed to integrate seamlessly with Flatsome theme
+ *
+ * @package APW_Woo_Plugin
+ * @since 1.18.0
+ */
+
+/* Registration field container */
+.apw-registration-field {
+    margin-bottom: 1rem;
+}
+
+/* Field labels */
+.apw-registration-field label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+/* Required field indicator */
+.apw-registration-field .required {
+    color: #e74c3c;
+    font-weight: bold;
+}
+
+/* Input fields */
+.apw-registration-field input[type="text"],
+.apw-registration-field input[type="tel"] {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+/* Input focus states */
+.apw-registration-field input[type="text"]:focus,
+.apw-registration-field input[type="tel"]:focus {
+    outline: none;
+    border-color: #0073aa;
+    box-shadow: 0 0 0 1px #0073aa;
+}
+
+/* Input validation states */
+.apw-registration-field input.woocommerce-invalid {
+    border-color: #e74c3c;
+}
+
+.apw-registration-field input.woocommerce-validated {
+    border-color: #27ae60;
+}
+
+/* Field descriptions */
+.apw-registration-field .description {
+    font-size: 0.875rem;
+    color: #666;
+    font-style: italic;
+    margin-top: 0.25rem;
+    display: block;
+}
+
+/* Error messages specific to registration fields */
+.woocommerce-error li[data-id*="apw_"] {
+    background-color: #f8d7da;
+    border-left: 4px solid #e74c3c;
+    padding: 0.75rem;
+    margin: 0.5rem 0;
+}
+
+/* Success messages */
+.woocommerce-message {
+    background-color: #d4edda;
+    border-left: 4px solid #27ae60;
+    padding: 0.75rem;
+    margin: 0.5rem 0;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+    .apw-registration-field {
+        margin-bottom: 0.75rem;
+    }
+    
+    .apw-registration-field input[type="text"],
+    .apw-registration-field input[type="tel"] {
+        padding: 0.625rem;
+        font-size: 16px; /* Prevent zoom on iOS */
+    }
+}
+
+/* Integration with Flatsome theme forms */
+.flatsome-theme .apw-registration-field input[type="text"],
+.flatsome-theme .apw-registration-field input[type="tel"] {
+    border-radius: 0;
+    border: 1px solid #eee;
+}
+
+.flatsome-theme .apw-registration-field input[type="text"]:focus,
+.flatsome-theme .apw-registration-field input[type="tel"]:focus {
+    border-color: var(--primary-color, #0073aa);
+}
+
+/* Admin user profile styling */
+.user-edit-php .apw-registration-field,
+.profile-php .apw-registration-field {
+    margin-bottom: 1rem;
+}
+
+/* Make form fields more accessible */
+.apw-registration-field input[required]:invalid {
+    box-shadow: none; /* Remove browser default invalid styling */
+}
+
+.apw-registration-field input[aria-describedby] {
+    /* Space for description text */
+}
+
+/* Loading state for AJAX validation */
+.apw-registration-field.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.apw-registration-field.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #0073aa;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
