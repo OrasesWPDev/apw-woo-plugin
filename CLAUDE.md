@@ -2,61 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project Overview
+## Development Overview
 
-The **APW WooCommerce Plugin** is a comprehensive WordPress plugin that extends WooCommerce functionality with advanced e-commerce features. Built specifically for the **Flatsome theme**, this plugin provides enhanced product displays, custom checkout processes, dynamic pricing integration, payment gateway enhancements, and sophisticated cart management systems.
+The **APW WooCommerce Plugin** is a comprehensive WordPress plugin that extends WooCommerce functionality. This file contains development-specific information for maintaining and extending the codebase.
 
-**Current Version**: 1.17.12
-
-### What This Plugin Does
-
-This plugin transforms a standard WooCommerce store into a feature-rich e-commerce platform by:
-
-1. **Custom Product Display System** - Overrides WooCommerce templates with enhanced product layouts, category displays, and shop pages optimized for the Flatsome theme
-2. **Advanced Cart Management** - Real-time cart quantity indicators with bubble notifications that update instantly across all pages
-3. **Dynamic Pricing Integration** - Seamless integration with WooCommerce Dynamic Pricing plugin for bulk discounts and threshold notifications
-4. **Payment Gateway Enhancements** - Intuit QBMS integration with credit card surcharge calculations and enhanced checkout experience
-5. **Recurring Billing System** - Manages subscription-like products with customer billing method preferences
-6. **FAQ Management** - ACF-powered context-aware FAQ system that displays relevant questions based on products, categories, or pages
-7. **Custom URL Structure** - SEO-friendly URLs with `/products/%category%/%product%` format
-8. **Enhanced Checkout Process** - Custom fields, shipping enhancements, and form validation
-9. **Product Add-ons Integration** - Extended compatibility with WooCommerce Product Add-ons plugin
-10. **Account Customizations** - Enhanced My Account page with custom styling and functionality
-
-### Target Use Case
-
-This plugin is designed for **medium to large e-commerce stores** that need:
-- Advanced product presentation capabilities
-- Sophisticated pricing strategies (bulk discounts, dynamic pricing)
-- Enhanced payment processing with surcharge handling
-- Professional checkout experience with custom fields
-- Real-time cart feedback and notifications
-- SEO-optimized product URLs
-- Context-aware customer support (FAQ system)
-- Subscription or recurring product management
-
-## Developer Roadmap
-
-### Quick Start Guide
-
-1. **Installation Requirements**
-   - WordPress 5.3+
-   - PHP 7.2+
-   - WooCommerce 5.0+
-   - Advanced Custom Fields PRO
-   - Flatsome Theme (recommended)
-
-2. **Initial Setup**
-   - Activate required dependencies first
-   - Enable debug mode: Set `APW_WOO_DEBUG_MODE` to `true` in main plugin file
-   - Check logs in `logs/debug-{date}.log` for initialization status
-   - Verify template overrides are loading correctly
-
-3. **Key Configuration Areas**
-   - Cart quantity indicators: Add `cart-quantity-indicator` class to cart links
-   - FAQ system: Configure ACF repeater fields with 'question' and 'answer' subfields
-   - Dynamic pricing: Install WooCommerce Dynamic Pricing plugin for full functionality
-   - Payment gateway: Configure Intuit QBMS settings for surcharge calculations
+**Current Version**: 1.18.0
 
 ## Core Architecture
 
@@ -96,6 +46,8 @@ apw-woo-plugin/
 - `APW_Woo_Template_Resolver` - Template resolution logic for WordPress template system
 - `APW_Woo_Product_Addons` - Enhanced Product Add-ons integration and customization
 - `APW_Woo_Recurring_Billing` - Manages recurring product billing method preferences
+- `APW_Woo_Registration_Fields` - Custom registration fields and user data management
+- `APW_Woo_Referral_Export` - Referral tracking and export functionality
 
 ### Template System
 
@@ -108,8 +60,7 @@ The plugin implements a sophisticated template override system:
 
 ## Debug Mode
 
-The plugin has extensive debug logging controlled by the constant `APW_WOO_DEBUG_MODE` in the main plugin file. When
-enabled:
+The plugin has extensive debug logging controlled by the constant `APW_WOO_DEBUG_MODE` in the main plugin file. When enabled:
 
 - Detailed logging to `logs/debug-{date}.log` files
 - Admin notices for development feedback
@@ -117,119 +68,6 @@ enabled:
 - Performance tracking capabilities
 
 **Important**: Debug mode should always be disabled in production environments.
-
-## Custom Functionality
-
-### Dynamic Pricing Integration
-
-- Integrates with WooCommerce Dynamic Pricing plugin
-- Custom AJAX endpoints for real-time price updates
-- Functions in `includes/apw-woo-dynamic-pricing-functions.php`
-- JavaScript handling in `assets/js/apw-woo-dynamic-pricing.js`
-
-### FAQ System
-
-- ACF-powered FAQ display system
-- Context-aware FAQs (product, category, or page-specific)
-- Template partial: `templates/partials/faq-display.php`
-- Supports repeater field structure with 'question' and 'answer' subfields
-
-### Product Add-ons Integration
-
-- Enhanced WooCommerce Product Add-ons compatibility
-- Custom styling and functionality extensions
-
-### Account Customizations
-
-- Enhanced WooCommerce My Account page functionality
-- Custom address form handling
-- Login/registration enhancements
-
-### Intuit Payment Gateway Integration
-
-- Integration with WooCommerce Intuit QBMS payment gateway
-- JavaScript enhancements for payment processing
-- Credit card surcharge calculation (3% fee)
-- Functions in `includes/apw-woo-intuit-payment-functions.php`
-- JavaScript handling in `assets/js/apw-woo-intuit-integration.js`
-
-### Recurring Billing Management
-
-- Checkout field for preferred monthly billing method selection
-- Automatic display for products tagged with 'recurring'
-- Order meta storage and admin display
-- Class-based implementation in `APW_Woo_Recurring_Billing`
-
-### Cart Quantity Indicators
-
-- **Real-time cart count display system** with bubble notifications
-- **CSS pseudo-element based quantity indicators** showing total item quantities (not just item count)
-- **Advanced empty cart detection** - Fixed issue where bubble didn't update to "0" until page reload
-- **Multi-layered update system** using WooCommerce cart fragments, AJAX fallbacks, and explicit cart monitoring
-- **Last-item removal detection** - Immediately shows "0" when removing final cart item
-- Functions in `includes/apw-woo-cart-indicator-functions.php`
-- JavaScript implementation in `assets/js/apw-woo-public.js:252-594`
-- CSS styling in `assets/css/woocommerce-custom.css` (`.cart-quantity-indicator` styles)
-
-**Usage**: Add `cart-quantity-indicator` class to any cart link element:
-```html
-<a href="/cart" class="cart-quantity-indicator">Cart</a>
-```
-
-### Checkout and Shipping Enhancements
-
-- Custom checkout form fields and validation
-- Enhanced cross-sells functionality
-- Specialized shipping calculations and options
-- WooCommerce tabs customization
-
-## Development Guidelines
-
-### File Organization
-
-- **Functions**: Non-class functionality in `includes/apw-woo-*-functions.php` files
-- **Classes**: Object-oriented code in `includes/class-*.php` files
-- **Templates**: WooCommerce overrides maintain same directory structure as WooCommerce
-- **Assets**: Auto-discovery system loads files based on naming conventions
-
-### Code Style
-
-- WordPress coding standards
-- Extensive PHPDoc documentation
-- Security-first approach with input sanitization and validation
-- Performance optimization with caching and conditional loading
-
-### Template Development
-
-- Templates follow WordPress/WooCommerce conventions
-- Custom hooks throughout templates for extensibility
-- Responsive design with Flatsome theme compatibility
-- Debug-friendly with conditional logging and visualization
-
-### Asset Management
-
-- Automatic file discovery in `assets/css/` and `assets/js/`
-- Cache busting using file modification times
-- Conditional loading based on page context
-- Dependency management for proper loading order
-
-## Dependencies
-
-### Required Plugins
-
-- **WooCommerce**: Core e-commerce functionality
-- **Advanced Custom Fields PRO**: FAQ system and custom field management
-
-### Optional Integrations
-
-- **WooCommerce Dynamic Pricing**: Enhanced pricing functionality
-- **WooCommerce Product Add-ons**: Extended product options
-- **WooCommerce Intuit QBMS**: Payment gateway with surcharge and JavaScript enhancements
-
-### Theme Requirements
-
-- **Flatsome Theme**: Optimized for this theme's structure and styling
-- Custom CSS handles responsive behavior and theme integration
 
 ## Development Workflows
 
@@ -362,6 +200,36 @@ $(document.body).on('wc_fragments_refreshed', function() {
 3. Verify conditional asset loading is working
 4. Check for unnecessary hook duplications
 
+## Development Guidelines
+
+### File Organization
+
+- **Functions**: Non-class functionality in `includes/apw-woo-*-functions.php` files
+- **Classes**: Object-oriented code in `includes/class-*.php` files
+- **Templates**: WooCommerce overrides maintain same directory structure as WooCommerce
+- **Assets**: Auto-discovery system loads files based on naming conventions
+
+### Code Style
+
+- WordPress coding standards
+- Extensive PHPDoc documentation
+- Security-first approach with input sanitization and validation
+- Performance optimization with caching and conditional loading
+
+### Template Development
+
+- Templates follow WordPress/WooCommerce conventions
+- Custom hooks throughout templates for extensibility
+- Responsive design with Flatsome theme compatibility
+- Debug-friendly with conditional logging and visualization
+
+### Asset Management
+
+- Automatic file discovery in `assets/css/` and `assets/js/`
+- Cache busting using file modification times
+- Conditional loading based on page context
+- Dependency management for proper loading order
+
 ## Security Considerations
 
 - All user inputs are sanitized and validated
@@ -377,31 +245,6 @@ $(document.body).on('wc_fragments_refreshed', function() {
 - Static caching within request lifecycle
 - Output buffer management for template processing
 - Hook removal caching to prevent redundant operations
-
-## Recent Updates & Changelog
-
-### Version 1.17.12 (Latest)
-- **Optimized**: Dynamic pricing threshold message timing for instant display
-- **Fixed**: Multiple simultaneous AJAX calls causing delayed threshold messages
-- **Enhanced**: Duplicate call prevention for price and threshold updates
-- **Improved**: Request cancellation to prevent overlapping AJAX calls
-- **Reduced**: Response delays from 150ms to 50ms for faster threshold display
-- **Faster**: Animation timing reduced from 450ms to 200ms for immediate visibility
-- **Fixed**: Enter key on quantity input now triggers price updates instead of adding to cart
-- **Enhanced**: Global form submission prevention for quantity inputs with Enter key
-- **Improved**: Users must explicitly click "Add to Cart" button to add items to cart
-
-### Version 1.17.11
-- **Fixed**: Cart quantity indicator bubble not updating to "0" when cart is emptied
-- **Enhanced**: Cart indicator JavaScript with comprehensive empty cart detection
-- **Improved**: Multi-layered update system for better cart state synchronization
-- **Added**: Immediate count=0 setting when last item is being removed
-- **Added**: Enhanced event handling with multiple delayed updates for timing issues
-
-### Version 1.17.10
-- Optimized threshold message performance and reduced duplicate executions
-- Fixed cart discount display timing and threshold message responsiveness
-- Implemented event-driven bulk discount threshold notifications
 
 ## API Reference
 
@@ -447,22 +290,37 @@ if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE) {
 .apw-woo-notices-container { /* Custom notice container */ }
 ```
 
-## Helpful Documentation
+## Testing & Development Commands
 
-### Official Documentation
-- [Flatsome Theme Documentation](https://docs.uxthemes.com/)
-- [WordPress Developer Documentation](https://wordpress.org/documentation/)
-- [Advanced Custom Fields Resources](https://www.advancedcustomfields.com/resources/)
-- [WooCommerce Documentation](https://woocommerce.com/documentation/woocommerce/)
+When working on this plugin, use these commands for testing:
 
-### WooCommerce Specific
-- [WooCommerce Intuit QBMS](https://woocommerce.com/document/woocommerce-intuit-qbms/)
-- [WooCommerce Hooks & Filters](https://woocommerce.com/document/introduction-to-hooks-actions-and-filters/)
-- [WooCommerce Visual Hook Guide](https://www.businessbloomer.com/woocommerce-visual-hook-guide-single-product-page/)
-- [WooCommerce Product Add-ons](https://woocommerce.com/document/product-add-ons/)
-- [WooCommerce Dynamic Pricing](https://woocommerce.com/document/woocommerce-dynamic-pricing/)
+```bash
+# Enable debug mode in apw-woo-plugin.php
+define('APW_WOO_DEBUG_MODE', true);
 
-### Development Resources
-- [WordPress Coding Standards](https://developer.wordpress.org/coding-standards/wordpress-coding-standards/)
-- [WooCommerce Template Structure](https://woocommerce.com/document/template-structure/)
-- [WordPress AJAX in Plugins](https://developer.wordpress.org/plugins/javascript/ajax/)
+# Check logs for debugging
+tail -f logs/debug-$(date +%Y-%m-%d).log
+
+# Test with different themes for compatibility
+# Test with minimum required versions of dependencies
+```
+
+## Recent Development Changes
+
+### Version 1.18.0 (Latest)
+- **NEW**: Custom Registration Fields system (`APW_Woo_Registration_Fields`)
+- **NEW**: Referral Export functionality (`APW_Woo_Referral_Export`)
+- **Added**: Hook-based registration field implementation
+- **Added**: Comprehensive export system with admin interface
+- **Enhanced**: Plugin architecture with proper initialization functions
+
+## Development Notes
+
+- Always use WordPress coding standards
+- Test with WooCommerce latest and minimum supported versions
+- Ensure Flatsome theme compatibility
+- Maintain backward compatibility when possible
+- Document all new functions and classes
+- Use proper escaping for all output
+- Validate and sanitize all inputs
+- Follow existing naming conventions
