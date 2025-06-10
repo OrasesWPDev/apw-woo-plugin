@@ -31,9 +31,13 @@ do_action('woocommerce_before_edit_account_address_form'); ?>
 
             <div class="woocommerce-address-fields__field-wrapper">
                 <?php
+                // Debug: Log all available fields in debug mode
+                if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                    apw_woo_log('EDIT ADDRESS TEMPLATE: Address fields for ' . $load_address . ': ' . print_r(array_keys($address), true));
+                }
+                
                 foreach ($address as $key => $field) {
-                    // Fields are already marked as required by our filters
-                    // This is just an additional check to ensure they're properly displayed
+                    // Enhanced field enforcement for template level
                     if ($key === $load_address . '_company' || $key === $load_address . '_phone') {
                         $field['required'] = true;
                         
@@ -44,14 +48,41 @@ do_action('woocommerce_before_edit_account_address_form'); ?>
                         if (!in_array('required', $field['class'])) {
                             $field['class'][] = 'required';
                         }
+                        if (!in_array('validate-required', $field['class'])) {
+                            $field['class'][] = 'validate-required';
+                        }
                         
-                        // Log if in debug mode
+                        // Ensure proper field configuration
+                        if ($key === $load_address . '_company') {
+                            $field['label'] = $field['label'] ?? __('Company name', 'woocommerce');
+                            $field['placeholder'] = $field['placeholder'] ?? __('Company name', 'woocommerce');
+                        }
+                        
+                        // Log field processing
                         if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
-                            apw_woo_log('EDIT ADDRESS TEMPLATE: Marking field as required: ' . $key);
+                            apw_woo_log('EDIT ADDRESS TEMPLATE: Processing required field: ' . $key . ' with classes: ' . implode(', ', $field['class']));
                         }
                     }
 
                     woocommerce_form_field($key, $field, wc_get_post_data_by_key($key, $field['value']));
+                }
+                
+                // Fallback: If company field wasn't in the array, add it manually
+                if (!isset($address[$load_address . '_company'])) {
+                    if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
+                        apw_woo_log('EDIT ADDRESS TEMPLATE: Company field missing, adding fallback field');
+                    }
+                    
+                    $company_field = array(
+                        'label'        => __('Company name', 'woocommerce'),
+                        'placeholder'  => __('Company name', 'woocommerce'),
+                        'required'     => true,
+                        'class'        => array('form-row-wide', 'required', 'validate-required'),
+                        'autocomplete' => 'organization',
+                        'type'         => 'text'
+                    );
+                    
+                    woocommerce_form_field($load_address . '_company', $company_field, '');
                 }
                 ?>
             </div>
