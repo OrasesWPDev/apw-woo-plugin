@@ -92,6 +92,25 @@
     }
 }
 
+/* WooCommerce Account Page Specific Styles - Higher Specificity */
+.woocommerce-account .woocommerce-MyAccount-content .apw-registration-field input[type="text"],
+.woocommerce-account .woocommerce-MyAccount-content .apw-registration-field input[type="tel"] {
+    width: 100% !important;
+    padding: 0.75rem !important;
+    border: 1px solid #ddd !important;
+    border-radius: 4px !important;
+    font-size: 1rem !important;
+    transition: border-color 0.3s ease !important;
+    background-color: #fff !important;
+}
+
+.woocommerce-account .woocommerce-MyAccount-content .apw-registration-field input[type="text"]:focus,
+.woocommerce-account .woocommerce-MyAccount-content .apw-registration-field input[type="tel"]:focus {
+    outline: none !important;
+    border-color: #0073aa !important;
+    box-shadow: 0 0 0 1px #0073aa !important;
+}
+
 /* Integration with Flatsome theme forms */
 .flatsome-theme .apw-registration-field input[type="text"],
 .flatsome-theme .apw-registration-field input[type="tel"] {
@@ -102,6 +121,14 @@
 .flatsome-theme .apw-registration-field input[type="text"]:focus,
 .flatsome-theme .apw-registration-field input[type="tel"]:focus {
     border-color: var(--primary-color, #0073aa);
+}
+
+/* Override WooCommerce Account Page styles specifically for registration fields */
+.woocommerce-account .woocommerce-MyAccount-content .apw-registration-field input[type="tel"] {
+    /* Ensure tel inputs match text inputs exactly */
+    color: inherit !important;
+    border-width: 1px !important;
+    border-style: solid !important;
 }
 
 /* Admin user profile styling */
