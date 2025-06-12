@@ -110,6 +110,9 @@ class APW_Woo_GitHub_Updater {
         add_filter('plugins_api', [$this, 'plugin_api_call'], 10, 3);
         add_filter('upgrader_pre_download', [$this, 'download_package'], 10, 3);
         
+        // Hook into package extraction to fix directory structure
+        add_filter('upgrader_unpack_package', [$this, 'fix_extracted_package'], 10, 5);
+        
         // Add admin notices when debug mode is enabled
         if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE) {
             add_action('admin_notices', [$this, 'display_update_notice']);
@@ -516,6 +519,81 @@ class APW_Woo_GitHub_Updater {
         apw_woo_log('=== Download handler complete ===');
         
         return $download_file;
+    }
+    
+    /**
+     * Fix extracted package directory structure
+     *
+     * GitHub zipballs extract to directories like "OrasesWPDev-apw-woo-plugin-abc123/"
+     * but WordPress needs "apw-woo-plugin/" to match the plugin directory.
+     * This hook intercepts after WordPress extracts the package and fixes the structure.
+     *
+     * @param string|WP_Error $result      Unpack result
+     * @param string          $local_source Local source location
+     * @param string          $remote_source Remote source location
+     * @param object          $upgrader     WP_Upgrader instance
+     * @param array           $hook_extra   Extra arguments
+     * @return string|WP_Error Modified result
+     */
+    public function fix_extracted_package($result, $local_source, $remote_source, $upgrader, $hook_extra) {
+        // Only process our plugin updates
+        if (is_wp_error($result) || empty($hook_extra['plugin'])) {
+            return $result;
+        }
+        
+        $plugin_slug = plugin_basename($this->plugin_file);
+        if ($hook_extra['plugin'] !== $plugin_slug) {
+            return $result;
+        }
+        
+        apw_woo_log('=== Starting package extraction fix ===');
+        apw_woo_log('Original result: ' . $result);
+        apw_woo_log('Local source: ' . $local_source);
+        apw_woo_log('Remote source: ' . $remote_source);
+        
+        // Check if the extracted directory has the wrong name
+        $extracted_dirs = glob($local_source . '/*', GLOB_ONLYDIR);
+        if (empty($extracted_dirs)) {
+            apw_woo_log('No directories found in extracted package', 'error');
+            return $result;
+        }
+        
+        $extracted_dir = $extracted_dirs[0];
+        $extracted_dir_name = basename($extracted_dir);
+        $expected_dir_name = dirname($plugin_slug);
+        
+        apw_woo_log('Extracted directory: ' . $extracted_dir_name);
+        apw_woo_log('Expected directory: ' . $expected_dir_name);
+        
+        // If directory name is already correct, no fix needed
+        if ($extracted_dir_name === $expected_dir_name) {
+            apw_woo_log('Directory structure already correct');
+            return $result;
+        }
+        
+        // Check if this looks like a GitHub commit hash directory
+        if (strpos($extracted_dir_name, $this->github_repo['owner'] . '-' . $this->github_repo['repo']) === 0) {
+            apw_woo_log('Detected GitHub commit hash directory, fixing structure...');
+            
+            $correct_dir = $local_source . '/' . $expected_dir_name;
+            
+            // Rename the directory to the correct name
+            if (rename($extracted_dir, $correct_dir)) {
+                apw_woo_log('Successfully renamed directory: ' . $extracted_dir_name . ' -> ' . $expected_dir_name);
+                
+                // Update the result to point to the correct directory
+                $new_result = $correct_dir;
+                apw_woo_log('Updated result path: ' . $new_result);
+                
+                return $new_result;
+            } else {
+                apw_woo_log('Failed to rename directory', 'error');
+                return new WP_Error('rename_failed', 'Failed to rename extracted directory');
+            }
+        }
+        
+        apw_woo_log('No directory structure fix needed');
+        return $result;
     }
     
     /**
