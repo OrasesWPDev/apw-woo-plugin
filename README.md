@@ -2,7 +2,7 @@
 
 A comprehensive WordPress plugin that extends WooCommerce functionality with advanced e-commerce features. Built specifically for the **Flatsome theme**, this plugin provides enhanced product displays, custom checkout processes, dynamic pricing integration, payment gateway enhancements, and sophisticated cart management systems.
 
-**Current Version**: 1.20.2
+**Current Version**: 1.20.4
 
 ## 🚀 Features
 
@@ -298,6 +298,21 @@ When debug mode is enabled:
 3. Test with different cart states
 4. Check WooCommerce cart fragments functionality
 
+#### Auto-Updater Issues
+1. **Update shows but doesn't apply**: 
+   - Check file permissions on plugin directory
+   - Enable debug mode to see extraction logs
+   - Look for GitHub commit hash directories in plugins folder
+   - Verify GitHub token is configured correctly for private repos
+2. **Update check not working**:
+   - Add `?apw_force_update_check=1` to any admin URL
+   - Check GitHub repository access and releases
+   - Verify internet connectivity and GitHub API access
+3. **Debug the updater**:
+   - Add `?apw_debug_updater=1` to admin URL for detailed status
+   - Enable `APW_WOO_DEBUG_MODE` for comprehensive logging
+   - Check `logs/debug-{date}.log` for extraction process details
+
 ### Debug Mode
 Enable debug mode for detailed troubleshooting:
 ```php
@@ -328,7 +343,19 @@ Log files will be created in the `logs/` directory.
 
 ## 📝 Changelog
 
-### Version 1.20.2 (Latest)
+### Version 1.20.4 (Latest)
+- **🔧 CRITICAL AUTO-UPDATER FIX**: Fixed GitHub zipball directory extraction issue preventing proper plugin updates
+- **✅ DIRECTORY STRUCTURE**: Replaced zip preprocessing with post-extraction directory fix using 'upgrader_unpack_package' hook
+- **🚀 PACKAGE HANDLING**: Auto-updater now properly renames GitHub commit hash directories to correct plugin directory names
+- **🛠️ UPDATE RELIABILITY**: Resolved issue where updates downloaded to wrong directories, causing "updated but not updating" behavior
+- **📊 IMPROVED LOGGING**: Enhanced debug logging for extraction process to aid troubleshooting
+- **🔒 PRODUCTION READY**: Maintains all previous auto-updater improvements with proper file handling
+
+### Version 1.20.3
+- **🔧 ZIP PROCESSING**: Attempted zipball preprocessing fix (superseded by v1.20.4)
+- **📊 VERSION SYNC**: Updated version numbers for testing
+
+### Version 1.20.2
 - **🐛 CRITICAL AUTO-UPDATER FIXES**: Completely rebuilt auto-updater system to resolve JavaScript errors
 - **✅ FIXED PLUGIN SLUG**: Corrected inconsistent plugin slug handling causing update failures
 - **📋 ENHANCED METADATA**: Added missing WordPress 'Tested up to' header and improved field validation
