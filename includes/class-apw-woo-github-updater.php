@@ -586,16 +586,24 @@ class APW_Woo_GitHub_Updater {
                 $this->remove_directory($correct_dir);
             }
             
-            // Rename the directory to the correct name
-            if (rename($extracted_dir, $correct_dir)) {
-                apw_woo_log('Successfully renamed directory: ' . $extracted_dir_name . ' -> ' . $expected_dir_name);
+            // Instead of renaming, move contents and clean up
+            if ($this->move_directory_contents($extracted_dir, $correct_dir)) {
+                apw_woo_log('Successfully moved contents from: ' . $extracted_dir_name . ' -> ' . $expected_dir_name);
+                
+                // Remove the original GitHub commit hash directory
+                if ($this->remove_directory($extracted_dir)) {
+                    apw_woo_log('Successfully removed original GitHub commit hash directory: ' . $extracted_dir_name);
+                } else {
+                    apw_woo_log('WARNING: Failed to remove original directory: ' . $extracted_dir_name, 'warning');
+                }
                 
                 // Verify the main plugin file exists in the correct location
                 $main_plugin_file = $correct_dir . '/' . basename($this->plugin_file);
                 if (file_exists($main_plugin_file)) {
                     apw_woo_log('Verified main plugin file exists: ' . $main_plugin_file);
                 } else {
-                    apw_woo_log('WARNING: Main plugin file not found after rename: ' . $main_plugin_file, 'warning');
+                    apw_woo_log('ERROR: Main plugin file not found after move: ' . $main_plugin_file, 'error');
+                    return new WP_Error('plugin_file_missing', 'Main plugin file not found after directory restructure');
                 }
                 
                 // Update the result to point to the correct directory
@@ -604,13 +612,66 @@ class APW_Woo_GitHub_Updater {
                 
                 return $new_result;
             } else {
-                apw_woo_log('Failed to rename directory from ' . $extracted_dir . ' to ' . $correct_dir, 'error');
-                return new WP_Error('rename_failed', 'Failed to rename extracted directory');
+                apw_woo_log('Failed to move directory contents from ' . $extracted_dir . ' to ' . $correct_dir, 'error');
+                return new WP_Error('move_failed', 'Failed to move extracted directory contents');
             }
         }
         
         apw_woo_log('No directory structure fix needed');
         return $result;
+    }
+    
+    /**
+     * Move directory contents from source to destination
+     *
+     * @param string $source_dir Source directory path
+     * @param string $dest_dir Destination directory path
+     * @return bool Success status
+     */
+    private function move_directory_contents($source_dir, $dest_dir) {
+        if (!file_exists($source_dir) || !is_dir($source_dir)) {
+            apw_woo_log('Source directory does not exist: ' . $source_dir, 'error');
+            return false;
+        }
+        
+        // Create destination directory if it doesn't exist
+        if (!file_exists($dest_dir)) {
+            if (!wp_mkdir_p($dest_dir)) {
+                apw_woo_log('Failed to create destination directory: ' . $dest_dir, 'error');
+                return false;
+            }
+        }
+        
+        $items = scandir($source_dir);
+        if ($items === false) {
+            apw_woo_log('Failed to read source directory: ' . $source_dir, 'error');
+            return false;
+        }
+        
+        foreach ($items as $item) {
+            if ($item == '.' || $item == '..') {
+                continue;
+            }
+            
+            $source_item = $source_dir . DIRECTORY_SEPARATOR . $item;
+            $dest_item = $dest_dir . DIRECTORY_SEPARATOR . $item;
+            
+            if (is_dir($source_item)) {
+                // Recursively move subdirectory
+                if (!$this->move_directory_contents($source_item, $dest_item)) {
+                    apw_woo_log('Failed to move subdirectory: ' . $source_item, 'error');
+                    return false;
+                }
+            } else {
+                // Move file
+                if (!rename($source_item, $dest_item)) {
+                    apw_woo_log('Failed to move file: ' . $source_item . ' to ' . $dest_item, 'error');
+                    return false;
+                }
+            }
+        }
+        
+        return true;
     }
     
     /**
