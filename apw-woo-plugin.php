@@ -13,6 +13,7 @@
  * Description:       Custom WooCommerce enhancements for displaying products across shop, category, and product pages.
  * Version:           1.20.1
  * Requires at least: 5.3
+ * Tested up to:      6.4
  * Requires PHP:      7.2
  * Author:            Orases
  * Author URI:        https://orases.com
