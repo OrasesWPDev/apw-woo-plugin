@@ -564,6 +564,8 @@ class APW_Woo_GitHub_Updater {
         
         apw_woo_log('Extracted directory: ' . $extracted_dir_name);
         apw_woo_log('Expected directory: ' . $expected_dir_name);
+        apw_woo_log('Plugin slug: ' . $plugin_slug);
+        apw_woo_log('Hook extra plugin: ' . $hook_extra['plugin']);
         
         // If directory name is already correct, no fix needed
         if ($extracted_dir_name === $expected_dir_name) {
@@ -577,9 +579,24 @@ class APW_Woo_GitHub_Updater {
             
             $correct_dir = $local_source . '/' . $expected_dir_name;
             
+            // Check if target directory already exists (shouldn't happen but let's be safe)
+            if (file_exists($correct_dir)) {
+                apw_woo_log('Target directory already exists, removing it first', 'warning');
+                // Remove existing directory if it exists
+                $this->remove_directory($correct_dir);
+            }
+            
             // Rename the directory to the correct name
             if (rename($extracted_dir, $correct_dir)) {
                 apw_woo_log('Successfully renamed directory: ' . $extracted_dir_name . ' -> ' . $expected_dir_name);
+                
+                // Verify the main plugin file exists in the correct location
+                $main_plugin_file = $correct_dir . '/' . basename($this->plugin_file);
+                if (file_exists($main_plugin_file)) {
+                    apw_woo_log('Verified main plugin file exists: ' . $main_plugin_file);
+                } else {
+                    apw_woo_log('WARNING: Main plugin file not found after rename: ' . $main_plugin_file, 'warning');
+                }
                 
                 // Update the result to point to the correct directory
                 $new_result = $correct_dir;
@@ -587,13 +604,41 @@ class APW_Woo_GitHub_Updater {
                 
                 return $new_result;
             } else {
-                apw_woo_log('Failed to rename directory', 'error');
+                apw_woo_log('Failed to rename directory from ' . $extracted_dir . ' to ' . $correct_dir, 'error');
                 return new WP_Error('rename_failed', 'Failed to rename extracted directory');
             }
         }
         
         apw_woo_log('No directory structure fix needed');
         return $result;
+    }
+    
+    /**
+     * Recursively remove directory and its contents
+     *
+     * @param string $dir Directory path to remove
+     * @return bool Success status
+     */
+    private function remove_directory($dir) {
+        if (!file_exists($dir)) {
+            return true;
+        }
+        
+        if (!is_dir($dir)) {
+            return unlink($dir);
+        }
+        
+        foreach (scandir($dir) as $item) {
+            if ($item == '.' || $item == '..') {
+                continue;
+            }
+            
+            if (!$this->remove_directory($dir . DIRECTORY_SEPARATOR . $item)) {
+                return false;
+            }
+        }
+        
+        return rmdir($dir);
     }
     
     /**
