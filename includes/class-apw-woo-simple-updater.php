@@ -91,10 +91,8 @@ class APW_Woo_Simple_Updater {
         // Load the Plugin Update Checker library
         require_once APW_WOO_PLUGIN_DIR . 'includes/vendor/plugin-update-checker/plugin-update-checker.php';
         
-        use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
-        
         // Create update checker instance
-        $this->update_checker = PucFactory::buildUpdateChecker(
+        $this->update_checker = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
             $this->github_repo_url,
             $this->plugin_file,
             'apw-woo-plugin'
