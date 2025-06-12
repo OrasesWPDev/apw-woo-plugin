@@ -389,13 +389,26 @@ class APW_Woo_GitHub_Updater {
             return $reply;
         }
         
-        // For private repos, we need to add authentication to the download
+        apw_woo_log('Custom download handler for: ' . $package);
+        
+        // For private repos, we need to add authentication headers
         $github_token = defined('APW_GITHUB_TOKEN') ? APW_GITHUB_TOKEN : null;
         if ($github_token) {
-            // Add token to download URL
-            $package_with_auth = add_query_arg('access_token', $github_token, $package);
-            $download_file = download_url($package_with_auth);
+            apw_woo_log('Using GitHub token for authenticated download');
+            
+            // Download with authentication headers
+            $args = [
+                'timeout' => 300,
+                'headers' => [
+                    'Authorization' => 'token ' . $github_token,
+                    'Accept' => 'application/vnd.github.v3+json',
+                    'User-Agent' => 'APW-WooCommerce-Plugin-Updater'
+                ]
+            ];
+            
+            $download_file = download_url($package, 300, false, $args);
         } else {
+            apw_woo_log('No GitHub token available, attempting public download');
             $download_file = download_url($package);
         }
         
@@ -404,6 +417,7 @@ class APW_Woo_GitHub_Updater {
             return $download_file;
         }
         
+        apw_woo_log('Download successful: ' . $download_file);
         return $download_file;
     }
     
