@@ -2,7 +2,7 @@
 
 A comprehensive WordPress plugin that extends WooCommerce functionality with advanced e-commerce features. Built specifically for the **Flatsome theme**, this plugin provides enhanced product displays, custom checkout processes, dynamic pricing integration, payment gateway enhancements, and sophisticated cart management systems.
 
-**Current Version**: 1.19.3
+**Current Version**: 1.19.5
 
 ## 🚀 Features
 
@@ -319,7 +319,17 @@ Log files will be created in the `logs/` directory.
 
 ## 📝 Changelog
 
-### Version 1.19.3 (Latest)
+### Version 1.19.5 (Latest)
+- **TEST**: Auto-updater testing version
+- **VERIFIED**: Plugin deployment and activation working correctly
+- **TESTED**: GitHub auto-updater system functionality
+
+### Version 1.19.4
+- **HOTFIX**: Enhanced deprecated updater file filtering to prevent syntax errors
+- **IMPROVED**: More robust autoload safety checks for old updater files
+- **ENHANCED**: Better error handling for server deployments with legacy files
+
+### Version 1.19.3
 - **FIXED**: Removed all site-specific environment detection that was causing deployment issues
 - **IMPROVED**: Made GitHub auto-updater completely environment agnostic
 - **ENHANCED**: Universal deployment compatibility for any WordPress site
