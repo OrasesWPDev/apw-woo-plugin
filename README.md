@@ -2,7 +2,7 @@
 
 A comprehensive WordPress plugin that extends WooCommerce functionality with advanced e-commerce features. Built specifically for the **Flatsome theme**, this plugin provides enhanced product displays, custom checkout processes, dynamic pricing integration, payment gateway enhancements, and sophisticated cart management systems.
 
-**Current Version**: 1.19.7
+**Current Version**: 1.19.8
 
 ## 🚀 Features
 
@@ -77,13 +77,22 @@ This enables detailed logging to `logs/debug-{date}.log` files.
 The plugin includes a standalone GitHub-based auto-updater with no external dependencies:
 
 #### Update Settings
-- **Check Frequency**: Hourly automatic checks
+- **Check Frequency**: Every minute for testing (configurable)
 - **Repository**: [https://github.com/OrasesWPDev/apw-woo-plugin](https://github.com/OrasesWPDev/apw-woo-plugin)
 - **Force Update**: Add `?apw_force_update_check=1` to any admin URL (admin users only)
+
+#### Private Repository Support
+For private repositories, add your GitHub token to `wp-config.php`:
+```php
+define('APW_GITHUB_TOKEN', 'your_github_personal_access_token');
+```
+**Token Permissions Required**: `repo` (for private repository access)
 
 #### Features
 - Direct GitHub API integration (no vendor dependencies)
 - Automatic update detection from GitHub releases
+- **Private repository support** with GitHub token authentication
+- **Fallback system** for when `/releases/latest` endpoint fails
 - Universal deployment compatibility for any WordPress site
 - Admin notices for update status (when debug mode enabled)
 - Secure admin-only update checking
@@ -319,7 +328,13 @@ Log files will be created in the `logs/` directory.
 
 ## 📝 Changelog
 
-### Version 1.19.7 (Latest)
+### Version 1.19.8 (Latest)
+- **🔒 PRIVATE REPO SUPPORT**: Added GitHub token authentication for private repository auto-updates
+- **🔄 FALLBACK SYSTEM**: Implements /releases endpoint fallback when /releases/latest fails
+- **📝 ENHANCED LOGGING**: Better error handling and logging for private repository access
+- **🛠️ IMPROVED RELIABILITY**: More robust auto-updater for private GitHub repositories
+
+### Version 1.19.7
 - **🧪 AUTO-UPDATER TEST**: Testing version to verify 1-minute update detection
 - **⚡ RAPID TESTING**: Created specifically to test fast update cycles
 - **🔍 VERIFICATION**: Confirms GitHub auto-updater is working correctly

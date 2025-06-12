@@ -179,14 +179,22 @@ class APW_Woo_GitHub_Updater {
             return $cached;
         }
         
-        // Get latest release from GitHub API
+        // Try /releases/latest first, then fallback to /releases for private repos
         $url = $this->github_repo['api_url'] . '/releases/latest';
+        $headers = [
+            'Accept' => 'application/vnd.github.v3+json',
+            'User-Agent' => 'APW-WooCommerce-Plugin-Updater'
+        ];
+        
+        // Add GitHub token if available (for private repos)
+        $github_token = defined('APW_GITHUB_TOKEN') ? APW_GITHUB_TOKEN : null;
+        if ($github_token) {
+            $headers['Authorization'] = 'token ' . $github_token;
+        }
+        
         $response = wp_remote_get($url, [
             'timeout' => 10,
-            'headers' => [
-                'Accept' => 'application/vnd.github.v3+json',
-                'User-Agent' => 'APW-WooCommerce-Plugin-Updater'
-            ]
+            'headers' => $headers
         ]);
         
         if (is_wp_error($response)) {
@@ -194,8 +202,15 @@ class APW_Woo_GitHub_Updater {
             return false;
         }
         
+        $response_code = wp_remote_retrieve_response_code($response);
         $body = wp_remote_retrieve_body($response);
         $release_data = json_decode($body, true);
+        
+        // If latest endpoint fails (404 for private repos without auth), try releases endpoint
+        if ($response_code === 404 || (isset($release_data['message']) && $release_data['message'] === 'Not Found')) {
+            apw_woo_log('Latest release endpoint failed, trying releases list', 'warning');
+            return $this->get_remote_version_from_releases();
+        }
         
         if (!$release_data || isset($release_data['message'])) {
             apw_woo_log('GitHub API response error: ' . ($release_data['message'] ?? 'Unknown error'), 'error');
@@ -211,6 +226,70 @@ class APW_Woo_GitHub_Updater {
         
         // Cache for 1 minute
         set_transient($this->cache_key, $version_data, MINUTE_IN_SECONDS);
+        
+        return $version_data;
+    }
+    
+    /**
+     * Get remote version from releases list (fallback for private repos)
+     *
+     * @return array|false Remote version info or false on failure
+     */
+    private function get_remote_version_from_releases() {
+        $url = $this->github_repo['api_url'] . '/releases';
+        $headers = [
+            'Accept' => 'application/vnd.github.v3+json',
+            'User-Agent' => 'APW-WooCommerce-Plugin-Updater'
+        ];
+        
+        // Add GitHub token if available
+        $github_token = defined('APW_GITHUB_TOKEN') ? APW_GITHUB_TOKEN : null;
+        if ($github_token) {
+            $headers['Authorization'] = 'token ' . $github_token;
+        }
+        
+        $response = wp_remote_get($url, [
+            'timeout' => 10,
+            'headers' => $headers
+        ]);
+        
+        if (is_wp_error($response)) {
+            apw_woo_log('GitHub releases API error: ' . $response->get_error_message(), 'error');
+            return false;
+        }
+        
+        $body = wp_remote_retrieve_body($response);
+        $releases = json_decode($body, true);
+        
+        if (!$releases || !is_array($releases) || empty($releases)) {
+            apw_woo_log('No releases found or invalid response', 'error');
+            return false;
+        }
+        
+        // Get the latest non-draft, non-prerelease
+        $latest_release = null;
+        foreach ($releases as $release) {
+            if (!$release['draft'] && !$release['prerelease']) {
+                $latest_release = $release;
+                break;
+            }
+        }
+        
+        if (!$latest_release) {
+            apw_woo_log('No published releases found', 'warning');
+            return false;
+        }
+        
+        $version_data = [
+            'version' => ltrim($latest_release['tag_name'], 'v'),
+            'download_url' => $latest_release['zipball_url'],
+            'details_url' => $latest_release['html_url'],
+            'release_notes' => $latest_release['body'] ?? ''
+        ];
+        
+        // Cache for 1 minute
+        set_transient($this->cache_key, $version_data, MINUTE_IN_SECONDS);
+        apw_woo_log('Successfully retrieved version from releases list: ' . $version_data['version']);
         
         return $version_data;
     }
@@ -270,7 +349,15 @@ class APW_Woo_GitHub_Updater {
             return $reply;
         }
         
-        $download_file = download_url($package);
+        // For private repos, we need to add authentication to the download
+        $github_token = defined('APW_GITHUB_TOKEN') ? APW_GITHUB_TOKEN : null;
+        if ($github_token) {
+            // Add token to download URL
+            $package_with_auth = add_query_arg('access_token', $github_token, $package);
+            $download_file = download_url($package_with_auth);
+        } else {
+            $download_file = download_url($package);
+        }
         
         if (is_wp_error($download_file)) {
             apw_woo_log('Download error: ' . $download_file->get_error_message(), 'error');
