@@ -2,7 +2,7 @@
 
 A comprehensive WordPress plugin that extends WooCommerce functionality with advanced e-commerce features. Built specifically for the **Flatsome theme**, this plugin provides enhanced product displays, custom checkout processes, dynamic pricing integration, payment gateway enhancements, and sophisticated cart management systems.
 
-**Current Version**: 1.19.0
+**Current Version**: 1.19.1
 
 ## 🚀 Features
 
@@ -25,8 +25,9 @@ A comprehensive WordPress plugin that extends WooCommerce functionality with adv
 - **Account Customizations** - Enhanced My Account page with custom styling and functionality
 
 ### Developer & Maintenance Features
-- **GitHub Auto-Updater** - Automatic plugin updates from GitHub releases with environment detection (staging/production)
-- **Environment-Aware Updates** - Different update behaviors for staging and production environments
+- **GitHub Auto-Updater** - Standalone GitHub API auto-updater with environment detection (staging/production)
+- **Environment-Aware Updates** - Different update behaviors for staging and production environments  
+- **Vendor-Free Architecture** - No external dependencies for cleaner plugin distribution
 - **Debug Logging** - Comprehensive logging system for development and troubleshooting
 
 ## 📋 Requirements
@@ -73,7 +74,7 @@ define('APW_WOO_DEBUG_MODE', true);
 This enables detailed logging to `logs/debug-{date}.log` files.
 
 ### Auto-Updater Configuration
-The plugin includes a GitHub-based auto-updater that automatically detects your environment:
+The plugin includes a standalone GitHub-based auto-updater with no external dependencies:
 
 #### Environment Detection
 - **Staging**: `https://allpointstage.wpenginepowered.com/`
@@ -85,10 +86,12 @@ The plugin includes a GitHub-based auto-updater that automatically detects your 
 - **Force Update**: Add `?apw_force_update_check=1` to any admin URL (admin users only)
 
 #### Features
+- Direct GitHub API integration (no vendor dependencies)
 - Automatic update detection from GitHub releases
 - Environment-aware logging (enhanced for staging)
 - Admin notices for update status (staging only when debug mode enabled)
 - Secure admin-only update checking
+- Clean plugin distribution without vendor directories
 
 ## 🎯 Key Features Guide
 

@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The **APW WooCommerce Plugin** is a comprehensive WordPress plugin that extends WooCommerce functionality. This file contains development-specific information for maintaining and extending the codebase.
 
-**Current Version**: 1.19.0
+**Current Version**: 1.19.1
 
 ## Core Architecture
 
@@ -41,7 +41,7 @@ apw-woo-plugin/
 ### Key Classes
 
 - `APW_Woo_Plugin` - Main plugin orchestrator and initialization
-- `APW_Woo_Simple_Updater` - GitHub auto-updater with environment detection (staging/production)
+- `APW_Woo_GitHub_Updater` - Standalone GitHub API auto-updater with environment detection (staging/production)
 - `APW_Woo_Template_Loader` - Handles WooCommerce template overrides and custom template loading
 - `APW_Woo_Assets` - Manages CSS/JS asset registration and enqueuing
 - `APW_Woo_Logger` - Centralized logging system (only active when `APW_WOO_DEBUG_MODE` is true)
@@ -311,7 +311,7 @@ tail -f logs/debug-$(date +%Y-%m-%d).log
 ## Auto-Updater System
 
 ### Overview
-The plugin includes a GitHub-based auto-updater system (`APW_Woo_Simple_Updater`) that provides automatic updates from the GitHub repository.
+The plugin includes a standalone GitHub-based auto-updater system (`APW_Woo_GitHub_Updater`) with direct GitHub API integration and no external dependencies.
 
 ### Environment Detection
 The updater automatically detects the environment based on site URL:
@@ -322,7 +322,7 @@ The updater automatically detects the environment based on site URL:
 - **Repository**: `https://github.com/OrasesWPDev/apw-woo-plugin/`
 - **Check Period**: 1 minute for both environments
 - **Admin Only**: Updates only check in WordPress admin context
-- **Release Assets**: Enabled for proper GitHub release handling
+- **No Dependencies**: Direct GitHub API integration without vendor libraries
 
 ### Developer Usage
 ```php
@@ -348,9 +348,21 @@ Add `?apw_force_update_check=1` to any admin URL (requires admin privileges).
 - Admin notices showing update status
 - More detailed debug information
 
+### Architecture Benefits
+- **Vendor-Free**: No external library dependencies for cleaner distribution
+- **Direct API**: Uses WordPress HTTP API for GitHub communication
+- **Lightweight**: Minimal code footprint compared to complex updater libraries
+
 ## Recent Development Changes
 
-### Version 1.19.0 (Latest)
+### Version 1.19.1 (Latest)
+- **REFACTORED**: Standalone GitHub auto-updater (`APW_Woo_GitHub_Updater`)
+- **REMOVED**: All vendor dependencies and directories
+- **NEW**: Direct GitHub API integration without external libraries
+- **Enhanced**: Cleaner plugin distribution with no vendor folders
+- **Improved**: Lightweight updater architecture with WordPress HTTP API
+
+### Version 1.19.0
 - **NEW**: GitHub Auto-Updater system (`APW_Woo_Simple_Updater`)
 - **NEW**: Environment detection for staging and production deployments
 - **Added**: Plugin Update Checker v5.6 library integration
