@@ -169,11 +169,20 @@ class APW_Woo_GitHub_Updater {
             apw_woo_log("Update available: {$this->plugin_data['Version']} → {$remote_version['version']}");
             
             $update_info = (object) [
+                'id' => 'w.org/plugins/' . dirname($plugin_slug),
                 'slug' => dirname($plugin_slug),
                 'plugin' => $plugin_slug,
                 'new_version' => $remote_version['version'],
-                'url' => $this->plugin_data['PluginURI'], // Use plugin homepage, not API URL
-                'package' => $remote_version['download_url']
+                'url' => $this->plugin_data['PluginURI'] ?? 'https://github.com/OrasesWPDev/apw-woo-plugin',
+                'package' => $remote_version['download_url'],
+                'icons' => [
+                    'default' => $this->plugin_data['PluginURI'] . '/assets/icon-256x256.png'
+                ],
+                'banners' => [],
+                'banners_rtl' => [],
+                'tested' => $this->plugin_data['TestedUpTo'] ?? '6.4',
+                'requires_php' => $this->plugin_data['RequiresPHP'] ?? '7.2',
+                'compatibility' => []
             ];
             
             apw_woo_log('Setting update info with package URL: ' . $remote_version['download_url']);
