@@ -172,7 +172,7 @@ class APW_Woo_GitHub_Updater {
                 'slug' => dirname($plugin_slug),
                 'plugin' => $plugin_slug,
                 'new_version' => $remote_version['version'],
-                'url' => $this->github_repo['api_url'],
+                'url' => $this->plugin_data['PluginURI'], // Use plugin homepage, not API URL
                 'package' => $remote_version['download_url']
             ];
             
