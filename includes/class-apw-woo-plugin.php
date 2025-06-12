@@ -22,6 +22,13 @@ class APW_Woo_Plugin {
     private static $instance = null;
 
     /**
+     * Auto-updater instance
+     *
+     * @var APW_Woo_Simple_Updater
+     */
+    private $updater;
+
+    /**
      * Constructor
      */
     private function __construct() {
@@ -48,10 +55,49 @@ class APW_Woo_Plugin {
         // Initialize template loader
         $template_loader = APW_Woo_Template_Loader::get_instance();
 
+        // Initialize auto-updater in admin context only
+        if (is_admin()) {
+            $this->init_updater();
+        }
+
         // Only add test notice when debug mode is enabled
         if (APW_WOO_DEBUG_MODE) {
             add_action('admin_notices', [$this, 'display_test_notice']);
         }
+    }
+
+    /**
+     * Initialize the auto-updater
+     */
+    private function init_updater() {
+        // Double-check admin context for security
+        if (!is_admin()) {
+            return;
+        }
+
+        // Initialize updater with GitHub repository
+        $this->updater = new APW_Woo_Simple_Updater(
+            APW_WOO_PLUGIN_FILE,
+            'https://github.com/OrasesWPDev/apw-woo-plugin/'
+        );
+
+        // Handle force update check if requested
+        if (isset($_GET['apw_force_update_check']) && current_user_can('manage_options')) {
+            $this->updater->force_update_check();
+            wp_redirect(remove_query_arg('apw_force_update_check'));
+            exit;
+        }
+
+        apw_woo_log('Auto-updater initialized in main plugin class');
+    }
+
+    /**
+     * Get the updater instance (for testing)
+     *
+     * @return APW_Woo_Simple_Updater|null
+     */
+    public function get_updater() {
+        return $this->updater;
     }
 
     /**

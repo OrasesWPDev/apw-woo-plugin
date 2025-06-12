@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The **APW WooCommerce Plugin** is a comprehensive WordPress plugin that extends WooCommerce functionality. This file contains development-specific information for maintaining and extending the codebase.
 
-**Current Version**: 1.18.0
+**Current Version**: 1.19.0
 
 ## Core Architecture
 
@@ -18,7 +18,9 @@ apw-woo-plugin/
 ├── includes/                    # Core functionality
 │   ├── class-*.php             # Main classes (OOP architecture)
 │   ├── apw-woo-*-functions.php # Feature-specific functions
-│   └── template/               # Template system classes
+│   ├── template/               # Template system classes
+│   └── vendor/                 # Third-party libraries
+│       └── plugin-update-checker/ # GitHub auto-updater library
 ├── templates/                   # WooCommerce template overrides
 │   ├── woocommerce/            # Mirrors WooCommerce structure
 │   └── partials/               # Reusable template components
@@ -39,6 +41,7 @@ apw-woo-plugin/
 ### Key Classes
 
 - `APW_Woo_Plugin` - Main plugin orchestrator and initialization
+- `APW_Woo_Simple_Updater` - GitHub auto-updater with environment detection (staging/production)
 - `APW_Woo_Template_Loader` - Handles WooCommerce template overrides and custom template loading
 - `APW_Woo_Assets` - Manages CSS/JS asset registration and enqueuing
 - `APW_Woo_Logger` - Centralized logging system (only active when `APW_WOO_DEBUG_MODE` is true)
@@ -305,9 +308,56 @@ tail -f logs/debug-$(date +%Y-%m-%d).log
 # Test with minimum required versions of dependencies
 ```
 
+## Auto-Updater System
+
+### Overview
+The plugin includes a GitHub-based auto-updater system (`APW_Woo_Simple_Updater`) that provides automatic updates from the GitHub repository.
+
+### Environment Detection
+The updater automatically detects the environment based on site URL:
+- **Staging**: `https://allpointstage.wpenginepowered.com/`
+- **Production**: `https://allpointwireless.com`
+
+### Configuration
+- **Repository**: `https://github.com/OrasesWPDev/apw-woo-plugin/`
+- **Check Period**: 1 minute for both environments
+- **Admin Only**: Updates only check in WordPress admin context
+- **Release Assets**: Enabled for proper GitHub release handling
+
+### Developer Usage
+```php
+// Access updater instance
+$plugin = APW_Woo_Plugin::get_instance();
+$updater = $plugin->get_updater();
+
+// Get updater status
+$status = $updater->get_update_checker_status();
+
+// Force update check
+$update = $updater->force_update_check();
+
+// Check environment
+$environment = $updater->get_environment();
+```
+
+### Force Update Check
+Add `?apw_force_update_check=1` to any admin URL (requires admin privileges).
+
+### Staging Features
+- Enhanced logging when `APW_WOO_DEBUG_MODE` is enabled
+- Admin notices showing update status
+- More detailed debug information
+
 ## Recent Development Changes
 
-### Version 1.18.0 (Latest)
+### Version 1.19.0 (Latest)
+- **NEW**: GitHub Auto-Updater system (`APW_Woo_Simple_Updater`)
+- **NEW**: Environment detection for staging and production deployments
+- **Added**: Plugin Update Checker v5.6 library integration
+- **Added**: Force update check functionality for admin users
+- **Enhanced**: Main plugin class with updater integration
+
+### Version 1.18.0
 - **NEW**: Custom Registration Fields system (`APW_Woo_Registration_Fields`)
 - **NEW**: Referral Export functionality (`APW_Woo_Referral_Export`)
 - **Added**: Hook-based registration field implementation
