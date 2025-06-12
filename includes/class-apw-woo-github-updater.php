@@ -395,8 +395,9 @@ class APW_Woo_GitHub_Updater {
      * @return bool|string
      */
     public function download_package($reply, $package, $upgrader) {
-        // Only handle our plugin updates
-        if (!strpos($package, 'github.com/' . $this->github_repo['owner'] . '/' . $this->github_repo['repo'])) {
+        // Only handle our plugin updates (check for both github.com and api.github.com URLs)
+        $repo_identifier = $this->github_repo['owner'] . '/' . $this->github_repo['repo'];
+        if (!strpos($package, $repo_identifier)) {
             apw_woo_log('Skipping download - not our plugin: ' . $package);
             return $reply;
         }
