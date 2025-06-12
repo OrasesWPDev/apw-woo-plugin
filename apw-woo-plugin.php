@@ -11,7 +11,7 @@
  * Plugin Name:       APW WooCommerce Plugin
  * Plugin URI:        https://github.com/OrasesWPDev/apw-woo-plugin
  * Description:       Custom WooCommerce enhancements for displaying products across shop, category, and product pages.
- * Version:           1.19.12
+ * Version:           1.19.13
  * Requires at least: 5.3
  * Requires PHP:      7.2
  * Author:            Orases
@@ -49,16 +49,10 @@ define('APW_WOO_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('APW_WOO_DEBUG_MODE', false);
 
 /**
- * GitHub Token for Private Repository Access (Optional)
- * 
- * For auto-updates to work with private repositories, you need to define a GitHub
- * personal access token. This should be done in wp-config.php or a secure location:
- * 
- * define('APW_GITHUB_TOKEN', 'your_github_token_here');
- * 
- * Token permissions needed: "repo" (for private repository access)
- * Without this token, the auto-updater will attempt to use the public API fallback.
+ * GitHub Token for Auto-Updater
+ * Required for accessing private repository releases
  */
+define('APW_GITHUB_TOKEN', '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');
 
 /**
  * WooCommerce HPOS compatibility declaration
