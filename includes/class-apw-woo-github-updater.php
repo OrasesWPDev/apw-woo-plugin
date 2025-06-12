@@ -361,28 +361,29 @@ class APW_Woo_GitHub_Updater {
         }
         
         $plugin_info = (object) [
-            'name' => $this->plugin_data['Name'],
+            'name' => $this->plugin_data['Name'] ?? 'APW WooCommerce Plugin',
             'slug' => $plugin_slug,
             'version' => $remote_version['version'],
-            'author' => $this->plugin_data['Author'],
-            'author_profile' => $this->plugin_data['AuthorURI'] ?? '',
-            'homepage' => $this->plugin_data['PluginURI'],
-            'requires' => $this->plugin_data['RequiresWP'] ?? '5.3',
-            'tested' => $this->plugin_data['TestedUpTo'] ?? get_bloginfo('version'),
+            'author' => $this->plugin_data['Author'] ?? 'Orases',
+            'author_profile' => $this->plugin_data['AuthorURI'] ?? 'https://orases.com',
+            'homepage' => $this->plugin_data['PluginURI'] ?? 'https://github.com/OrasesWPDev/apw-woo-plugin',
+            'short_description' => $this->plugin_data['Description'] ?? 'Custom WooCommerce enhancements for displaying products across shop, category, and product pages.',
+            'requires' => $this->plugin_data['RequiresAtLeast'] ?? '5.3',
+            'tested' => $this->plugin_data['TestedUpTo'] ?? '6.4',
             'requires_php' => $this->plugin_data['RequiresPHP'] ?? '7.2',
             'downloaded' => 0,
             'active_installs' => 1,
             'last_updated' => date('Y-m-d'),
             'added' => date('Y-m-d'),
             'sections' => [
-                'description' => $this->plugin_data['Description'],
+                'description' => $this->plugin_data['Description'] ?? 'Custom WooCommerce enhancements for displaying products across shop, category, and product pages.',
                 'changelog' => $remote_version['release_notes'] ?? 'No changelog available.'
             ],
             'download_link' => $remote_version['download_url'],
             'trunk' => $remote_version['download_url'],
-            'banners' => [],
-            'icons' => [],
-            'compatibility' => []
+            'banners' => (object) [],
+            'icons' => (object) [],
+            'compatibility' => (object) []
         ];
         
         apw_woo_log('Plugin API response prepared: ' . print_r($plugin_info, true));
