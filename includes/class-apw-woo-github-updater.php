@@ -110,8 +110,8 @@ class APW_Woo_GitHub_Updater {
         add_filter('plugins_api', [$this, 'plugin_api_call'], 10, 3);
         add_filter('upgrader_pre_download', [$this, 'download_package'], 10, 3);
         
-        // Hook into package extraction to fix directory structure
-        add_filter('upgrader_unpack_package', [$this, 'fix_extracted_package'], 10, 5);
+        // Hook into post-update to clean up directory structure
+        add_action('upgrader_process_complete', [$this, 'cleanup_after_update'], 999, 2);
         
         // Add admin notices when debug mode is enabled
         if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE) {
@@ -522,78 +522,150 @@ class APW_Woo_GitHub_Updater {
     }
     
     /**
-     * Fix extracted package directory structure
+     * Clean up directory structure after update completes
      *
-     * GitHub zipballs extract to directories like "OrasesWPDev-apw-woo-plugin-abc123/"
-     * but WordPress needs "apw-woo-plugin/" to match the plugin directory.
-     * This hook intercepts after WordPress extracts the package and fixes the structure.
+     * This runs AFTER WordPress completes the update process, avoiding interference
+     * with WordPress's internal plugin file tracking during the update.
      *
-     * @param string|WP_Error $result      Unpack result
-     * @param string          $local_source Local source location
-     * @param string          $remote_source Remote source location
-     * @param object          $upgrader     WP_Upgrader instance
-     * @param array           $hook_extra   Extra arguments
-     * @return string|WP_Error Modified result
+     * @param object $upgrader WP_Upgrader instance
+     * @param array $hook_extra Extra arguments passed to upgrader
      */
-    public function fix_extracted_package($result, $local_source, $remote_source, $upgrader, $hook_extra) {
-        // Only process our plugin updates
-        if (is_wp_error($result) || empty($hook_extra['plugin'])) {
-            return $result;
+    public function cleanup_after_update($upgrader, $hook_extra) {
+        // Only handle plugin updates
+        if (!isset($hook_extra['type']) || $hook_extra['type'] !== 'plugin') {
+            return;
         }
         
+        // Only handle our plugin updates
         $plugin_slug = plugin_basename($this->plugin_file);
-        if ($hook_extra['plugin'] !== $plugin_slug) {
-            return $result;
+        if (!isset($hook_extra['plugin']) || $hook_extra['plugin'] !== $plugin_slug) {
+            return;
         }
         
-        apw_woo_log('=== Starting package extraction fix ===');
-        apw_woo_log('Original result: ' . $result);
-        apw_woo_log('Local source: ' . $local_source);
-        apw_woo_log('Remote source: ' . $remote_source);
+        apw_woo_log('=== Starting post-update directory cleanup ===');
+        apw_woo_log('Plugin slug: ' . $plugin_slug);
         
-        // Check if the extracted directory has the wrong name
-        $extracted_dirs = glob($local_source . '/*', GLOB_ONLYDIR);
-        if (empty($extracted_dirs)) {
-            apw_woo_log('No directories found in extracted package', 'error');
-            return $result;
-        }
-        
-        $extracted_dir = $extracted_dirs[0];
-        $extracted_dir_name = basename($extracted_dir);
+        $plugins_dir = WP_PLUGIN_DIR;
         $expected_dir_name = dirname($plugin_slug);
+        $expected_plugin_dir = $plugins_dir . '/' . $expected_dir_name;
         
-        apw_woo_log('Extracted directory: ' . $extracted_dir_name);
-        apw_woo_log('Expected directory: ' . $expected_dir_name);
+        apw_woo_log('Expected plugin directory: ' . $expected_plugin_dir);
         
-        // If directory name is already correct, no fix needed
-        if ($extracted_dir_name === $expected_dir_name) {
-            apw_woo_log('Directory structure already correct');
-            return $result;
+        // Look for GitHub commit hash directories
+        $github_pattern = $plugins_dir . '/' . $this->github_repo['owner'] . '-' . $this->github_repo['repo'] . '-*';
+        $github_dirs = glob($github_pattern, GLOB_ONLYDIR);
+        
+        apw_woo_log('Looking for GitHub directories with pattern: ' . $github_pattern);
+        apw_woo_log('Found GitHub directories: ' . print_r($github_dirs, true));
+        
+        if (!empty($github_dirs)) {
+            $github_dir = $github_dirs[0]; // Use the first match
+            $github_dir_name = basename($github_dir);
+            
+            apw_woo_log('Processing GitHub directory: ' . $github_dir_name);
+            
+            // Verify this directory contains our plugin file
+            $github_plugin_file = $github_dir . '/' . basename($this->plugin_file);
+            if (file_exists($github_plugin_file)) {
+                apw_woo_log('Confirmed plugin file exists in GitHub directory: ' . $github_plugin_file);
+                
+                // Remove existing correct directory if it exists
+                if (file_exists($expected_plugin_dir)) {
+                    apw_woo_log('Removing existing plugin directory: ' . $expected_plugin_dir);
+                    $this->remove_directory($expected_plugin_dir);
+                }
+                
+                // Rename GitHub directory to correct name
+                if (rename($github_dir, $expected_plugin_dir)) {
+                    apw_woo_log('Successfully renamed: ' . $github_dir_name . ' -> ' . $expected_dir_name);
+                    
+                    // Update active plugins list to use correct path
+                    $this->update_active_plugins_list($github_dir_name, $expected_dir_name);
+                    
+                    // Verify the plugin file exists in the new location
+                    $final_plugin_file = $expected_plugin_dir . '/' . basename($this->plugin_file);
+                    if (file_exists($final_plugin_file)) {
+                        apw_woo_log('SUCCESS: Plugin file confirmed at correct location: ' . $final_plugin_file);
+                    } else {
+                        apw_woo_log('ERROR: Plugin file not found after rename: ' . $final_plugin_file, 'error');
+                    }
+                } else {
+                    apw_woo_log('Failed to rename GitHub directory', 'error');
+                }
+            } else {
+                apw_woo_log('Plugin file not found in GitHub directory: ' . $github_plugin_file, 'warning');
+            }
+        } else {
+            apw_woo_log('No GitHub commit hash directories found - cleanup not needed');
         }
         
-        // Check if this looks like a GitHub commit hash directory
-        if (strpos($extracted_dir_name, $this->github_repo['owner'] . '-' . $this->github_repo['repo']) === 0) {
-            apw_woo_log('Detected GitHub commit hash directory, fixing structure...');
+        apw_woo_log('=== Post-update directory cleanup complete ===');
+    }
+    
+    /**
+     * Update active plugins list to use correct plugin path
+     *
+     * @param string $old_dir_name Old directory name (GitHub commit hash)
+     * @param string $new_dir_name New directory name (correct plugin directory)
+     */
+    private function update_active_plugins_list($old_dir_name, $new_dir_name) {
+        $active_plugins = get_option('active_plugins', []);
+        $plugin_basename = basename($this->plugin_file);
+        
+        $old_plugin_path = $old_dir_name . '/' . $plugin_basename;
+        $new_plugin_path = $new_dir_name . '/' . $plugin_basename;
+        
+        apw_woo_log('Updating active plugins list:');
+        apw_woo_log('Old path: ' . $old_plugin_path);
+        apw_woo_log('New path: ' . $new_plugin_path);
+        
+        // Find and update the plugin path in active plugins
+        $key = array_search($old_plugin_path, $active_plugins);
+        if ($key !== false) {
+            $active_plugins[$key] = $new_plugin_path;
+            update_option('active_plugins', $active_plugins);
+            apw_woo_log('Updated active plugins list with new path');
+        } else {
+            apw_woo_log('Plugin not found in active plugins list - checking if new path already exists');
             
-            $correct_dir = $local_source . '/' . $expected_dir_name;
-            
-            // Rename the directory to the correct name
-            if (rename($extracted_dir, $correct_dir)) {
-                apw_woo_log('Successfully renamed directory: ' . $extracted_dir_name . ' -> ' . $expected_dir_name);
-                
-                // Update the result to point to the correct directory
-                $new_result = $correct_dir;
-                apw_woo_log('Updated result path: ' . $new_result);
-                
-                return $new_result;
+            // Check if the new path is already in the list
+            if (!in_array($new_plugin_path, $active_plugins)) {
+                // Add the new path to active plugins
+                $active_plugins[] = $new_plugin_path;
+                update_option('active_plugins', $active_plugins);
+                apw_woo_log('Added new plugin path to active plugins list');
             } else {
-                apw_woo_log('Failed to rename directory', 'error');
-                return new WP_Error('rename_failed', 'Failed to rename extracted directory');
+                apw_woo_log('New plugin path already exists in active plugins list');
+            }
+        }
+    }
+    
+    /**
+     * Recursively remove directory and its contents
+     *
+     * @param string $dir Directory path to remove
+     * @return bool Success status
+     */
+    private function remove_directory($dir) {
+        if (!file_exists($dir)) {
+            return true;
+        }
+        
+        if (!is_dir($dir)) {
+            return unlink($dir);
+        }
+        
+        foreach (scandir($dir) as $item) {
+            if ($item == '.' || $item == '..') {
+                continue;
+            }
+            
+            if (!$this->remove_directory($dir . DIRECTORY_SEPARATOR . $item)) {
+                return false;
             }
         }
         
-        apw_woo_log('No directory structure fix needed');
-        return $result;
+        return rmdir($dir);
     }
     
     /**
