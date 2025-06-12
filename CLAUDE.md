@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The **APW WooCommerce Plugin** is a comprehensive WordPress plugin that extends WooCommerce functionality. This file contains development-specific information for maintaining and extending the codebase.
 
-**Current Version**: 1.19.1
+**Current Version**: 1.19.2
 
 ## Core Architecture
 
@@ -355,7 +355,13 @@ Add `?apw_force_update_check=1` to any admin URL (requires admin privileges).
 
 ## Recent Development Changes
 
-### Version 1.19.1 (Latest)
+### Version 1.19.2 (Latest)
+- **FIXED**: Syntax error caused by old updater file still existing on servers
+- **Enhanced**: Added safety checks to prevent loading of deprecated updater files
+- **Improved**: More robust autoload system with better error handling
+- **Updated**: Version bump to ensure clean update deployment
+
+### Version 1.19.1
 - **REFACTORED**: Standalone GitHub auto-updater (`APW_Woo_GitHub_Updater`)
 - **REMOVED**: All vendor dependencies and directories
 - **NEW**: Direct GitHub API integration without external libraries
@@ -363,7 +369,7 @@ Add `?apw_force_update_check=1` to any admin URL (requires admin privileges).
 - **Improved**: Lightweight updater architecture with WordPress HTTP API
 
 ### Version 1.19.0
-- **NEW**: GitHub Auto-Updater system (`APW_Woo_Simple_Updater`)
+- **NEW**: GitHub Auto-Updater system (`APW_Woo_GitHub_Updater`)
 - **NEW**: Environment detection for staging and production deployments
 - **Added**: Plugin Update Checker v5.6 library integration
 - **Added**: Force update check functionality for admin users
