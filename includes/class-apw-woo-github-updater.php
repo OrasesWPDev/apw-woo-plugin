@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
  * Standalone GitHub Auto-Updater for APW WooCommerce Plugin
  * 
  * Direct GitHub API integration without external dependencies.
- * Handles automatic updates with environment detection for staging and production.
+ * Handles automatic updates for WordPress plugins via GitHub releases.
  */
 class APW_Woo_GitHub_Updater {
     
@@ -32,12 +32,6 @@ class APW_Woo_GitHub_Updater {
      */
     private $github_repo;
     
-    /**
-     * Current environment (staging or production)
-     *
-     * @var string
-     */
-    private $environment;
     
     /**
      * Plugin data
@@ -61,7 +55,6 @@ class APW_Woo_GitHub_Updater {
      */
     public function __construct($plugin_file, $github_repo_url) {
         $this->plugin_file = $plugin_file;
-        $this->environment = $this->detect_environment();
         $this->plugin_data = get_plugin_data($plugin_file);
         
         // Parse GitHub repository info
@@ -71,7 +64,7 @@ class APW_Woo_GitHub_Updater {
         // Only initialize in admin context
         if (is_admin()) {
             $this->init_hooks();
-            apw_woo_log("GitHub auto-updater initialized for {$this->environment} environment");
+            apw_woo_log("GitHub auto-updater initialized");
         }
     }
     
@@ -93,23 +86,6 @@ class APW_Woo_GitHub_Updater {
         ];
     }
     
-    /**
-     * Detect current environment based on site URL
-     *
-     * @return string 'staging' or 'production'
-     */
-    private function detect_environment() {
-        $site_url = get_site_url();
-        
-        if (strpos($site_url, 'allpointstage.wpenginepowered.com') !== false) {
-            return 'staging';
-        } elseif (strpos($site_url, 'allpointwireless.com') !== false) {
-            return 'production';
-        }
-        
-        // Default to production for safety
-        return 'production';
-    }
     
     /**
      * Initialize WordPress hooks
@@ -119,9 +95,9 @@ class APW_Woo_GitHub_Updater {
         add_filter('plugins_api', [$this, 'plugin_api_call'], 10, 3);
         add_filter('upgrader_pre_download', [$this, 'download_package'], 10, 3);
         
-        // Add admin notices for staging
-        if ($this->environment === 'staging') {
-            add_action('admin_notices', [$this, 'display_staging_update_notice']);
+        // Add admin notices when debug mode is enabled
+        if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE) {
+            add_action('admin_notices', [$this, 'display_update_notice']);
         }
         
         // Handle force update check
@@ -131,7 +107,7 @@ class APW_Woo_GitHub_Updater {
             exit;
         }
         
-        // Set up check interval (1 minute for both environments as requested)
+        // Set up check interval
         if (!wp_next_scheduled('apw_woo_update_check')) {
             wp_schedule_event(time(), 'hourly', 'apw_woo_update_check');
         }
@@ -215,7 +191,7 @@ class APW_Woo_GitHub_Updater {
             'release_notes' => $release_data['body'] ?? ''
         ];
         
-        // Cache for 1 minute (both environments)
+        // Cache for 1 minute
         set_transient($this->cache_key, $version_data, MINUTE_IN_SECONDS);
         
         return $version_data;
@@ -293,7 +269,7 @@ class APW_Woo_GitHub_Updater {
      */
     public function force_update_check() {
         delete_transient($this->cache_key);
-        apw_woo_log("Forcing update check for {$this->environment} environment");
+        apw_woo_log("Forcing update check");
         
         // Trigger WordPress update check
         wp_update_plugins();
@@ -315,17 +291,16 @@ class APW_Woo_GitHub_Updater {
     }
     
     /**
-     * Display staging-specific update notices
+     * Display update notices when debug mode is enabled
      */
-    public function display_staging_update_notice() {
-        if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && $this->environment === 'staging') {
+    public function display_update_notice() {
+        if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE) {
             $last_check = get_option('_transient_timeout_' . $this->cache_key);
             $last_check_time = $last_check ? human_time_diff($last_check - MINUTE_IN_SECONDS, time()) . ' ago' : 'Never';
             ?>
             <div class="notice notice-info is-dismissible">
                 <p>
-                    <strong>APW Auto-Updater (Staging):</strong> 
-                    Environment: <?php echo esc_html($this->environment); ?> | 
+                    <strong>APW Auto-Updater:</strong> 
                     Last Check: <?php echo esc_html($last_check_time); ?> |
                     <a href="<?php echo esc_url(add_query_arg('apw_force_update_check', '1')); ?>">Force Check</a>
                 </p>
@@ -344,22 +319,13 @@ class APW_Woo_GitHub_Updater {
         
         return [
             'status' => 'active',
-            'environment' => $this->environment,
             'github_repo' => $this->github_repo['api_url'],
             'current_version' => $this->plugin_data['Version'],
             'remote_version' => $remote_version ? $remote_version['version'] : 'Unknown',
             'update_available' => $remote_version ? version_compare($this->plugin_data['Version'], $remote_version['version'], '<') : false,
-            'check_period' => '1 minute',
+            'check_period' => 'hourly',
             'cache_key' => $this->cache_key
         ];
     }
     
-    /**
-     * Get current environment
-     *
-     * @return string Current environment
-     */
-    public function get_environment() {
-        return $this->environment;
-    }
 }

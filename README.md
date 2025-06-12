@@ -2,7 +2,7 @@
 
 A comprehensive WordPress plugin that extends WooCommerce functionality with advanced e-commerce features. Built specifically for the **Flatsome theme**, this plugin provides enhanced product displays, custom checkout processes, dynamic pricing integration, payment gateway enhancements, and sophisticated cart management systems.
 
-**Current Version**: 1.19.2
+**Current Version**: 1.19.3
 
 ## 🚀 Features
 
@@ -76,20 +76,16 @@ This enables detailed logging to `logs/debug-{date}.log` files.
 ### Auto-Updater Configuration
 The plugin includes a standalone GitHub-based auto-updater with no external dependencies:
 
-#### Environment Detection
-- **Staging**: `https://allpointstage.wpenginepowered.com/`
-- **Production**: `https://allpointwireless.com`
-
 #### Update Settings
-- **Check Frequency**: 1 minute for both environments
+- **Check Frequency**: Hourly automatic checks
 - **Repository**: [https://github.com/OrasesWPDev/apw-woo-plugin](https://github.com/OrasesWPDev/apw-woo-plugin)
 - **Force Update**: Add `?apw_force_update_check=1` to any admin URL (admin users only)
 
 #### Features
 - Direct GitHub API integration (no vendor dependencies)
 - Automatic update detection from GitHub releases
-- Environment-aware logging (enhanced for staging)
-- Admin notices for update status (staging only when debug mode enabled)
+- Universal deployment compatibility for any WordPress site
+- Admin notices for update status (when debug mode enabled)
 - Secure admin-only update checking
 - Clean plugin distribution without vendor directories
 
@@ -323,7 +319,13 @@ Log files will be created in the `logs/` directory.
 
 ## 📝 Changelog
 
-### Version 1.19.2 (Latest)
+### Version 1.19.3 (Latest)
+- **FIXED**: Removed all site-specific environment detection that was causing deployment issues
+- **IMPROVED**: Made GitHub auto-updater completely environment agnostic
+- **ENHANCED**: Universal deployment compatibility for any WordPress site
+- **SIMPLIFIED**: Removed staging/production specific logic that could cause errors
+
+### Version 1.19.2
 - **HOTFIX**: Fixed syntax error caused by old updater file still existing on servers
 - **Enhanced**: Added safety checks to prevent loading of deprecated updater files  
 - **Improved**: More robust autoload system with better error handling
