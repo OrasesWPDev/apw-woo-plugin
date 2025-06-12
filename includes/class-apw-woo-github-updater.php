@@ -403,7 +403,7 @@ class APW_Woo_GitHub_Updater {
         
         // Only handle our plugin updates (check for both github.com and api.github.com URLs)
         $repo_identifier = $this->github_repo['owner'] . '/' . $this->github_repo['repo'];
-        if (!strpos($package, $repo_identifier)) {
+        if (strpos($package, $repo_identifier) === false) {
             apw_woo_log('Skipping download - not our plugin: ' . $package);
             return $reply;
         }
@@ -421,7 +421,7 @@ class APW_Woo_GitHub_Updater {
         
         apw_woo_log('Using GitHub token for authenticated download');
         
-        // Download with authentication headers
+        // Download with authentication headers - we need to use wp_remote_get instead
         $args = [
             'timeout' => 300,
             'headers' => [
@@ -433,13 +433,38 @@ class APW_Woo_GitHub_Updater {
         
         apw_woo_log('Download arguments: ' . print_r($args, true));
         
-        $download_file = download_url($package, 300, false, $args);
+        // Use wp_remote_get for proper header support
+        $response = wp_remote_get($package, $args);
         
-        if (is_wp_error($download_file)) {
-            apw_woo_log('Download failed: ' . $download_file->get_error_message(), 'error');
-            apw_woo_log('Error data: ' . print_r($download_file->get_error_data(), true), 'error');
-            return $download_file;
+        if (is_wp_error($response)) {
+            apw_woo_log('Download request failed: ' . $response->get_error_message(), 'error');
+            return $response;
         }
+        
+        $response_code = wp_remote_retrieve_response_code($response);
+        if ($response_code !== 200) {
+            apw_woo_log('Download failed with HTTP ' . $response_code, 'error');
+            return new WP_Error('download_failed', 'Download failed with HTTP ' . $response_code);
+        }
+        
+        // Create temporary file
+        $tmp_file = wp_tempnam($package);
+        if (!$tmp_file) {
+            apw_woo_log('Failed to create temporary file', 'error');
+            return new WP_Error('temp_file_failed', 'Failed to create temporary file');
+        }
+        
+        // Write the response body to temp file
+        $body = wp_remote_retrieve_body($response);
+        $bytes_written = file_put_contents($tmp_file, $body);
+        
+        if ($bytes_written === false) {
+            unlink($tmp_file);
+            apw_woo_log('Failed to write download to temporary file', 'error');
+            return new WP_Error('write_failed', 'Failed to write download to temporary file');
+        }
+        
+        $download_file = $tmp_file;
         
         apw_woo_log('Download successful to: ' . $download_file);
         apw_woo_log('File size: ' . (file_exists($download_file) ? filesize($download_file) . ' bytes' : 'File not found'));
