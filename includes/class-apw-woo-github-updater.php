@@ -63,8 +63,10 @@ class APW_Woo_GitHub_Updater {
         
         // Only initialize in admin context
         if (is_admin()) {
+            // Add custom cron schedule for 1-minute checks
+            add_filter('cron_schedules', [$this, 'add_minute_cron_schedule']);
             $this->init_hooks();
-            apw_woo_log("GitHub auto-updater initialized");
+            apw_woo_log("GitHub auto-updater initialized with 1-minute check interval");
         }
     }
     
@@ -86,6 +88,19 @@ class APW_Woo_GitHub_Updater {
         ];
     }
     
+    /**
+     * Add custom cron schedule for 1-minute checks
+     *
+     * @param array $schedules Existing cron schedules
+     * @return array Modified schedules array
+     */
+    public function add_minute_cron_schedule($schedules) {
+        $schedules['apw_woo_minute_check'] = array(
+            'interval' => 60, // 1 minute in seconds
+            'display' => __('Every Minute (APW Auto-Updater Testing)')
+        );
+        return $schedules;
+    }
     
     /**
      * Initialize WordPress hooks
@@ -107,9 +122,12 @@ class APW_Woo_GitHub_Updater {
             exit;
         }
         
-        // Set up check interval
+        // Set up check interval - 1 minute for testing
         if (!wp_next_scheduled('apw_woo_update_check')) {
-            wp_schedule_event(time(), 'hourly', 'apw_woo_update_check');
+            // Clear any existing scheduled event first
+            wp_clear_scheduled_hook('apw_woo_update_check');
+            // Schedule every minute for faster testing
+            wp_schedule_event(time(), 'apw_woo_minute_check', 'apw_woo_update_check');
         }
         add_action('apw_woo_update_check', [$this, 'scheduled_update_check']);
     }
@@ -323,7 +341,7 @@ class APW_Woo_GitHub_Updater {
             'current_version' => $this->plugin_data['Version'],
             'remote_version' => $remote_version ? $remote_version['version'] : 'Unknown',
             'update_available' => $remote_version ? version_compare($this->plugin_data['Version'], $remote_version['version'], '<') : false,
-            'check_period' => 'hourly',
+            'check_period' => 'every minute (testing)',
             'cache_key' => $this->cache_key
         ];
     }
