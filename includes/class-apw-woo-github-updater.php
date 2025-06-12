@@ -41,6 +41,13 @@ class APW_Woo_GitHub_Updater {
     private $plugin_data;
     
     /**
+     * Plugin activation status before update
+     *
+     * @var bool
+     */
+    private $was_active_before_update = false;
+    
+    /**
      * GitHub API cache key
      *
      * @var string
@@ -112,6 +119,12 @@ class APW_Woo_GitHub_Updater {
         
         // Hook into package extraction to fix directory structure
         add_filter('upgrader_unpack_package', [$this, 'fix_extracted_package'], 10, 5);
+        
+        // Hook into pre-update to capture activation status
+        add_action('upgrader_pre_install', [$this, 'capture_activation_status'], 10, 2);
+        
+        // Hook into post-update to preserve activation status
+        add_action('upgrader_process_complete', [$this, 'preserve_plugin_activation'], 10, 2);
         
         // Add admin notices when debug mode is enabled
         if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE) {
@@ -619,6 +632,86 @@ class APW_Woo_GitHub_Updater {
         
         apw_woo_log('No directory structure fix needed');
         return $result;
+    }
+    
+    /**
+     * Capture plugin activation status before update
+     *
+     * @param bool $response Installation response
+     * @param array $hook_extra Extra arguments passed to upgrader
+     */
+    public function capture_activation_status($response, $hook_extra) {
+        // Only handle plugin updates
+        if (!isset($hook_extra['type']) || $hook_extra['type'] !== 'plugin') {
+            return;
+        }
+        
+        // Only handle our plugin updates
+        $plugin_slug = plugin_basename($this->plugin_file);
+        if (!isset($hook_extra['plugin']) || $hook_extra['plugin'] !== $plugin_slug) {
+            return;
+        }
+        
+        apw_woo_log('=== Capturing activation status before update ===');
+        
+        // Check if plugin is currently active
+        $active_plugins = get_option('active_plugins', []);
+        $this->was_active_before_update = in_array($plugin_slug, $active_plugins);
+        
+        apw_woo_log('Plugin was active before update: ' . ($this->was_active_before_update ? 'YES' : 'NO'));
+        apw_woo_log('Plugin slug: ' . $plugin_slug);
+    }
+    
+    /**
+     * Preserve plugin activation status after update
+     *
+     * @param object $upgrader WP_Upgrader instance
+     * @param array $hook_extra Extra arguments passed to upgrader
+     */
+    public function preserve_plugin_activation($upgrader, $hook_extra) {
+        // Only handle plugin updates
+        if (!isset($hook_extra['type']) || $hook_extra['type'] !== 'plugin') {
+            return;
+        }
+        
+        // Only handle our plugin updates
+        $plugin_slug = plugin_basename($this->plugin_file);
+        if (!isset($hook_extra['plugin']) || $hook_extra['plugin'] !== $plugin_slug) {
+            return;
+        }
+        
+        apw_woo_log('=== Post-update activation preservation ===');
+        apw_woo_log('Plugin slug: ' . $plugin_slug);
+        apw_woo_log('Was active before update: ' . ($this->was_active_before_update ? 'YES' : 'NO'));
+        
+        // Check if plugin is currently active
+        $active_plugins = get_option('active_plugins', []);
+        $is_active = in_array($plugin_slug, $active_plugins);
+        
+        apw_woo_log('Plugin currently active: ' . ($is_active ? 'YES' : 'NO'));
+        
+        // If plugin was active before update but isn't now, reactivate it
+        if ($this->was_active_before_update && !$is_active) {
+            apw_woo_log('Plugin not active, attempting to reactivate...');
+            
+            // Verify the plugin file exists
+            $plugin_file_path = WP_PLUGIN_DIR . '/' . $plugin_slug;
+            if (file_exists($plugin_file_path)) {
+                apw_woo_log('Plugin file exists, reactivating: ' . $plugin_file_path);
+                
+                // Activate the plugin
+                $result = activate_plugin($plugin_slug);
+                if (is_wp_error($result)) {
+                    apw_woo_log('Failed to reactivate plugin: ' . $result->get_error_message(), 'error');
+                } else {
+                    apw_woo_log('Plugin successfully reactivated');
+                }
+            } else {
+                apw_woo_log('Plugin file not found: ' . $plugin_file_path, 'error');
+            }
+        } else {
+            apw_woo_log('Plugin is already active, no action needed');
+        }
     }
     
     /**
