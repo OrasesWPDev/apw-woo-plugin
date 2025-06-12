@@ -122,6 +122,11 @@ class APW_Woo_GitHub_Updater {
             exit;
         }
         
+        // Handle debug test (shows results instead of redirecting)
+        if (isset($_GET['apw_debug_updater']) && current_user_can('manage_options')) {
+            add_action('admin_notices', [$this, 'display_debug_results']);
+        }
+        
         // Set up check interval - 1 minute for testing
         if (!wp_next_scheduled('apw_woo_update_check')) {
             // Clear any existing scheduled event first
@@ -139,20 +144,30 @@ class APW_Woo_GitHub_Updater {
      * @return object Modified transient
      */
     public function check_for_updates($transient) {
+        apw_woo_log('check_for_updates called');
+        
         if (empty($transient->checked)) {
+            apw_woo_log('No checked plugins in transient');
             return $transient;
         }
         
         $plugin_slug = plugin_basename($this->plugin_file);
+        apw_woo_log('Plugin slug: ' . $plugin_slug);
+        apw_woo_log('Current version: ' . $this->plugin_data['Version']);
         
         // Get remote version
         $remote_version = $this->get_remote_version();
         if (!$remote_version) {
+            apw_woo_log('No remote version found');
             return $transient;
         }
         
+        apw_woo_log('Remote version found: ' . $remote_version['version']);
+        
         // Compare versions
         if (version_compare($this->plugin_data['Version'], $remote_version['version'], '<')) {
+            apw_woo_log("Update available: {$this->plugin_data['Version']} → {$remote_version['version']}");
+            
             $transient->response[$plugin_slug] = (object) [
                 'slug' => dirname($plugin_slug),
                 'plugin' => $plugin_slug,
@@ -160,8 +175,6 @@ class APW_Woo_GitHub_Updater {
                 'url' => $this->github_repo['api_url'],
                 'package' => $remote_version['download_url']
             ];
-            
-            apw_woo_log("Update available: {$this->plugin_data['Version']} → {$remote_version['version']}");
         }
         
         return $transient;
@@ -173,11 +186,13 @@ class APW_Woo_GitHub_Updater {
      * @return array|false Remote version info or false on failure
      */
     private function get_remote_version() {
-        // Check cache first
-        $cached = get_transient($this->cache_key);
-        if ($cached !== false) {
-            return $cached;
-        }
+        // Temporarily disable cache for debugging
+        // $cached = get_transient($this->cache_key);
+        // if ($cached !== false) {
+        //     return $cached;
+        // }
+        
+        apw_woo_log('Starting get_remote_version check...');
         
         // Try /releases/latest first, then fallback to /releases for private repos
         $url = $this->github_repo['api_url'] . '/releases/latest';
@@ -188,10 +203,13 @@ class APW_Woo_GitHub_Updater {
         
         // Add GitHub token if available (for private repos)
         $github_token = defined('APW_GITHUB_TOKEN') ? APW_GITHUB_TOKEN : null;
+        apw_woo_log('GitHub token available: ' . ($github_token ? 'YES' : 'NO'));
+        
         if ($github_token) {
             $headers['Authorization'] = 'token ' . $github_token;
         }
         
+        apw_woo_log('Making request to: ' . $url);
         $response = wp_remote_get($url, [
             'timeout' => 10,
             'headers' => $headers
@@ -205,6 +223,9 @@ class APW_Woo_GitHub_Updater {
         $response_code = wp_remote_retrieve_response_code($response);
         $body = wp_remote_retrieve_body($response);
         $release_data = json_decode($body, true);
+        
+        apw_woo_log('Response code: ' . $response_code);
+        apw_woo_log('Response body (first 200 chars): ' . substr($body, 0, 200));
         
         // If latest endpoint fails (404 for private repos without auth), try releases endpoint
         if ($response_code === 404 || (isset($release_data['message']) && $release_data['message'] === 'Not Found')) {
@@ -236,6 +257,8 @@ class APW_Woo_GitHub_Updater {
      * @return array|false Remote version info or false on failure
      */
     private function get_remote_version_from_releases() {
+        apw_woo_log('Trying fallback releases endpoint...');
+        
         $url = $this->github_repo['api_url'] . '/releases';
         $headers = [
             'Accept' => 'application/vnd.github.v3+json',
@@ -248,6 +271,7 @@ class APW_Woo_GitHub_Updater {
             $headers['Authorization'] = 'token ' . $github_token;
         }
         
+        apw_woo_log('Making fallback request to: ' . $url);
         $response = wp_remote_get($url, [
             'timeout' => 10,
             'headers' => $headers
@@ -258,8 +282,12 @@ class APW_Woo_GitHub_Updater {
             return false;
         }
         
+        $response_code = wp_remote_retrieve_response_code($response);
         $body = wp_remote_retrieve_body($response);
         $releases = json_decode($body, true);
+        
+        apw_woo_log('Fallback response code: ' . $response_code);
+        apw_woo_log('Fallback response body (first 200 chars): ' . substr($body, 0, 200));
         
         if (!$releases || !is_array($releases) || empty($releases)) {
             apw_woo_log('No releases found or invalid response', 'error');
@@ -407,11 +435,36 @@ class APW_Woo_GitHub_Updater {
                 <p>
                     <strong>APW Auto-Updater:</strong> 
                     Last Check: <?php echo esc_html($last_check_time); ?> |
-                    <a href="<?php echo esc_url(add_query_arg('apw_force_update_check', '1')); ?>">Force Check</a>
+                    <a href="<?php echo esc_url(add_query_arg('apw_force_update_check', '1')); ?>">Force Check</a> |
+                    <a href="<?php echo esc_url(add_query_arg('apw_debug_updater', '1')); ?>">Debug Test</a>
                 </p>
             </div>
             <?php
         }
+    }
+    
+    /**
+     * Display debug results for updater testing
+     */
+    public function display_debug_results() {
+        $remote_version = $this->get_remote_version();
+        $github_token = defined('APW_GITHUB_TOKEN') ? 'Configured' : 'Not configured';
+        ?>
+        <div class="notice notice-warning">
+            <h3>APW Auto-Updater Debug Results</h3>
+            <p><strong>Current Version:</strong> <?php echo esc_html($this->plugin_data['Version']); ?></p>
+            <p><strong>GitHub Token:</strong> <?php echo esc_html($github_token); ?></p>
+            <p><strong>Repository:</strong> <?php echo esc_html($this->github_repo['api_url']); ?></p>
+            <?php if ($remote_version): ?>
+                <p><strong>Remote Version Found:</strong> <?php echo esc_html($remote_version['version']); ?></p>
+                <p><strong>Download URL:</strong> <?php echo esc_html($remote_version['download_url']); ?></p>
+                <p><strong>Update Available:</strong> <?php echo version_compare($this->plugin_data['Version'], $remote_version['version'], '<') ? 'YES' : 'NO'; ?></p>
+            <?php else: ?>
+                <p><strong>Remote Version:</strong> <span style="color: red;">Failed to retrieve</span></p>
+                <p><em>Check debug logs for details</em></p>
+            <?php endif; ?>
+        </div>
+        <?php
     }
     
     /**
