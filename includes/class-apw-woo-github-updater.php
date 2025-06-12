@@ -297,6 +297,18 @@ class APW_Woo_GitHub_Updater {
         // Get the latest non-draft, non-prerelease
         $latest_release = null;
         foreach ($releases as $release) {
+            // Ensure $release is an array before accessing its properties
+            if (!is_array($release)) {
+                apw_woo_log('Invalid release data format (not array): ' . print_r($release, true), 'warning');
+                continue;
+            }
+            
+            // Check if required keys exist
+            if (!isset($release['draft']) || !isset($release['prerelease'])) {
+                apw_woo_log('Release missing draft/prerelease keys: ' . print_r($release, true), 'warning');
+                continue;
+            }
+            
             if (!$release['draft'] && !$release['prerelease']) {
                 $latest_release = $release;
                 break;
