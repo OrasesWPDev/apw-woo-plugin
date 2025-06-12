@@ -168,13 +168,16 @@ class APW_Woo_GitHub_Updater {
         if (version_compare($this->plugin_data['Version'], $remote_version['version'], '<')) {
             apw_woo_log("Update available: {$this->plugin_data['Version']} → {$remote_version['version']}");
             
-            $transient->response[$plugin_slug] = (object) [
+            $update_info = (object) [
                 'slug' => dirname($plugin_slug),
                 'plugin' => $plugin_slug,
                 'new_version' => $remote_version['version'],
                 'url' => $this->github_repo['api_url'],
                 'package' => $remote_version['download_url']
             ];
+            
+            apw_woo_log('Setting update info with package URL: ' . $remote_version['download_url']);
+            $transient->response[$plugin_slug] = $update_info;
         }
         
         return $transient;
@@ -395,6 +398,9 @@ class APW_Woo_GitHub_Updater {
      * @return bool|string
      */
     public function download_package($reply, $package, $upgrader) {
+        apw_woo_log('DOWNLOAD HANDLER CALLED - Package: ' . $package);
+        apw_woo_log('Repository identifier: ' . $this->github_repo['owner'] . '/' . $this->github_repo['repo']);
+        
         // Only handle our plugin updates (check for both github.com and api.github.com URLs)
         $repo_identifier = $this->github_repo['owner'] . '/' . $this->github_repo['repo'];
         if (!strpos($package, $repo_identifier)) {
