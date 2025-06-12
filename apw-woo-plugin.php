@@ -11,8 +11,9 @@
  * Plugin Name:       APW WooCommerce Plugin
  * Plugin URI:        https://github.com/OrasesWPDev/apw-woo-plugin
  * Description:       Custom WooCommerce enhancements for displaying products across shop, category, and product pages.
- * Version:           1.20.1
+ * Version:           1.20.2
  * Requires at least: 5.3
+ * Tested up to:      6.4
  * Requires PHP:      7.2
  * Author:            Orases
  * Author URI:        https://orases.com
@@ -33,7 +34,7 @@ if (!defined('ABSPATH')) {
 /**
  * Plugin constants
  */
-define('APW_WOO_VERSION', '1.20.1');
+define('APW_WOO_VERSION', '1.20.2');
 define('APW_WOO_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('APW_WOO_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('APW_WOO_PLUGIN_FILE', __FILE__);
@@ -46,7 +47,7 @@ define('APW_WOO_PLUGIN_BASENAME', plugin_basename(__FILE__));
  *
  * @see templates/woocommerce/single-product.php for hook visualization
  */
-define('APW_WOO_DEBUG_MODE', true);
+define('APW_WOO_DEBUG_MODE', false);
 
 /**
  * GitHub Token for Auto-Updater

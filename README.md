@@ -2,7 +2,7 @@
 
 A comprehensive WordPress plugin that extends WooCommerce functionality with advanced e-commerce features. Built specifically for the **Flatsome theme**, this plugin provides enhanced product displays, custom checkout processes, dynamic pricing integration, payment gateway enhancements, and sophisticated cart management systems.
 
-**Current Version**: 1.19.8
+**Current Version**: 1.20.2
 
 ## 🚀 Features
 
@@ -328,7 +328,27 @@ Log files will be created in the `logs/` directory.
 
 ## 📝 Changelog
 
-### Version 1.19.8 (Latest)
+### Version 1.20.2 (Latest)
+- **🐛 CRITICAL AUTO-UPDATER FIXES**: Completely rebuilt auto-updater system to resolve JavaScript errors
+- **✅ FIXED PLUGIN SLUG**: Corrected inconsistent plugin slug handling causing update failures
+- **📋 ENHANCED METADATA**: Added missing WordPress 'Tested up to' header and improved field validation
+- **🔧 FIXED TRANSIENT STRUCTURE**: Complete WordPress-compatible update transient structure
+- **📊 COMPLETE API RESPONSE**: Enhanced plugin API response with all required WordPress.org fields
+- **🚫 ELIMINATED JS ERRORS**: Fixed "TypeError: can't access property 'attr', t is undefined" error
+- **🔒 PRODUCTION READY**: Disabled debug mode and synchronized all version numbers
+
+### Version 1.20.1
+- **🔧 CRITICAL FIXES**: Fixed version mismatch, strpos() bug, and download authentication
+- **⚡ ENHANCED DOWNLOAD**: Replaced broken download_url() with proper wp_remote_get() implementation
+- **🔐 AUTHENTICATION**: Proper GitHub token authentication for private repository downloads
+- **🛡️ ERROR HANDLING**: Comprehensive error handling throughout download process
+
+### Version 1.20.0
+- **✅ AUTO-UPDATER FUNCTIONAL**: Auto-updater detection working with disabled debug mode
+- **🧪 TESTING COMPLETE**: Comprehensive testing of GitHub API integration
+- **🔄 STABLE RELEASE**: Final testing release before production deployment
+
+### Version 1.19.8
 - **🔒 PRIVATE REPO SUPPORT**: Added GitHub token authentication for private repository auto-updates
 - **🔄 FALLBACK SYSTEM**: Implements /releases endpoint fallback when /releases/latest fails
 - **📝 ENHANCED LOGGING**: Better error handling and logging for private repository access

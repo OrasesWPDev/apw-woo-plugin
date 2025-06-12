@@ -169,11 +169,20 @@ class APW_Woo_GitHub_Updater {
             apw_woo_log("Update available: {$this->plugin_data['Version']} → {$remote_version['version']}");
             
             $update_info = (object) [
+                'id' => 'w.org/plugins/' . dirname($plugin_slug),
                 'slug' => dirname($plugin_slug),
                 'plugin' => $plugin_slug,
                 'new_version' => $remote_version['version'],
-                'url' => $this->github_repo['api_url'],
-                'package' => $remote_version['download_url']
+                'url' => $this->plugin_data['PluginURI'] ?? 'https://github.com/OrasesWPDev/apw-woo-plugin',
+                'package' => $remote_version['download_url'],
+                'icons' => [
+                    'default' => $this->plugin_data['PluginURI'] . '/assets/icon-256x256.png'
+                ],
+                'banners' => [],
+                'banners_rtl' => [],
+                'tested' => $this->plugin_data['TestedUpTo'] ?? '6.4',
+                'requires_php' => $this->plugin_data['RequiresPHP'] ?? '7.2',
+                'compatibility' => []
             ];
             
             apw_woo_log('Setting update info with package URL: ' . $remote_version['download_url']);
@@ -361,27 +370,63 @@ class APW_Woo_GitHub_Updater {
         }
         
         $plugin_info = (object) [
-            'name' => $this->plugin_data['Name'],
+            'name' => $this->plugin_data['Name'] ?? 'APW WooCommerce Plugin',
             'slug' => $plugin_slug,
             'version' => $remote_version['version'],
-            'author' => $this->plugin_data['Author'],
-            'author_profile' => $this->plugin_data['AuthorURI'] ?? '',
-            'homepage' => $this->plugin_data['PluginURI'],
-            'requires' => $this->plugin_data['RequiresWP'] ?? '5.3',
-            'tested' => $this->plugin_data['TestedUpTo'] ?? get_bloginfo('version'),
+            'author' => '<a href="' . ($this->plugin_data['AuthorURI'] ?? 'https://orases.com') . '">' . ($this->plugin_data['Author'] ?? 'Orases') . '</a>',
+            'author_profile' => $this->plugin_data['AuthorURI'] ?? 'https://orases.com',
+            'contributors' => [
+                'orases' => [
+                    'profile' => 'https://orases.com',
+                    'avatar' => 'https://secure.gravatar.com/avatar/?s=96&d=monsterid&r=g',
+                    'display_name' => 'Orases'
+                ]
+            ],
+            'homepage' => $this->plugin_data['PluginURI'] ?? 'https://github.com/OrasesWPDev/apw-woo-plugin',
+            'short_description' => $this->plugin_data['Description'] ?? 'Custom WooCommerce enhancements for displaying products across shop, category, and product pages.',
+            'description' => $this->plugin_data['Description'] ?? 'Custom WooCommerce enhancements for displaying products across shop, category, and product pages.',
+            'requires' => $this->plugin_data['RequiresAtLeast'] ?? '5.3',
+            'tested' => $this->plugin_data['TestedUpTo'] ?? '6.4',
             'requires_php' => $this->plugin_data['RequiresPHP'] ?? '7.2',
+            'rating' => 100,
+            'ratings' => [5 => 1, 4 => 0, 3 => 0, 2 => 0, 1 => 0],
+            'num_ratings' => 1,
+            'support_threads' => 0,
+            'support_threads_resolved' => 0,
             'downloaded' => 0,
             'active_installs' => 1,
-            'last_updated' => date('Y-m-d'),
+            'last_updated' => date('Y-m-d H:i:s'),
             'added' => date('Y-m-d'),
             'sections' => [
-                'description' => $this->plugin_data['Description'],
-                'changelog' => $remote_version['release_notes'] ?? 'No changelog available.'
+                'description' => $this->plugin_data['Description'] ?? 'Custom WooCommerce enhancements for displaying products across shop, category, and product pages.',
+                'changelog' => $remote_version['release_notes'] ?? 'No changelog available.',
+                'installation' => 'Upload the plugin files to the `/wp-content/plugins/apw-woo-plugin` directory, or install the plugin through the WordPress plugins screen directly. Activate the plugin through the \'Plugins\' screen in WordPress.'
             ],
             'download_link' => $remote_version['download_url'],
             'trunk' => $remote_version['download_url'],
-            'banners' => [],
-            'icons' => [],
+            'donate_link' => '',
+            'banners' => [
+                'low' => '',
+                'high' => ''
+            ],
+            'icons' => [
+                '1x' => '',
+                '2x' => '',
+                'svg' => ''
+            ],
+            'screenshots' => [],
+            'tags' => [
+                'woocommerce' => 'WooCommerce',
+                'ecommerce' => 'E-Commerce',
+                'shop' => 'Shop'
+            ],
+            'versions' => [
+                $remote_version['version'] => $remote_version['download_url']
+            ],
+            'business_model' => false,
+            'repository_url' => '',
+            'commercial_support_url' => '',
+            'donate_link_2' => '',
             'compatibility' => []
         ];
         
