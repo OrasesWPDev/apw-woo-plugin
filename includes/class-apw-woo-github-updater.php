@@ -357,22 +357,33 @@ class APW_Woo_GitHub_Updater {
             return $result;
         }
         
-        return (object) [
+        $plugin_info = (object) [
             'name' => $this->plugin_data['Name'],
             'slug' => $plugin_slug,
             'version' => $remote_version['version'],
             'author' => $this->plugin_data['Author'],
+            'author_profile' => $this->plugin_data['AuthorURI'] ?? '',
             'homepage' => $this->plugin_data['PluginURI'],
             'requires' => $this->plugin_data['RequiresWP'] ?? '5.3',
             'tested' => $this->plugin_data['TestedUpTo'] ?? get_bloginfo('version'),
+            'requires_php' => $this->plugin_data['RequiresPHP'] ?? '7.2',
             'downloaded' => 0,
+            'active_installs' => 1,
             'last_updated' => date('Y-m-d'),
+            'added' => date('Y-m-d'),
             'sections' => [
                 'description' => $this->plugin_data['Description'],
-                'changelog' => $remote_version['release_notes']
+                'changelog' => $remote_version['release_notes'] ?? 'No changelog available.'
             ],
-            'download_link' => $remote_version['download_url']
+            'download_link' => $remote_version['download_url'],
+            'trunk' => $remote_version['download_url'],
+            'banners' => [],
+            'icons' => [],
+            'compatibility' => []
         ];
+        
+        apw_woo_log('Plugin API response prepared: ' . print_r($plugin_info, true));
+        return $plugin_info;
     }
     
     /**
@@ -386,38 +397,47 @@ class APW_Woo_GitHub_Updater {
     public function download_package($reply, $package, $upgrader) {
         // Only handle our plugin updates
         if (!strpos($package, 'github.com/' . $this->github_repo['owner'] . '/' . $this->github_repo['repo'])) {
+            apw_woo_log('Skipping download - not our plugin: ' . $package);
             return $reply;
         }
         
-        apw_woo_log('Custom download handler for: ' . $package);
+        apw_woo_log('=== Starting custom download handler ===');
+        apw_woo_log('Package URL: ' . $package);
+        apw_woo_log('Upgrader type: ' . get_class($upgrader));
         
         // For private repos, we need to add authentication headers
         $github_token = defined('APW_GITHUB_TOKEN') ? APW_GITHUB_TOKEN : null;
-        if ($github_token) {
-            apw_woo_log('Using GitHub token for authenticated download');
-            
-            // Download with authentication headers
-            $args = [
-                'timeout' => 300,
-                'headers' => [
-                    'Authorization' => 'token ' . $github_token,
-                    'Accept' => 'application/vnd.github.v3+json',
-                    'User-Agent' => 'APW-WooCommerce-Plugin-Updater'
-                ]
-            ];
-            
-            $download_file = download_url($package, 300, false, $args);
-        } else {
-            apw_woo_log('No GitHub token available, attempting public download');
-            $download_file = download_url($package);
+        if (!$github_token) {
+            apw_woo_log('ERROR: No GitHub token available for private repository', 'error');
+            return new WP_Error('no_github_token', 'GitHub token required for private repository access.');
         }
         
+        apw_woo_log('Using GitHub token for authenticated download');
+        
+        // Download with authentication headers
+        $args = [
+            'timeout' => 300,
+            'headers' => [
+                'Authorization' => 'token ' . $github_token,
+                'Accept' => 'application/vnd.github.v3+json',
+                'User-Agent' => 'APW-WooCommerce-Plugin-Updater'
+            ]
+        ];
+        
+        apw_woo_log('Download arguments: ' . print_r($args, true));
+        
+        $download_file = download_url($package, 300, false, $args);
+        
         if (is_wp_error($download_file)) {
-            apw_woo_log('Download error: ' . $download_file->get_error_message(), 'error');
+            apw_woo_log('Download failed: ' . $download_file->get_error_message(), 'error');
+            apw_woo_log('Error data: ' . print_r($download_file->get_error_data(), true), 'error');
             return $download_file;
         }
         
-        apw_woo_log('Download successful: ' . $download_file);
+        apw_woo_log('Download successful to: ' . $download_file);
+        apw_woo_log('File size: ' . (file_exists($download_file) ? filesize($download_file) . ' bytes' : 'File not found'));
+        apw_woo_log('=== Download handler complete ===');
+        
         return $download_file;
     }
     
