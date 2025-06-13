@@ -2,7 +2,7 @@
 
 A comprehensive WordPress plugin that extends WooCommerce functionality with advanced e-commerce features. Built specifically for the **Flatsome theme**, this plugin provides enhanced product displays, custom checkout processes, dynamic pricing integration, payment gateway enhancements, and sophisticated cart management systems.
 
-**Current Version**: 1.20.4
+**Current Version**: 1.20.6
 
 ## 🚀 Features
 
@@ -343,7 +343,18 @@ Log files will be created in the `logs/` directory.
 
 ## 📝 Changelog
 
-### Version 1.20.4 (Latest)
+### Version 1.20.6 (Latest)
+- **🔧 CRITICAL AUTO-UPDATER FIX**: Fixed plugin deactivation after updates by implementing immediate directory renaming
+- **✅ EARLY DIRECTORY FIX**: Added 'upgrader_install_package_result' hook to rename GitHub commit hash directories before WordPress processes them
+- **🚀 PLUGIN ACTIVATION**: Resolved issue where plugin would deactivate itself after auto-updates due to directory name mismatch
+- **🛠️ DUAL PATTERN SUPPORT**: Enhanced pattern matching to handle both 'Orases-' and 'OrasesWPDev-' directory naming conventions
+- **📊 IMPROVED LOGGING**: Added detailed logging for directory renaming process during updates
+- **🔒 ACTIVATION RELIABILITY**: Plugin now maintains activation status through auto-updates
+
+### Version 1.20.5
+- **TEST**: Version for hotfix verification and testing
+
+### Version 1.20.4
 - **🔧 CRITICAL AUTO-UPDATER FIX**: Fixed GitHub zipball directory extraction issue preventing proper plugin updates
 - **✅ DIRECTORY STRUCTURE**: Replaced zip preprocessing with post-extraction directory fix using 'upgrader_unpack_package' hook
 - **🚀 PACKAGE HANDLING**: Auto-updater now properly renames GitHub commit hash directories to correct plugin directory names

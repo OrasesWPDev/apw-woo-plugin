@@ -113,6 +113,9 @@ class APW_Woo_GitHub_Updater {
         // Hook into post-update to clean up directory structure
         add_action('upgrader_process_complete', [$this, 'cleanup_after_update'], 999, 2);
         
+        // Hook into the installation process to handle directory naming immediately
+        add_filter('upgrader_install_package_result', [$this, 'fix_directory_name'], 10, 2);
+        
         // Add admin notices when debug mode is enabled
         if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE) {
             add_action('admin_notices', [$this, 'display_update_notice']);
@@ -522,6 +525,79 @@ class APW_Woo_GitHub_Updater {
     }
     
     /**
+     * Fix directory name immediately after package installation
+     *
+     * @param array $result Installation result
+     * @param array $hook_extra Hook extra data
+     * @return array Modified result
+     */
+    public function fix_directory_name($result, $hook_extra) {
+        // Only handle plugin installations/updates
+        if (!isset($hook_extra['type']) || $hook_extra['type'] !== 'plugin') {
+            return $result;
+        }
+        
+        // Only handle our plugin
+        if (isset($hook_extra['plugin'])) {
+            $plugin_slug = plugin_basename($this->plugin_file);
+            if ($hook_extra['plugin'] !== $plugin_slug) {
+                return $result;
+            }
+        }
+        
+        // Check if installation was successful and has a destination
+        if (!is_array($result) || !isset($result['destination'])) {
+            return $result;
+        }
+        
+        $installed_dir = $result['destination'];
+        $installed_dir_name = basename($installed_dir);
+        
+        apw_woo_log('=== Fix directory name called ===');
+        apw_woo_log('Installed directory: ' . $installed_dir);
+        apw_woo_log('Installed directory name: ' . $installed_dir_name);
+        
+        // Check if this is a GitHub commit hash directory
+        $repo_identifier = $this->github_repo['owner'] . '-' . $this->github_repo['repo'];
+        $alt_repo_identifier = $this->github_repo['owner'] . 'WPDev-' . $this->github_repo['repo'];
+        
+        if (strpos($installed_dir_name, $repo_identifier) === 0 || strpos($installed_dir_name, $alt_repo_identifier) === 0) {
+            apw_woo_log('Detected GitHub commit hash directory: ' . $installed_dir_name);
+            
+            $plugins_dir = WP_PLUGIN_DIR;
+            $expected_dir_name = dirname(plugin_basename($this->plugin_file));
+            $expected_dir_path = $plugins_dir . '/' . $expected_dir_name;
+            
+            apw_woo_log('Expected directory name: ' . $expected_dir_name);
+            apw_woo_log('Expected directory path: ' . $expected_dir_path);
+            
+            // Remove existing directory if it exists
+            if (file_exists($expected_dir_path)) {
+                apw_woo_log('Removing existing directory: ' . $expected_dir_path);
+                $this->remove_directory($expected_dir_path);
+            }
+            
+            // Rename the GitHub directory to the expected name
+            if (rename($installed_dir, $expected_dir_path)) {
+                apw_woo_log('Successfully renamed directory: ' . $installed_dir_name . ' -> ' . $expected_dir_name);
+                
+                // Update the result to reflect the new destination
+                $result['destination'] = $expected_dir_path;
+                $result['destination_name'] = $expected_dir_name;
+                
+                apw_woo_log('Updated installation result destination to: ' . $expected_dir_path);
+            } else {
+                apw_woo_log('Failed to rename directory from ' . $installed_dir . ' to ' . $expected_dir_path, 'error');
+            }
+        } else {
+            apw_woo_log('Directory name does not match GitHub pattern, no rename needed: ' . $installed_dir_name);
+        }
+        
+        apw_woo_log('=== Fix directory name complete ===');
+        return $result;
+    }
+    
+    /**
      * Clean up directory structure after update completes
      *
      * This runs AFTER WordPress completes the update process, avoiding interference
@@ -554,6 +630,13 @@ class APW_Woo_GitHub_Updater {
         // Look for GitHub commit hash directories
         $github_pattern = $plugins_dir . '/' . $this->github_repo['owner'] . '-' . $this->github_repo['repo'] . '-*';
         $github_dirs = glob($github_pattern, GLOB_ONLYDIR);
+        
+        // Also look for directories that match the exact pattern we're seeing
+        $alternative_pattern = $plugins_dir . '/' . $this->github_repo['owner'] . 'WPDev-' . $this->github_repo['repo'] . '-*';
+        $alternative_dirs = glob($alternative_pattern, GLOB_ONLYDIR);
+        
+        // Combine both patterns
+        $github_dirs = array_merge($github_dirs, $alternative_dirs);
         
         apw_woo_log('Looking for GitHub directories with pattern: ' . $github_pattern);
         apw_woo_log('Found GitHub directories: ' . print_r($github_dirs, true));
