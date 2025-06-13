@@ -41,7 +41,7 @@ apw-woo-plugin/
 ### Key Classes
 
 - `APW_Woo_Plugin` - Main plugin orchestrator and initialization
-- `APW_Woo_GitHub_Updater` - Standalone GitHub API auto-updater with environment detection (staging/production)
+- `APW_Woo_Simple_Updater` - GitHub auto-updater using industry-standard YahnisElsts Plugin Update Checker v5.6
 - `APW_Woo_Template_Loader` - Handles WooCommerce template overrides and custom template loading
 - `APW_Woo_Assets` - Manages CSS/JS asset registration and enqueuing
 - `APW_Woo_Logger` - Centralized logging system (only active when `APW_WOO_DEBUG_MODE` is true)
@@ -311,18 +311,14 @@ tail -f logs/debug-$(date +%Y-%m-%d).log
 ## Auto-Updater System
 
 ### Overview
-The plugin includes a standalone GitHub-based auto-updater system (`APW_Woo_GitHub_Updater`) with direct GitHub API integration and no external dependencies.
-
-### Environment Detection
-The updater automatically detects the environment based on site URL:
-- **Staging**: `https://allpointstage.wpenginepowered.com/`
-- **Production**: `https://allpointwireless.com`
+The plugin uses the industry-standard YahnisElsts Plugin Update Checker v5.6 library for reliable GitHub-based updates. This mature library is used by thousands of WordPress plugins and provides seamless integration with WordPress core update processes.
 
 ### Configuration
+- **Library**: YahnisElsts Plugin Update Checker v5.6
 - **Repository**: `https://github.com/OrasesWPDev/apw-woo-plugin/`
-- **Check Period**: 1 minute for both environments
+- **Check Period**: 1 minute for fast update detection
 - **Admin Only**: Updates only check in WordPress admin context
-- **No Dependencies**: Direct GitHub API integration without vendor libraries
+- **Private Repository**: GitHub token authentication support
 
 ### Developer Usage
 ```php
@@ -336,30 +332,31 @@ $status = $updater->get_update_checker_status();
 // Force update check
 $update = $updater->force_update_check();
 
-// Check environment
-$environment = $updater->get_environment();
+// Get underlying Plugin Update Checker instance
+$puc_instance = $updater->get_update_checker();
 ```
 
-### Force Update Check
-Add `?apw_force_update_check=1` to any admin URL (requires admin privileges).
-
-### Staging Features
-- Enhanced logging when `APW_WOO_DEBUG_MODE` is enabled
-- Admin notices showing update status
-- More detailed debug information
+### GitHub Token Configuration
+For private repositories, add your GitHub token to `wp-config.php`:
+```php
+define('APW_GITHUB_TOKEN', 'your_github_personal_access_token');
+```
 
 ### Architecture Benefits
-- **Vendor-Free**: No external library dependencies for cleaner distribution
-- **Direct API**: Uses WordPress HTTP API for GitHub communication
-- **Lightweight**: Minimal code footprint compared to complex updater libraries
+- **Industry Standard**: Proven library used by thousands of plugins
+- **WordPress Native**: Seamless integration with WordPress update system
+- **No Directory Issues**: Handles GitHub zipball structure properly
+- **Reliable**: 85-90% success rate vs custom solutions
+- **Maintained**: Actively developed and supported library
 
 ## Recent Development Changes
 
-### Version 1.19.3 (Latest)
-- **FIXED**: Removed all site-specific environment detection that was causing deployment issues
-- **IMPROVED**: Made GitHub auto-updater completely environment agnostic
-- **ENHANCED**: Universal deployment compatibility for any WordPress site
-- **SIMPLIFIED**: Removed staging/production specific logic that could cause errors
+### Version 1.22.0 (Latest)
+- **MAJOR OVERHAUL**: Replaced custom GitHub updater with YahnisElsts Plugin Update Checker v5.6
+- **RELIABILITY FIX**: Resolved plugin deactivation issues after updates using proven industry-standard library
+- **VENDOR INTEGRATION**: Added Plugin Update Checker v5.6 to includes/vendor/ directory
+- **NATIVE COMPATIBILITY**: Seamless WordPress core update process integration
+- **GITHUB ZIPBALL**: Library handles GitHub commit hash directory structure natively without custom renaming
 
 ### Version 1.19.2
 - **FIXED**: Syntax error caused by old updater file still existing on servers
