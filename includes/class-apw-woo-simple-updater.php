@@ -72,18 +72,19 @@ class APW_Woo_Simple_Updater {
         }
         
         try {
-            // Initialize the update checker
+            // Initialize the update checker with 1 minute check period (1/60 hours)
             $this->update_checker = YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
                 $this->github_repo_url,
                 $this->plugin_file,
-                'apw-woo-plugin'
+                'apw-woo-plugin',
+                1/60  // Check period in hours (1 minute)
             );
             
             // Set branch (optional, defaults to 'main')
             $this->update_checker->setBranch('main');
             
-            // Set check period to 1 minute for fast update detection
-            $this->update_checker->setCheckPeriod(1/60);
+            // Alternative: Set check period via scheduler property after initialization
+            // $this->update_checker->scheduler->checkPeriod = 1/60;
             
             // Add GitHub token if available (for private repos)
             $github_token = defined('APW_GITHUB_TOKEN') ? APW_GITHUB_TOKEN : null;
@@ -135,6 +136,35 @@ class APW_Woo_Simple_Updater {
     }
     
     /**
+     * Set the check period for updates
+     *
+     * @param float $hours Check period in hours (e.g., 1/60 for 1 minute)
+     * @return bool Success status
+     */
+    public function set_check_period($hours) {
+        if (!$this->update_checker || !isset($this->update_checker->scheduler)) {
+            return false;
+        }
+        
+        $this->update_checker->scheduler->checkPeriod = $hours;
+        apw_woo_log("Update check period changed to " . ($hours * 60) . " minutes");
+        return true;
+    }
+    
+    /**
+     * Get the current check period
+     *
+     * @return float|null Check period in hours, or null if not available
+     */
+    public function get_check_period() {
+        if (!$this->update_checker || !isset($this->update_checker->scheduler)) {
+            return null;
+        }
+        
+        return $this->update_checker->scheduler->checkPeriod;
+    }
+    
+    /**
      * Get update checker status information
      *
      * @return array Status information
@@ -149,12 +179,15 @@ class APW_Woo_Simple_Updater {
         
         $plugin_data = get_plugin_data($this->plugin_file);
         
+        $check_period_hours = isset($this->update_checker->scheduler) ? $this->update_checker->scheduler->checkPeriod : 'Unknown';
+        $check_period_minutes = is_numeric($check_period_hours) ? round($check_period_hours * 60, 2) : 'Unknown';
+        
         return [
             'status' => 'active',
             'library' => 'YahnisElsts Plugin Update Checker v5.6',
             'github_repo' => $this->github_repo_url,
             'current_version' => $plugin_data['Version'],
-            'check_period' => '1 minute',
+            'check_period' => $check_period_minutes . ' minutes (' . $check_period_hours . ' hours)',
             'authentication' => defined('APW_GITHUB_TOKEN') ? 'Enabled' : 'Disabled',
             'last_check' => 'Handled by library'
         ];
