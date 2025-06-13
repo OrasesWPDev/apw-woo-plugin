@@ -24,7 +24,7 @@ class APW_Woo_Plugin {
     /**
      * Auto-updater instance
      *
-     * @var APW_Woo_GitHub_Updater
+     * @var APW_Woo_Simple_Updater
      */
     private $updater;
 
@@ -75,8 +75,8 @@ class APW_Woo_Plugin {
             return;
         }
 
-        // Initialize updater with GitHub repository
-        $this->updater = new APW_Woo_GitHub_Updater(
+        // Initialize updater with GitHub repository using Plugin Update Checker library
+        $this->updater = new APW_Woo_Simple_Updater(
             APW_WOO_PLUGIN_FILE,
             'https://github.com/OrasesWPDev/apw-woo-plugin/'
         );
@@ -87,7 +87,7 @@ class APW_Woo_Plugin {
     /**
      * Get the updater instance (for testing)
      *
-     * @return APW_Woo_GitHub_Updater|null
+     * @return APW_Woo_Simple_Updater|null
      */
     public function get_updater() {
         return $this->updater;
