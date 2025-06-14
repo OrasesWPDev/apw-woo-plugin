@@ -1220,7 +1220,8 @@ function apw_woo_ajax_get_threshold_messages() {
 }
 
 // Hook into WooCommerce cart fee calculation
-add_action('woocommerce_cart_calculate_fees', 'apw_woo_apply_role_based_bulk_discounts');
+// Add bulk discount calculation hook with priority 5 to run before surcharge calculations (priority 15)
+add_action('woocommerce_cart_calculate_fees', 'apw_woo_apply_role_based_bulk_discounts', 5);
 
 /**
  * Ensure cart is calculated on cart page load to show discounts immediately
@@ -1238,3 +1239,144 @@ function apw_woo_ensure_cart_calculated_on_load() {
     }
 }
 add_action('wp', 'apw_woo_ensure_cart_calculated_on_load', 20);
+
+/**
+ * Save applied discount rules to order meta during checkout
+ * This preserves the discount rules for potential admin order edits
+ */
+function apw_woo_save_discount_rules_to_order($order, $data) {
+    if (!$order instanceof WC_Order) {
+        return;
+    }
+    
+    // Get all current cart fees that are discounts (negative amounts)
+    $cart_fees = WC()->cart->get_fees();
+    $discount_rules = array();
+    
+    foreach ($cart_fees as $fee_key => $fee) {
+        if ($fee->amount < 0) { // Negative fees are discounts
+            // Extract product info from fee name if possible
+            $fee_name = $fee->name;
+            $discount_amount = abs($fee->amount);
+            
+            // Store discount rule info
+            $discount_rules[] = array(
+                'name' => $fee_name,
+                'amount' => $discount_amount,
+                'original_fee_key' => $fee_key,
+                'applied_at' => current_time('mysql'),
+                'cart_contents' => WC()->cart->get_cart_contents() // Store cart state for comparison
+            );
+            
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log("ADMIN DISCOUNT PRESERVATION: Saved discount rule '{$fee_name}' with amount \${$discount_amount} to order #{$order->get_id()}");
+            }
+        }
+    }
+    
+    // Save discount rules to order meta
+    if (!empty($discount_rules)) {
+        $order->update_meta_data('_apw_saved_discount_rules', $discount_rules);
+        $order->save();
+        
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log("ADMIN DISCOUNT PRESERVATION: Saved " . count($discount_rules) . " discount rules to order #{$order->get_id()}");
+        }
+    }
+}
+add_action('woocommerce_checkout_create_order', 'apw_woo_save_discount_rules_to_order', 10, 2);
+
+/**
+ * Reapply quantity discounts when admin edits orders
+ * This runs when admin clicks "Recalculate" button or modifies items
+ */
+function apw_woo_reapply_admin_discounts($and_taxes, $order) {
+    // Only run in admin context
+    if (!is_admin() || !$order instanceof WC_Order) {
+        return;
+    }
+    
+    // Get saved discount rules from order meta
+    $saved_rules = $order->get_meta('_apw_saved_discount_rules');
+    if (empty($saved_rules) || !is_array($saved_rules)) {
+        return;
+    }
+    
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log("ADMIN DISCOUNT PRESERVATION: Processing admin order edit for order #{$order->get_id()} with " . count($saved_rules) . " saved discount rules");
+    }
+    
+    // Remove existing discount fees first
+    $fees = $order->get_fees();
+    foreach ($fees as $fee_id => $fee) {
+        $fee_name = $fee->get_name();
+        if (strpos($fee_name, 'Discount') !== false || strpos($fee_name, 'VIP') !== false || strpos($fee_name, 'Bulk') !== false) {
+            $order->remove_item($fee_id);
+            
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log("ADMIN DISCOUNT PRESERVATION: Removed existing discount fee '{$fee_name}' from order #{$order->get_id()}");
+            }
+        }
+    }
+    
+    // Check current order items against saved discount rules
+    $order_items = $order->get_items();
+    
+    foreach ($saved_rules as $rule) {
+        // Check if order still qualifies for this discount
+        if (apw_woo_order_qualifies_for_discount($order, $order_items, $rule)) {
+            // Reapply the discount as a fee
+            $fee = new WC_Order_Item_Fee();
+            $fee->set_name($rule['name']);
+            $fee->set_total(-$rule['amount']); // Negative for discount
+            $fee->set_tax_status('taxable');
+            
+            $order->add_item($fee);
+            
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log("ADMIN DISCOUNT PRESERVATION: Reapplied discount '{$rule['name']}' with amount \${$rule['amount']} to order #{$order->get_id()}");
+            }
+        } else {
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log("ADMIN DISCOUNT PRESERVATION: Order #{$order->get_id()} no longer qualifies for discount '{$rule['name']}'");
+            }
+        }
+    }
+}
+add_action('woocommerce_order_before_calculate_totals', 'apw_woo_reapply_admin_discounts', 10, 2);
+
+/**
+ * Check if current order still qualifies for a saved discount rule
+ * This function checks product IDs, quantities, and user roles
+ */
+function apw_woo_order_qualifies_for_discount($order, $order_items, $discount_rule) {
+    if (!$order instanceof WC_Order || !is_array($discount_rule)) {
+        return false;
+    }
+    
+    // Get user ID and role from order
+    $user_id = $order->get_user_id();
+    $user = $user_id ? get_user_by('ID', $user_id) : null;
+    $user_roles = $user ? $user->roles : array();
+    
+    // Check if this is a bulk discount for product ID 80 (based on current system)
+    foreach ($order_items as $item_id => $item) {
+        $product_id = $item->get_product_id();
+        $quantity = $item->get_quantity();
+        
+        // Check for product ID 80 bulk discount (matching current discount rules)
+        if ($product_id == 80) {
+            // VIP Discount check (distro10 role)
+            if (strpos($discount_rule['name'], 'VIP') !== false && in_array('distro10', $user_roles)) {
+                return true;
+            }
+            
+            // Bulk discount check (5+ quantity)
+            if (strpos($discount_rule['name'], 'Bulk') !== false && $quantity >= 5) {
+                return true;
+            }
+        }
+    }
+    
+    return false;
+}
