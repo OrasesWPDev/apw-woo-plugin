@@ -211,9 +211,12 @@ function apw_woo_add_intuit_surcharge_fee() {
 
     $chosen_gateway = WC()->session->get('chosen_payment_method');
     if ($chosen_gateway === 'intuit_payments_credit_card') {
-        $subtotal = WC()->cart->get_subtotal();
-        $shipping = WC()->cart->get_shipping_total();
-        $surcharge = ($subtotal + $shipping) * 0.03;
+        // Get cart total which includes all discounts and fees already applied
+        $cart_totals = WC()->cart->get_totals();
+        $cart_total = $cart_totals['total'] ?? 0;
+        
+        // Calculate 3% surcharge on the discounted total (not original subtotal)
+        $surcharge = $cart_total * 0.03;
 
         if ($surcharge > 0) {
             WC()->cart->add_fee(__('Credit Card Surcharge (3%)', 'apw-woo-plugin'), $surcharge, true);
@@ -225,5 +228,5 @@ function apw_woo_add_intuit_surcharge_fee() {
     }
 }
 
-// Add the surcharge calculation hook
-add_action('woocommerce_cart_calculate_fees', 'apw_woo_add_intuit_surcharge_fee');
+// Add the surcharge calculation hook with priority 15 to run after discounts (priority 5)
+add_action('woocommerce_cart_calculate_fees', 'apw_woo_add_intuit_surcharge_fee', 15);

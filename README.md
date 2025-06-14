@@ -2,7 +2,7 @@
 
 A comprehensive WordPress plugin that extends WooCommerce functionality with advanced e-commerce features. Built specifically for the **Flatsome theme**, this plugin provides enhanced product displays, custom checkout processes, dynamic pricing integration, payment gateway enhancements, and sophisticated cart management systems.
 
-**Current Version**: 1.22.1
+**Current Version**: 1.23.0
 
 ## 🚀 Features
 
@@ -343,7 +343,16 @@ Log files will be created in the `logs/` directory.
 
 ## 📝 Changelog
 
-### Version 1.22.1 (Latest)
+### Version 1.23.0 (Latest)
+- **💳 FIXED**: Credit card surcharge calculation order - now applies 3% after discounts are deducted
+- **🛒 ENHANCED**: Hook priority system ensures discounts (priority 5) apply before surcharges (priority 15)
+- **👨‍💼 NEW**: Admin order discount preservation - quantity discounts maintain when admins edit orders
+- **🔄 INTELLIGENT**: Automatically reapplies qualifying discounts when admin recalculates order totals
+- **📊 IMPROVED**: Proper cart total calculation using WooCommerce's native get_totals() method
+- **🔧 TECHNICAL**: Uses `woocommerce_order_before_calculate_totals` hook for admin order management
+- **💰 CORRECT MATH**: $545 base + $25.22 shipping - $50 discount = $520.22 × 3% = $15.61 surcharge (previously $17.11)
+
+### Version 1.22.1
 - **🔧 HOTFIX**: Fixed Plugin Update Checker v5.6 API compatibility issue
 - **✅ RESOLVED**: Replaced invalid `setCheckPeriod()` method call with correct initialization parameter
 - **⚡ MAINTAINED**: 1-minute update check frequency using proper v5.6 API
