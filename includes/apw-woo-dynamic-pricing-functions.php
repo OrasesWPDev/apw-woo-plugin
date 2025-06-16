@@ -1356,6 +1356,24 @@ function apw_woo_reapply_admin_discounts_before_calc($and_taxes, $order) {
             if (APW_WOO_DEBUG_MODE) {
                 apw_woo_log("ADMIN DISCOUNT PRESERVATION: Reapplied taxable discount '{$rule['name']}' with amount \${$rule['amount']} to order #{$order->get_id()}");
             }
+            
+            // IMMEDIATE FALLBACK: Calculate tax for this fee right away
+            // This ensures tax is calculated even if the after_calculate_totals hook doesn't fire
+            $fee_total = $fee->get_total();
+            if ($fee_total < 0) { // Only for discount fees
+                $tax_rates = WC_Tax::get_rates($fee->get_tax_class(), $order->get_tax_address());
+                $fee_taxes = WC_Tax::calc_tax(abs($fee_total), $tax_rates, false);
+                
+                if (!empty($fee_taxes)) {
+                    $total_tax = -array_sum($fee_taxes);
+                    $fee->set_total_tax($total_tax);
+                    $fee->set_taxes(array('total' => array_map(function($tax) { return -$tax; }, $fee_taxes)));
+                    
+                    if (APW_WOO_DEBUG_MODE) {
+                        apw_woo_log("ADMIN DISCOUNT PRESERVATION: Immediately calculated tax for '{$rule['name']}': \${$total_tax}");
+                    }
+                }
+            }
         } else {
             if (APW_WOO_DEBUG_MODE) {
                 apw_woo_log("ADMIN DISCOUNT PRESERVATION: Order #{$order->get_id()} no longer qualifies for discount '{$rule['name']}'");
@@ -1369,14 +1387,24 @@ function apw_woo_reapply_admin_discounts_before_calc($and_taxes, $order) {
  * This runs after WooCommerce calculates taxes to ensure proper tax handling
  */
 function apw_woo_ensure_discount_tax_calculated($order) {
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log("ADMIN DISCOUNT TAX: Function called - checking context and order");
+    }
+    
     // Only run in admin context
     if (!is_admin() || !$order instanceof WC_Order) {
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log("ADMIN DISCOUNT TAX: Skipping - not admin context or invalid order object");
+        }
         return;
     }
     
     // Get saved discount rules from order meta
     $saved_rules = $order->get_meta('_apw_saved_discount_rules');
     if (empty($saved_rules) || !is_array($saved_rules)) {
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log("ADMIN DISCOUNT TAX: No saved discount rules found for order #{$order->get_id()}");
+        }
         return;
     }
     

@@ -2,7 +2,7 @@
 
 A comprehensive WordPress plugin that extends WooCommerce functionality with advanced e-commerce features. Built specifically for the **Flatsome theme**, this plugin provides enhanced product displays, custom checkout processes, dynamic pricing integration, payment gateway enhancements, and sophisticated cart management systems.
 
-**Current Version**: 1.23.2
+**Current Version**: 1.23.3
 
 ## 🚀 Features
 
@@ -343,7 +343,15 @@ Log files will be created in the `logs/` directory.
 
 ## 📝 Changelog
 
-### Version 1.23.2 (Latest)
+### Version 1.23.3 (Latest)
+- **🔧 CRITICAL FIX**: Resolved duplicate credit card surcharge fees by removing existing surcharges before adding new ones
+- **💳 FIXED**: Credit card surcharge now correctly shows $15.64 instead of $17.14 when multiple cart calculations occur
+- **📊 ENHANCED**: VIP discount tax preservation with immediate fallback tax calculation 
+- **🏷️ IMPROVED**: Admin discount tax recalculation now happens immediately after discount reapplication
+- **⚙️ TECHNICAL**: Added fallback tax calculation to ensure -$3 VIP tax persists even if WooCommerce hooks don't fire
+- **🛡️ PREVENTION**: Multiple fee additions prevented through existing fee removal before new calculation
+
+### Version 1.23.2
 - **💳 FIXED**: Credit card surcharge calculation now properly accounts for VIP discount fees instead of coupon discounts
 - **🔧 CORRECTED**: Surcharge base calculation changed from manual sum of negative cart fees vs discount_total field 
 - **🏷️ FIXED**: VIP discount tax preservation completely redesigned to work with WooCommerce's tax calculation flow
