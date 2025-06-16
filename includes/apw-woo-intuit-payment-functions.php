@@ -124,6 +124,19 @@ function apw_woo_enqueue_intuit_scripts() {
 add_action('wp_enqueue_scripts', 'apw_woo_enqueue_intuit_scripts');
 
 /**
+ * Reset surcharge calculation flags when cart changes significantly
+ * This ensures surcharge is recalculated when VIP discounts are applied/removed
+ */
+function apw_woo_reset_surcharge_calculation_flags() {
+    // Set global flag to force surcharge recalculation
+    $GLOBALS['apw_woo_force_surcharge_recalc'] = true;
+    
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log('SURCHARGE FIX: Reset calculation flags due to cart changes');
+    }
+}
+
+/**
  * Initialize Intuit payment gateway integration
  */
 function apw_woo_init_intuit_integration() {
@@ -163,11 +176,15 @@ function apw_woo_init_intuit_integration() {
     // Add the surcharge calculation hook with priority 15 to run after discounts (priority 5)
     add_action('woocommerce_cart_calculate_fees', 'apw_woo_add_intuit_surcharge_fee', 15);
     
+    // CRITICAL FIX: Hook into discount application to trigger surcharge recalculation
+    add_action('apw_woo_bulk_discount_applied', 'apw_woo_reset_surcharge_calculation_flags', 10);
+    add_action('woocommerce_cart_updated', 'apw_woo_reset_surcharge_calculation_flags', 10);
+    
     // Mark as initialized
     $initialized = true;
     
     if (APW_WOO_DEBUG_MODE) {
-        apw_woo_log('Intuit payment integration initialized');
+        apw_woo_log('Intuit payment integration initialized with surcharge recalculation triggers');
     }
 }
 
@@ -201,11 +218,10 @@ function apw_woo_preserve_intuit_fields($data) {
  * 
  * Applies a 3% surcharge when Intuit credit card payment method is selected.
  * Only applies on the checkout page to avoid affecting cart calculations.
+ * 
+ * COMPREHENSIVE FIX: Removes stale surcharge fees and recalculates based on current cart state
  */
 function apw_woo_add_intuit_surcharge_fee() {
-    // Prevent multiple executions within the same request
-    static $surcharge_processed = false;
-    
     if (is_admin() && !defined('DOING_AJAX')) {
         return;
     }
@@ -217,61 +233,90 @@ function apw_woo_add_intuit_surcharge_fee() {
 
     $chosen_gateway = WC()->session->get('chosen_payment_method');
     if ($chosen_gateway === 'intuit_payments_credit_card') {
-        // Check if surcharge already exists to prevent duplicates
+        
+        // CRITICAL FIX: Always remove existing surcharge fees before recalculating
+        // This prevents stale fees from persisting when cart totals change
         $existing_fees = WC()->cart->get_fees();
-        $surcharge_exists = false;
-        foreach ($existing_fees as $fee) {
+        $removed_old_surcharge = false;
+        
+        foreach ($existing_fees as $fee_id => $fee) {
             if (strpos($fee->name, 'Credit Card Surcharge') !== false) {
-                $surcharge_exists = true;
+                // Remove the old surcharge fee to force fresh calculation
+                if (method_exists(WC()->cart, 'remove_fee')) {
+                    WC()->cart->remove_fee($fee_id);
+                } else {
+                    // WooCommerce doesn't have remove_fee, so we'll use reflection to remove it
+                    $fees_property = new ReflectionProperty(WC()->cart, 'fees');
+                    $fees_property->setAccessible(true);
+                    $fees = $fees_property->getValue(WC()->cart);
+                    unset($fees[$fee_id]);
+                    $fees_property->setValue(WC()->cart, $fees);
+                }
+                $removed_old_surcharge = true;
+                
                 if (APW_WOO_DEBUG_MODE) {
-                    apw_woo_log("Credit card surcharge already exists: $" . number_format($fee->amount, 2));
+                    apw_woo_log("SURCHARGE FIX: Removed old surcharge fee: $" . number_format($fee->amount, 2) . " to force recalculation");
                 }
                 break;
             }
         }
         
-        // Only add surcharge if it doesn't already exist
-        if (!$surcharge_exists && !$surcharge_processed) {
-            // Calculate surcharge base: subtotal + shipping - VIP discounts (before tax)
-            $cart_totals = WC()->cart->get_totals();
-            $subtotal = $cart_totals['subtotal'] ?? 0;
-            $shipping_total = $cart_totals['shipping_total'] ?? 0;
-            
-            // Get actual discount from negative cart fees (VIP discounts are fees, not coupons)
-            $total_discount = 0;
-            foreach (WC()->cart->get_fees() as $fee) {
-                if ($fee->amount < 0) {
-                    $total_discount += abs($fee->amount);
-                }
+        // Calculate surcharge base: subtotal + shipping - VIP discounts (before tax)
+        $cart_totals = WC()->cart->get_totals();
+        $subtotal = $cart_totals['subtotal'] ?? 0;
+        $shipping_total = $cart_totals['shipping_total'] ?? 0;
+        
+        // Get actual discount from negative cart fees (VIP discounts are fees, not coupons)
+        $total_discount = 0;
+        foreach (WC()->cart->get_fees() as $fee) {
+            if ($fee->amount < 0) {
+                $total_discount += abs($fee->amount);
             }
-            
-            // Base for surcharge calculation: subtotal + shipping - discount fees (before tax)
-            $surcharge_base = $subtotal + $shipping_total - $total_discount;
-            
-            // Calculate 3% surcharge on the pre-tax total
-            $surcharge = $surcharge_base * 0.03;
+        }
+        
+        // Base for surcharge calculation: subtotal + shipping - discount fees (before tax)
+        $surcharge_base = $subtotal + $shipping_total - $total_discount;
+        
+        // Calculate 3% surcharge on the pre-tax total
+        $surcharge = $surcharge_base * 0.03;
 
-            if ($surcharge > 0) {
-                WC()->cart->add_fee(__('Credit Card Surcharge (3%)', 'apw-woo-plugin'), $surcharge, true);
-                $surcharge_processed = true;
-                
-                if (APW_WOO_DEBUG_MODE) {
-                    apw_woo_log("Credit Card Surcharge Calculation:");
-                    apw_woo_log("- Subtotal: $" . number_format($subtotal, 2));
-                    apw_woo_log("- Shipping: $" . number_format($shipping_total, 2));
-                    apw_woo_log("- Discount fees: $" . number_format($total_discount, 2));
-                    apw_woo_log("- Base for surcharge: $" . number_format($surcharge_base, 2));
-                    apw_woo_log("- Applied 3% surcharge: $" . number_format($surcharge, 2));
+        if ($surcharge > 0) {
+            WC()->cart->add_fee(__('Credit Card Surcharge (3%)', 'apw-woo-plugin'), $surcharge, true);
+            
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log("SURCHARGE FIX: Recalculated Credit Card Surcharge:");
+                apw_woo_log("- Subtotal: $" . number_format($subtotal, 2));
+                apw_woo_log("- Shipping: $" . number_format($shipping_total, 2));
+                apw_woo_log("- Discount fees: $" . number_format($total_discount, 2));
+                apw_woo_log("- Base for surcharge: $" . number_format($surcharge_base, 2));
+                apw_woo_log("- Applied 3% surcharge: $" . number_format($surcharge, 2));
+                if ($removed_old_surcharge) {
+                    apw_woo_log("- Previous surcharge removed and recalculated due to cart changes");
                 }
             }
         }
-    }
-    
-    // Reset flag for next request
-    if (!$chosen_gateway || $chosen_gateway !== 'intuit_payments_credit_card') {
-        $surcharge_processed = false;
-        if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log("Reset surcharge flag - payment method is not Intuit credit card");
+    } else {
+        // If not using Intuit payment method, remove any existing surcharge fees
+        $existing_fees = WC()->cart->get_fees();
+        
+        foreach ($existing_fees as $fee_id => $fee) {
+            if (strpos($fee->name, 'Credit Card Surcharge') !== false) {
+                if (method_exists(WC()->cart, 'remove_fee')) {
+                    WC()->cart->remove_fee($fee_id);
+                } else {
+                    // Use reflection to remove fee if remove_fee method doesn't exist
+                    $fees_property = new ReflectionProperty(WC()->cart, 'fees');
+                    $fees_property->setAccessible(true);
+                    $fees = $fees_property->getValue(WC()->cart);
+                    unset($fees[$fee_id]);
+                    $fees_property->setValue(WC()->cart, $fees);
+                }
+                
+                if (APW_WOO_DEBUG_MODE) {
+                    apw_woo_log("SURCHARGE FIX: Removed surcharge fee - payment method changed from Intuit");
+                }
+                break;
+            }
         }
     }
 }
