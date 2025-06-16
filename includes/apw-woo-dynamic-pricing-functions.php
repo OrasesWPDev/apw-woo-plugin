@@ -1259,17 +1259,24 @@ function apw_woo_save_discount_rules_to_order($order, $data) {
             $fee_name = $fee->name;
             $discount_amount = abs($fee->amount);
             
-            // Get the tax amount for this fee (preserve the original tax calculation)
+            // Get the tax amount and tax class for this fee (for proper recalculation)
             $fee_tax = 0;
             if (isset($fee->tax) && is_numeric($fee->tax)) {
                 $fee_tax = $fee->tax;
             }
             
-            // Store discount rule info including original tax amount
+            // Get tax class if available
+            $tax_class = '';
+            if (isset($fee->tax_class)) {
+                $tax_class = $fee->tax_class;
+            }
+            
+            // Store discount rule info including tax information for proper recalculation
             $discount_rules[] = array(
                 'name' => $fee_name,
                 'amount' => $discount_amount,
                 'tax_amount' => $fee_tax,
+                'tax_class' => $tax_class,
                 'original_fee_key' => $fee_key,
                 'applied_at' => current_time('mysql'),
                 'cart_contents' => WC()->cart->get_cart_contents() // Store cart state for comparison
@@ -1295,9 +1302,9 @@ add_action('woocommerce_checkout_create_order', 'apw_woo_save_discount_rules_to_
 
 /**
  * Reapply quantity discounts when admin edits orders
- * This runs when admin clicks "Recalculate" button or modifies items
+ * This runs before order calculation to ensure fees are present for tax calculation
  */
-function apw_woo_reapply_admin_discounts($and_taxes, $order) {
+function apw_woo_reapply_admin_discounts_before_calc($and_taxes, $order) {
     // Only run in admin context
     if (!is_admin() || !$order instanceof WC_Order) {
         return;
@@ -1332,28 +1339,22 @@ function apw_woo_reapply_admin_discounts($and_taxes, $order) {
     foreach ($saved_rules as $rule) {
         // Check if order still qualifies for this discount
         if (apw_woo_order_qualifies_for_discount($order, $order_items, $rule)) {
-            // Reapply the discount as a fee with preserved tax amount
+            // Reapply the discount as a fee and let WooCommerce calculate tax naturally
             $fee = new WC_Order_Item_Fee();
             $fee->set_name($rule['name']);
             $fee->set_total(-$rule['amount']); // Negative for discount
             
-            // Preserve the original tax amount from checkout
-            if (isset($rule['tax_amount']) && is_numeric($rule['tax_amount'])) {
-                $fee->set_tax_status('taxable');
-                $fee->set_total_tax($rule['tax_amount']); // Preserve original tax calculation
-                
-                if (APW_WOO_DEBUG_MODE) {
-                    apw_woo_log("ADMIN DISCOUNT PRESERVATION: Preserving original tax amount \${$rule['tax_amount']} for discount '{$rule['name']}'");
-                }
-            } else {
-                $fee->set_tax_status('taxable');
-            }
+            // Set taxable status and let WooCommerce calculate tax properly
+            $fee->set_tax_status('taxable');
+            
+            // Get the tax class from the original rule if available, otherwise use standard
+            $tax_class = isset($rule['tax_class']) ? $rule['tax_class'] : '';
+            $fee->set_tax_class($tax_class);
             
             $order->add_item($fee);
             
             if (APW_WOO_DEBUG_MODE) {
-                $tax_info = isset($rule['tax_amount']) ? " and tax \${$rule['tax_amount']}" : "";
-                apw_woo_log("ADMIN DISCOUNT PRESERVATION: Reapplied discount '{$rule['name']}' with amount \${$rule['amount']}{$tax_info} to order #{$order->get_id()}");
+                apw_woo_log("ADMIN DISCOUNT PRESERVATION: Reapplied taxable discount '{$rule['name']}' with amount \${$rule['amount']} to order #{$order->get_id()}");
             }
         } else {
             if (APW_WOO_DEBUG_MODE) {
@@ -1362,7 +1363,66 @@ function apw_woo_reapply_admin_discounts($and_taxes, $order) {
         }
     }
 }
-add_action('woocommerce_order_before_calculate_totals', 'apw_woo_reapply_admin_discounts', 10, 2);
+
+/**
+ * Ensure VIP discount tax is properly calculated after order totals are calculated
+ * This runs after WooCommerce calculates taxes to ensure proper tax handling
+ */
+function apw_woo_ensure_discount_tax_calculated($order) {
+    // Only run in admin context
+    if (!is_admin() || !$order instanceof WC_Order) {
+        return;
+    }
+    
+    // Get saved discount rules from order meta
+    $saved_rules = $order->get_meta('_apw_saved_discount_rules');
+    if (empty($saved_rules) || !is_array($saved_rules)) {
+        return;
+    }
+    
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log("ADMIN DISCOUNT TAX: Ensuring proper tax calculation for discount fees in order #{$order->get_id()}");
+    }
+    
+    // Check all fees and ensure tax is calculated properly
+    $fees = $order->get_fees();
+    foreach ($fees as $fee_id => $fee) {
+        $fee_name = $fee->get_name();
+        
+        // If this is a VIP/discount fee, ensure tax is calculated
+        if ((strpos($fee_name, 'Discount') !== false || strpos($fee_name, 'VIP') !== false || strpos($fee_name, 'Bulk') !== false) 
+            && $fee->get_tax_status() === 'taxable') {
+            
+            // Force recalculation of tax for this fee
+            $fee_total = $fee->get_total();
+            if ($fee_total < 0) { // Only for discount fees (negative amounts)
+                
+                // Calculate tax on the fee amount using WooCommerce's tax calculation
+                $tax_rates = WC_Tax::get_rates($fee->get_tax_class(), $order->get_tax_address());
+                $fee_taxes = WC_Tax::calc_tax(abs($fee_total), $tax_rates, false);
+                
+                if (!empty($fee_taxes)) {
+                    // Set the calculated tax (negative for discount)
+                    $total_tax = -array_sum($fee_taxes);
+                    $fee->set_total_tax($total_tax);
+                    
+                    // Set individual tax amounts
+                    $fee->set_taxes(array('total' => array_map(function($tax) { return -$tax; }, $fee_taxes)));
+                    
+                    if (APW_WOO_DEBUG_MODE) {
+                        apw_woo_log("ADMIN DISCOUNT TAX: Recalculated tax for '{$fee_name}': \${$total_tax}");
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Hook before calculation to ensure fees are present
+add_action('woocommerce_order_before_calculate_totals', 'apw_woo_reapply_admin_discounts_before_calc', 10, 2);
+
+// Hook after calculation to ensure tax is properly calculated
+add_action('woocommerce_after_order_calculate_totals', 'apw_woo_ensure_discount_tax_calculated', 10, 1);
 
 /**
  * Check if current order still qualifies for a saved discount rule
