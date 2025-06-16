@@ -1082,5 +1082,5 @@ if (APW_WOO_DEBUG_MODE) {
 //--------------------------------------------------------------
 
 // Hook into WordPress 'plugins_loaded' to initialize our plugin
-add_action('woocommerce_init', 'apw_woo_initialize_intuit_integration', 20);
+add_action('woocommerce_init', 'apw_woo_init_intuit_integration', 20);
 add_action('plugins_loaded', 'apw_woo_init');

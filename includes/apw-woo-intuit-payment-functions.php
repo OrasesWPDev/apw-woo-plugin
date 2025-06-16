@@ -160,6 +160,9 @@ function apw_woo_init_intuit_integration() {
     // Add a filter to ensure our fields are preserved during checkout
     add_filter('woocommerce_checkout_posted_data', 'apw_woo_preserve_intuit_fields');
     
+    // Add the surcharge calculation hook with priority 15 to run after discounts (priority 5)
+    add_action('woocommerce_cart_calculate_fees', 'apw_woo_add_intuit_surcharge_fee', 15);
+    
     // Mark as initialized
     $initialized = true;
     
@@ -273,5 +276,6 @@ function apw_woo_add_intuit_surcharge_fee() {
     }
 }
 
-// Add the surcharge calculation hook with priority 15 to run after discounts (priority 5)
-add_action('woocommerce_cart_calculate_fees', 'apw_woo_add_intuit_surcharge_fee', 15);
+// REMOVED: File-level hook registration that was causing duplicate surcharge calculations
+// Hook registration now handled in apw_woo_init_intuit_integration() function with static protection
+// This prevents multiple hook registrations when the file is loaded multiple times
