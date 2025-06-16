@@ -201,23 +201,11 @@ function apw_woo_init_product_addons() {
  * @return void
  */
 function apw_woo_initialize_intuit_integration() {
-    // Include the functions file
-    $intuit_file = APW_WOO_PLUGIN_DIR . 'includes/apw-woo-intuit-payment-functions.php';
+    // REMOVED: Duplicate initialization that was causing double surcharge calculations
+    // The Intuit integration is now properly handled by the main plugin file
+    // at line 1085: add_action('woocommerce_init', 'apw_woo_initialize_intuit_integration', 20);
     
-    if (file_exists($intuit_file)) {
-        require_once $intuit_file;
-        
-        // Call the initialization function if it exists
-        if (function_exists('apw_woo_init_intuit_integration')) {
-            apw_woo_init_intuit_integration();
-            
-            if (APW_WOO_DEBUG_MODE) {
-                apw_woo_log('Intuit payment integration initialized from main plugin');
-            }
-        }
-    } else {
-        if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log('Intuit payment functions file not found: ' . $intuit_file, 'warning');
-        }
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log('DEPRECATED: apw_woo_initialize_intuit_integration called from product addons - this is now handled by main plugin initialization');
     }
 }
