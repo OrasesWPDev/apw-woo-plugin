@@ -1422,12 +1422,29 @@ function apw_woo_ensure_discount_tax_calculated($order) {
         return;
     }
     
+    // CRITICAL: Prevent infinite loop during tax recalculation
+    static $processing_tax_orders = array();
+    $order_id = $order->get_id();
+    if (isset($processing_tax_orders[$order_id])) {
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log("ADMIN DISCOUNT TAX: Already processing tax calculation for order #{$order_id}, preventing infinite loop");
+        }
+        return;
+    }
+    $processing_tax_orders[$order_id] = true;
+    
+    // CRITICAL: Temporarily remove this hook to prevent recursive calls when fee modifications trigger recalculation
+    remove_action('woocommerce_after_order_calculate_totals', 'apw_woo_ensure_discount_tax_calculated', 10);
+    
     // Get saved discount rules from order meta
     $saved_rules = $order->get_meta('_apw_saved_discount_rules');
     if (empty($saved_rules) || !is_array($saved_rules)) {
         if (APW_WOO_DEBUG_MODE) {
             apw_woo_log("ADMIN DISCOUNT TAX: No saved discount rules found for order #{$order->get_id()}");
         }
+        // Restore hook and clear flag before returning
+        add_action('woocommerce_after_order_calculate_totals', 'apw_woo_ensure_discount_tax_calculated', 10, 1);
+        unset($processing_tax_orders[$order_id]);
         return;
     }
     
@@ -1466,6 +1483,16 @@ function apw_woo_ensure_discount_tax_calculated($order) {
                 }
             }
         }
+    }
+    
+    // CRITICAL: Restore the hook for future order calculations
+    add_action('woocommerce_after_order_calculate_totals', 'apw_woo_ensure_discount_tax_calculated', 10, 1);
+    
+    // Clear the processing flag to allow future legitimate calls
+    unset($processing_tax_orders[$order_id]);
+    
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log("ADMIN DISCOUNT TAX: Completed tax calculation for order #{$order_id}");
     }
 }
 
