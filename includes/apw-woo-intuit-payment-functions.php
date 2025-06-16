@@ -211,18 +211,28 @@ function apw_woo_add_intuit_surcharge_fee() {
 
     $chosen_gateway = WC()->session->get('chosen_payment_method');
     if ($chosen_gateway === 'intuit_payments_credit_card') {
-        // Get cart total which includes all discounts and fees already applied
+        // Calculate surcharge base: subtotal + shipping - VIP discounts (before tax)
         $cart_totals = WC()->cart->get_totals();
-        $cart_total = $cart_totals['total'] ?? 0;
+        $subtotal = $cart_totals['subtotal'] ?? 0;
+        $shipping_total = $cart_totals['shipping_total'] ?? 0;
+        $discount_total = $cart_totals['discount_total'] ?? 0; // This includes VIP discounts
         
-        // Calculate 3% surcharge on the discounted total (not original subtotal)
-        $surcharge = $cart_total * 0.03;
+        // Base for surcharge calculation: subtotal + shipping - discounts (before tax)
+        $surcharge_base = $subtotal + $shipping_total - $discount_total;
+        
+        // Calculate 3% surcharge on the pre-tax total
+        $surcharge = $surcharge_base * 0.03;
 
         if ($surcharge > 0) {
             WC()->cart->add_fee(__('Credit Card Surcharge (3%)', 'apw-woo-plugin'), $surcharge, true);
             
             if (APW_WOO_DEBUG_MODE) {
-                apw_woo_log("Applied Intuit surcharge: $" . number_format($surcharge, 2));
+                apw_woo_log("Credit Card Surcharge Calculation:");
+                apw_woo_log("- Subtotal: $" . number_format($subtotal, 2));
+                apw_woo_log("- Shipping: $" . number_format($shipping_total, 2));
+                apw_woo_log("- Discounts: $" . number_format($discount_total, 2));
+                apw_woo_log("- Base for surcharge: $" . number_format($surcharge_base, 2));
+                apw_woo_log("- Applied 3% surcharge: $" . number_format($surcharge, 2));
             }
         }
     }
