@@ -82,18 +82,23 @@ class APW_Woo_Assets
             wp_localize_script('apw-woo-scripts', 'apwWooData', $page_data);
         }
 
-        // Register payment debugging script
-        wp_register_script(
-            'apw-woo-payment-debug',
-            APW_WOO_PLUGIN_URL . 'assets/js/apw-woo-payment-debug.js',
-            array('jquery'),
-            filemtime(APW_WOO_PLUGIN_DIR . 'assets/js/apw-woo-payment-debug.js'),
-            true
-        );
+        // Register payment debugging script (conditionally if file exists)
+        $debug_script_path = APW_WOO_PLUGIN_DIR . 'assets/js/apw-woo-payment-debug.js';
+        if (file_exists($debug_script_path)) {
+            wp_register_script(
+                'apw-woo-payment-debug',
+                APW_WOO_PLUGIN_URL . 'assets/js/apw-woo-payment-debug.js',
+                array('jquery'),
+                filemtime($debug_script_path),
+                true
+            );
 
-        // Only enqueue on checkout page
-        if (function_exists('is_checkout') && is_checkout()) {
-            wp_enqueue_script('apw-woo-payment-debug');
+            // Only enqueue on checkout page
+            if (function_exists('is_checkout') && is_checkout()) {
+                wp_enqueue_script('apw-woo-payment-debug');
+            }
+        } elseif (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('Payment debug script not found: apw-woo-payment-debug.js', 'notice');
         }
     }
 
