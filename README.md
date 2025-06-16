@@ -2,7 +2,7 @@
 
 A comprehensive WordPress plugin that extends WooCommerce functionality with advanced e-commerce features. Built specifically for the **Flatsome theme**, this plugin provides enhanced product displays, custom checkout processes, dynamic pricing integration, payment gateway enhancements, and sophisticated cart management systems.
 
-**Current Version**: 1.23.8
+**Current Version**: 1.23.9
 
 ## 🚀 Features
 
@@ -343,15 +343,25 @@ Log files will be created in the `logs/` directory.
 
 ## 📝 Changelog
 
-### Version 1.23.8 (Latest)
-- **🔧 FINAL FIX**: Resolved credit card surcharge fee persistence issue that prevented recalculation when cart totals changed
+### Version 1.23.9 (Latest)
+- **🔧 CRITICAL HOTFIX**: Fixed fatal ReflectionException error "Property WC_Cart::$fees does not exist" from v1.23.8
+- **⚡ NATIVE API FIX**: Replaced PHP reflection with WooCommerce's native API methods for fee management
+- **🛡️ VERSION-SAFE**: Multi-tier fallback system: remove_fee() → property_exists() → existence check
+- **🔄 IMPROVED COMPATIBILITY**: Works across different WooCommerce versions without internal property dependencies
+- **📊 ENHANCED LOGGING**: Better debug output for fee removal operations using native methods
+- **🚫 REFLECTION ELIMINATED**: Completely removed fragile reflection-based cart manipulation
+- **✅ PRODUCTION READY**: Fixes staging environment fatal errors while maintaining surcharge calculation accuracy
+
+### Version 1.23.8
+- **🔧 PARTIAL FIX**: Resolved credit card surcharge fee persistence issue that prevented recalculation when cart totals changed
 - **💰 COMPREHENSIVE SOLUTION**: Surcharge now correctly shows $15.64 instead of $17.14 by removing stale fees before recalculation
 - **🔄 SMART RECALCULATION**: Added automatic fee removal and recalculation when VIP discounts are applied or cart contents change
 - **🚫 STALE FEE ELIMINATION**: Fixed root cause where old surcharge fees persisted in cart preventing fresh calculations
 - **⚡ REACTIVE SYSTEM**: Added hooks to trigger surcharge recalculation on discount application and cart updates
-- **🛡️ REFLECTION-BASED FEE REMOVAL**: Implemented robust fee removal using PHP reflection for maximum compatibility
+- **❌ REFLECTION ERROR**: Used PHP reflection for fee removal which caused fatal errors in some WooCommerce versions
 - **📊 ENHANCED LOGGING**: Added detailed debug logging to track fee removal and recalculation processes
 - **🔧 CART STATE MANAGEMENT**: Fixed architectural issue where cart fees persisted across calculation cycles
+- **⚠️ SUPERSEDED**: This version had fatal ReflectionException errors - use v1.23.9 instead
 
 ### Version 1.23.7
 - **🔧 CRITICAL FIX**: Fixed credit card surcharge duplicate calculation - now shows correct $15.64 instead of $17.14
