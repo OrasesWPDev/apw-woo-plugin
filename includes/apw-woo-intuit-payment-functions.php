@@ -235,29 +235,51 @@ function apw_woo_add_intuit_surcharge_fee() {
     if ($chosen_gateway === 'intuit_payments_credit_card') {
         
         // CRITICAL FIX: Always remove existing surcharge fees before recalculating
-        // This prevents stale fees from persisting when cart totals change
+        // Using WooCommerce native API methods instead of reflection for version compatibility
         $existing_fees = WC()->cart->get_fees();
         $removed_old_surcharge = false;
         
-        foreach ($existing_fees as $fee_id => $fee) {
-            if (strpos($fee->name, 'Credit Card Surcharge') !== false) {
-                // Remove the old surcharge fee to force fresh calculation
-                if (method_exists(WC()->cart, 'remove_fee')) {
+        // Step 1: Check if WooCommerce has a native remove_fee method
+        if (method_exists(WC()->cart, 'remove_fee')) {
+            foreach ($existing_fees as $fee_id => $fee) {
+                if (strpos($fee->name, 'Credit Card Surcharge') !== false) {
                     WC()->cart->remove_fee($fee_id);
+                    $removed_old_surcharge = true;
+                    
+                    if (APW_WOO_DEBUG_MODE) {
+                        apw_woo_log("SURCHARGE FIX: Removed old surcharge fee using native remove_fee(): $" . number_format($fee->amount, 2));
+                    }
+                    break;
+                }
+            }
+        } else {
+            // Step 2: Use WooCommerce's fee array rebuilding approach
+            $clean_fees = array();
+            foreach ($existing_fees as $fee_id => $fee) {
+                if (strpos($fee->name, 'Credit Card Surcharge') === false) {
+                    // Keep non-surcharge fees
+                    $clean_fees[$fee_id] = $fee;
                 } else {
-                    // WooCommerce doesn't have remove_fee, so we'll use reflection to remove it
-                    $fees_property = new ReflectionProperty(WC()->cart, 'fees');
-                    $fees_property->setAccessible(true);
-                    $fees = $fees_property->getValue(WC()->cart);
-                    unset($fees[$fee_id]);
-                    $fees_property->setValue(WC()->cart, $fees);
+                    $removed_old_surcharge = true;
+                    if (APW_WOO_DEBUG_MODE) {
+                        apw_woo_log("SURCHARGE FIX: Identified old surcharge fee for removal: $" . number_format($fee->amount, 2));
+                    }
                 }
-                $removed_old_surcharge = true;
-                
+            }
+            
+            // Step 3: Access fees property safely using WooCommerce's pattern
+            if (property_exists(WC()->cart, 'fees')) {
+                WC()->cart->fees = $clean_fees;
                 if (APW_WOO_DEBUG_MODE) {
-                    apw_woo_log("SURCHARGE FIX: Removed old surcharge fee: $" . number_format($fee->amount, 2) . " to force recalculation");
+                    apw_woo_log("SURCHARGE FIX: Rebuilt fees array without surcharge using property access");
                 }
-                break;
+            } else {
+                // Step 4: Ultimate fallback - force complete fee recalculation
+                if (APW_WOO_DEBUG_MODE) {
+                    apw_woo_log("SURCHARGE FIX: No direct fee access available - using existence check fallback");
+                }
+                // In this case, we'll rely on existence check below to prevent duplicate
+                $removed_old_surcharge = false;
             }
         }
         
@@ -299,23 +321,37 @@ function apw_woo_add_intuit_surcharge_fee() {
         // If not using Intuit payment method, remove any existing surcharge fees
         $existing_fees = WC()->cart->get_fees();
         
-        foreach ($existing_fees as $fee_id => $fee) {
-            if (strpos($fee->name, 'Credit Card Surcharge') !== false) {
-                if (method_exists(WC()->cart, 'remove_fee')) {
+        // Use same native API approach for consistency
+        if (method_exists(WC()->cart, 'remove_fee')) {
+            foreach ($existing_fees as $fee_id => $fee) {
+                if (strpos($fee->name, 'Credit Card Surcharge') !== false) {
                     WC()->cart->remove_fee($fee_id);
+                    
+                    if (APW_WOO_DEBUG_MODE) {
+                        apw_woo_log("SURCHARGE FIX: Removed surcharge fee using native remove_fee() - payment method changed from Intuit");
+                    }
+                    break;
+                }
+            }
+        } else {
+            // Rebuild fees array without surcharge fees
+            $clean_fees = array();
+            foreach ($existing_fees as $fee_id => $fee) {
+                if (strpos($fee->name, 'Credit Card Surcharge') === false) {
+                    $clean_fees[$fee_id] = $fee;
                 } else {
-                    // Use reflection to remove fee if remove_fee method doesn't exist
-                    $fees_property = new ReflectionProperty(WC()->cart, 'fees');
-                    $fees_property->setAccessible(true);
-                    $fees = $fees_property->getValue(WC()->cart);
-                    unset($fees[$fee_id]);
-                    $fees_property->setValue(WC()->cart, $fees);
+                    if (APW_WOO_DEBUG_MODE) {
+                        apw_woo_log("SURCHARGE FIX: Removing surcharge fee - payment method changed from Intuit");
+                    }
                 }
-                
+            }
+            
+            // Set clean fees array using property access
+            if (property_exists(WC()->cart, 'fees')) {
+                WC()->cart->fees = $clean_fees;
                 if (APW_WOO_DEBUG_MODE) {
-                    apw_woo_log("SURCHARGE FIX: Removed surcharge fee - payment method changed from Intuit");
+                    apw_woo_log("SURCHARGE FIX: Rebuilt fees array to remove surcharge");
                 }
-                break;
             }
         }
     }
