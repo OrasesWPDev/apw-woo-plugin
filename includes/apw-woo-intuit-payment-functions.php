@@ -215,10 +215,17 @@ function apw_woo_add_intuit_surcharge_fee() {
         $cart_totals = WC()->cart->get_totals();
         $subtotal = $cart_totals['subtotal'] ?? 0;
         $shipping_total = $cart_totals['shipping_total'] ?? 0;
-        $discount_total = $cart_totals['discount_total'] ?? 0; // This includes VIP discounts
         
-        // Base for surcharge calculation: subtotal + shipping - discounts (before tax)
-        $surcharge_base = $subtotal + $shipping_total - $discount_total;
+        // Get actual discount from negative cart fees (VIP discounts are fees, not coupons)
+        $total_discount = 0;
+        foreach (WC()->cart->get_fees() as $fee) {
+            if ($fee->amount < 0) {
+                $total_discount += abs($fee->amount);
+            }
+        }
+        
+        // Base for surcharge calculation: subtotal + shipping - discount fees (before tax)
+        $surcharge_base = $subtotal + $shipping_total - $total_discount;
         
         // Calculate 3% surcharge on the pre-tax total
         $surcharge = $surcharge_base * 0.03;
@@ -230,7 +237,7 @@ function apw_woo_add_intuit_surcharge_fee() {
                 apw_woo_log("Credit Card Surcharge Calculation:");
                 apw_woo_log("- Subtotal: $" . number_format($subtotal, 2));
                 apw_woo_log("- Shipping: $" . number_format($shipping_total, 2));
-                apw_woo_log("- Discounts: $" . number_format($discount_total, 2));
+                apw_woo_log("- Discount fees: $" . number_format($total_discount, 2));
                 apw_woo_log("- Base for surcharge: $" . number_format($surcharge_base, 2));
                 apw_woo_log("- Applied 3% surcharge: $" . number_format($surcharge, 2));
             }
