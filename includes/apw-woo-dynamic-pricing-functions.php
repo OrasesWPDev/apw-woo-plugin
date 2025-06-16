@@ -1259,17 +1259,24 @@ function apw_woo_save_discount_rules_to_order($order, $data) {
             $fee_name = $fee->name;
             $discount_amount = abs($fee->amount);
             
-            // Store discount rule info
+            // Get the tax amount for this fee (preserve the original tax calculation)
+            $fee_tax = 0;
+            if (isset($fee->tax) && is_numeric($fee->tax)) {
+                $fee_tax = $fee->tax;
+            }
+            
+            // Store discount rule info including original tax amount
             $discount_rules[] = array(
                 'name' => $fee_name,
                 'amount' => $discount_amount,
+                'tax_amount' => $fee_tax,
                 'original_fee_key' => $fee_key,
                 'applied_at' => current_time('mysql'),
                 'cart_contents' => WC()->cart->get_cart_contents() // Store cart state for comparison
             );
             
             if (APW_WOO_DEBUG_MODE) {
-                apw_woo_log("ADMIN DISCOUNT PRESERVATION: Saved discount rule '{$fee_name}' with amount \${$discount_amount} to order #{$order->get_id()}");
+                apw_woo_log("ADMIN DISCOUNT PRESERVATION: Saved discount rule '{$fee_name}' with amount \${$discount_amount} and tax \${$fee_tax} to order #{$order->get_id()}");
             }
         }
     }
@@ -1325,16 +1332,28 @@ function apw_woo_reapply_admin_discounts($and_taxes, $order) {
     foreach ($saved_rules as $rule) {
         // Check if order still qualifies for this discount
         if (apw_woo_order_qualifies_for_discount($order, $order_items, $rule)) {
-            // Reapply the discount as a fee
+            // Reapply the discount as a fee with preserved tax amount
             $fee = new WC_Order_Item_Fee();
             $fee->set_name($rule['name']);
             $fee->set_total(-$rule['amount']); // Negative for discount
-            $fee->set_tax_status('taxable');
+            
+            // Preserve the original tax amount from checkout
+            if (isset($rule['tax_amount']) && is_numeric($rule['tax_amount'])) {
+                $fee->set_tax_status('taxable');
+                $fee->set_total_tax($rule['tax_amount']); // Preserve original tax calculation
+                
+                if (APW_WOO_DEBUG_MODE) {
+                    apw_woo_log("ADMIN DISCOUNT PRESERVATION: Preserving original tax amount \${$rule['tax_amount']} for discount '{$rule['name']}'");
+                }
+            } else {
+                $fee->set_tax_status('taxable');
+            }
             
             $order->add_item($fee);
             
             if (APW_WOO_DEBUG_MODE) {
-                apw_woo_log("ADMIN DISCOUNT PRESERVATION: Reapplied discount '{$rule['name']}' with amount \${$rule['amount']} to order #{$order->get_id()}");
+                $tax_info = isset($rule['tax_amount']) ? " and tax \${$rule['tax_amount']}" : "";
+                apw_woo_log("ADMIN DISCOUNT PRESERVATION: Reapplied discount '{$rule['name']}' with amount \${$rule['amount']}{$tax_info} to order #{$order->get_id()}");
             }
         } else {
             if (APW_WOO_DEBUG_MODE) {
