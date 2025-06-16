@@ -2,7 +2,7 @@
 
 A comprehensive WordPress plugin that extends WooCommerce functionality with advanced e-commerce features. Built specifically for the **Flatsome theme**, this plugin provides enhanced product displays, custom checkout processes, dynamic pricing integration, payment gateway enhancements, and sophisticated cart management systems.
 
-**Current Version**: 1.23.3
+**Current Version**: 1.23.6
 
 ## 🚀 Features
 
@@ -343,13 +343,29 @@ Log files will be created in the `logs/` directory.
 
 ## 📝 Changelog
 
-### Version 1.23.3 (Latest)
-- **🔧 CRITICAL FIX**: Resolved duplicate credit card surcharge fees by removing existing surcharges before adding new ones
-- **💳 FIXED**: Credit card surcharge now correctly shows $15.64 instead of $17.14 when multiple cart calculations occur
+### Version 1.23.6 (Latest)
+- **🔧 CRITICAL FIX**: Fixed duplicate VIP discount lines and missing -$3.00 tax discount in admin order view
+- **🚫 DUPLICATE PREVENTION**: Moved all VIP discount hook registrations inside protected function to prevent multiple registrations
+- **💰 ADMIN TAX FIX**: Restored missing -$3.00 tax discount that should persist during admin order edits
+- **⚙️ ARCHITECTURE**: Applied same fix pattern as Intuit surcharge - moved file-level hooks inside static protection
+- **🛡️ ENHANCED PROTECTION**: Added request-level static flags to prevent multiple executions of discount functions
+- **📊 CONSISTENT BEHAVIOR**: VIP discounts now show as single line item with proper tax calculation in admin orders
+
+### Version 1.23.5
+- **🔧 HOTFIX**: Fixed duplicate credit card surcharge calculation ($17.14 → $8.57) caused by duplicate Intuit integration initialization
+- **🚫 REMOVED DUPLICATE**: Eliminated duplicate initialization in product addons file that was causing double hook registrations
+- **⚙️ TECHNICAL**: Each Intuit integration initialization was registering `woocommerce_cart_calculate_fees` hook, causing 2× surcharge application
+
+### Version 1.23.4  
+- **🔧 HOTFIX**: Fixed fatal error `Call to undefined method WC_Cart_Fees::remove_fee()` that broke checkout functionality
+- **💳 CHECKOUT RESTORED**: Removed erroneous WooCommerce API calls and implemented proper duplicate prevention logic
+- **🛡️ ERROR PREVENTION**: Replaced non-existent `remove_fee()` method with existence checks and static flags
+
+### Version 1.23.3
+- **❌ INCOMPLETE FIX**: Attempted to fix duplicate credit card surcharge - did not resolve root cause
 - **📊 ENHANCED**: VIP discount tax preservation with immediate fallback tax calculation 
-- **🏷️ IMPROVED**: Admin discount tax recalculation now happens immediately after discount reapplication
-- **⚙️ TECHNICAL**: Added fallback tax calculation to ensure -$3 VIP tax persists even if WooCommerce hooks don't fire
-- **🛡️ PREVENTION**: Multiple fee additions prevented through existing fee removal before new calculation
+- **🏷️ IMPROVED**: Admin discount tax recalculation approach
+- **⚠️ NOTE**: This version did not fix the underlying duplicate initialization issues
 
 ### Version 1.23.2
 - **💳 FIXED**: Credit card surcharge calculation now properly accounts for VIP discount fees instead of coupon discounts

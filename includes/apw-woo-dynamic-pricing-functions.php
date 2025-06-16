@@ -808,11 +808,19 @@ function apw_woo_init_dynamic_pricing()
         add_action('admin_notices', 'apw_woo_debug_dynamic_pricing_admin');
     }
 
+    // MOVED: Register bulk discount and admin hooks inside protected function to prevent duplicates
+    // These were previously at file level causing duplicate VIP discounts and missing tax discounts
+    add_action('woocommerce_cart_calculate_fees', 'apw_woo_apply_role_based_bulk_discounts', 5);
+    add_action('wp', 'apw_woo_ensure_cart_calculated_on_load', 20);
+    add_action('woocommerce_checkout_create_order', 'apw_woo_save_discount_rules_to_order', 10, 2);
+    add_action('woocommerce_order_before_calculate_totals', 'apw_woo_reapply_admin_discounts_before_calc', 10, 2);
+    add_action('woocommerce_after_order_calculate_totals', 'apw_woo_ensure_discount_tax_calculated', 10, 1);
+
     // Mark as initialized to prevent recursive calls
     $initialized = true;
 
     if (APW_WOO_DEBUG_MODE) {
-        apw_woo_log('Dynamic Pricing integration initialized');
+        apw_woo_log('Dynamic Pricing integration initialized with protected hook registrations');
     }
 }
 
@@ -1051,11 +1059,11 @@ function apw_woo_apply_role_based_bulk_discounts($cart) {
         }
     }
     
-    // Mark as applied to prevent duplicate execution
+    // Mark as applied AFTER successful processing to prevent duplicates
     $already_applied = true;
     
     if (APW_WOO_DEBUG_MODE) {
-        apw_woo_log('BULK DISCOUNT: Bulk discount calculation completed');
+        apw_woo_log('BULK DISCOUNT: Bulk discount calculation completed, marked as applied');
     }
 }
 
@@ -1219,9 +1227,8 @@ function apw_woo_ajax_get_threshold_messages() {
     ));
 }
 
-// Hook into WooCommerce cart fee calculation
-// Add bulk discount calculation hook with priority 5 to run before surcharge calculations (priority 15)
-add_action('woocommerce_cart_calculate_fees', 'apw_woo_apply_role_based_bulk_discounts', 5);
+// REMOVED: Hook moved inside apw_woo_init_dynamic_pricing() to prevent duplicate registrations
+// add_action('woocommerce_cart_calculate_fees', 'apw_woo_apply_role_based_bulk_discounts', 5);
 
 /**
  * Ensure cart is calculated on cart page load to show discounts immediately
@@ -1238,7 +1245,8 @@ function apw_woo_ensure_cart_calculated_on_load() {
         }
     }
 }
-add_action('wp', 'apw_woo_ensure_cart_calculated_on_load', 20);
+// REMOVED: Hook moved inside apw_woo_init_dynamic_pricing() to prevent duplicate registrations
+// add_action('wp', 'apw_woo_ensure_cart_calculated_on_load', 20);
 
 /**
  * Save applied discount rules to order meta during checkout
@@ -1298,7 +1306,8 @@ function apw_woo_save_discount_rules_to_order($order, $data) {
         }
     }
 }
-add_action('woocommerce_checkout_create_order', 'apw_woo_save_discount_rules_to_order', 10, 2);
+// REMOVED: Hook moved inside apw_woo_init_dynamic_pricing() to prevent duplicate registrations
+// add_action('woocommerce_checkout_create_order', 'apw_woo_save_discount_rules_to_order', 10, 2);
 
 /**
  * Reapply quantity discounts when admin edits orders
@@ -1309,6 +1318,17 @@ function apw_woo_reapply_admin_discounts_before_calc($and_taxes, $order) {
     if (!is_admin() || !$order instanceof WC_Order) {
         return;
     }
+    
+    // Prevent multiple executions for the same order in the same request
+    static $processing_orders = array();
+    $order_id = $order->get_id();
+    if (isset($processing_orders[$order_id])) {
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log("ADMIN DISCOUNT PRESERVATION: Already processing order #{$order_id}, skipping duplicate");
+        }
+        return;
+    }
+    $processing_orders[$order_id] = true;
     
     // Get saved discount rules from order meta
     $saved_rules = $order->get_meta('_apw_saved_discount_rules');
@@ -1380,6 +1400,9 @@ function apw_woo_reapply_admin_discounts_before_calc($and_taxes, $order) {
             }
         }
     }
+    
+    // Clean up processing flag after completion
+    unset($processing_orders[$order_id]);
 }
 
 /**
@@ -1446,11 +1469,9 @@ function apw_woo_ensure_discount_tax_calculated($order) {
     }
 }
 
-// Hook before calculation to ensure fees are present
-add_action('woocommerce_order_before_calculate_totals', 'apw_woo_reapply_admin_discounts_before_calc', 10, 2);
-
-// Hook after calculation to ensure tax is properly calculated
-add_action('woocommerce_after_order_calculate_totals', 'apw_woo_ensure_discount_tax_calculated', 10, 1);
+// REMOVED: Hooks moved inside apw_woo_init_dynamic_pricing() to prevent duplicate registrations
+// add_action('woocommerce_order_before_calculate_totals', 'apw_woo_reapply_admin_discounts_before_calc', 10, 2);
+// add_action('woocommerce_after_order_calculate_totals', 'apw_woo_ensure_discount_tax_calculated', 10, 1);
 
 /**
  * Check if current order still qualifies for a saved discount rule
