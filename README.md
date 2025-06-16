@@ -2,7 +2,7 @@
 
 A comprehensive WordPress plugin that extends WooCommerce functionality with advanced e-commerce features. Built specifically for the **Flatsome theme**, this plugin provides enhanced product displays, custom checkout processes, dynamic pricing integration, payment gateway enhancements, and sophisticated cart management systems.
 
-**Current Version**: 1.23.9
+**Current Version**: 1.23.10
 
 ## 🚀 Features
 
@@ -343,7 +343,17 @@ Log files will be created in the `logs/` directory.
 
 ## 📝 Changelog
 
-### Version 1.23.9 (Latest)
+### Version 1.23.10 (Latest)
+- **🔧 FINAL SURCHARGE FIX**: Implemented fee existence check to prevent duplicate credit card surcharges
+- **🚫 DUPLICATE PREVENTION**: Skip surcharge addition if Credit Card Surcharge already exists in cart
+- **⚡ SIMPLIFIED APPROACH**: Replaced complex fee removal logic with existence check for reliability  
+- **🎯 DISPLAY ORDER FIX**: Confirmed hook priorities: VIP Discount (priority 5) → Surcharge (priority 15)
+- **💰 CORRECT CALCULATION**: Ensures surcharge calculates as $15.64 instead of incorrect $17.14
+- **🔄 NO MORE PERSISTENCE**: Prevents old surcharge fees from persisting when cart recalculates
+- **🛡️ VERSION AGNOSTIC**: Works regardless of WooCommerce's internal fee property availability
+- **✅ CHECKOUT ORDER**: VIP discounts now display before surcharges in checkout table
+
+### Version 1.23.9
 - **🔧 CRITICAL HOTFIX**: Fixed fatal ReflectionException error "Property WC_Cart::$fees does not exist" from v1.23.8
 - **⚡ NATIVE API FIX**: Replaced PHP reflection with WooCommerce's native API methods for fee management
 - **🛡️ VERSION-SAFE**: Multi-tier fallback system: remove_fee() → property_exists() → existence check
