@@ -2,7 +2,7 @@
 
 A comprehensive WordPress plugin that extends WooCommerce functionality with advanced e-commerce features. Built specifically for the **Flatsome theme**, this plugin provides enhanced product displays, custom checkout processes, dynamic pricing integration, payment gateway enhancements, and sophisticated cart management systems.
 
-**Current Version**: 1.23.6
+**Current Version**: 1.23.7
 
 ## 🚀 Features
 
@@ -343,7 +343,15 @@ Log files will be created in the `logs/` directory.
 
 ## 📝 Changelog
 
-### Version 1.23.6 (Latest)
+### Version 1.23.7 (Latest)
+- **🔧 CRITICAL FIX**: Fixed credit card surcharge duplicate calculation - now shows correct $15.64 instead of $17.14
+- **💥 HOTFIX**: Fixed admin order save hanging (HTTP 500 error) when adjusting shipping costs after VIP discount changes
+- **🚫 ARCHITECTURAL FIX**: Moved file-level Intuit hook registration inside protected function to prevent duplicate registrations
+- **🔄 INFINITE LOOP PREVENTION**: Added static processing flags and temporary hook removal to prevent recursive tax calculations
+- **⚙️ HOOK MANAGEMENT**: Fixed main plugin call from deprecated function to proper apw_woo_init_intuit_integration
+- **🛡️ ROBUST PROTECTION**: Applied same fix pattern as VIP discounts - eliminated file-level hook registrations without static protection
+
+### Version 1.23.6
 - **🔧 CRITICAL FIX**: Fixed duplicate VIP discount lines and missing -$3.00 tax discount in admin order view
 - **🚫 DUPLICATE PREVENTION**: Moved all VIP discount hook registrations inside protected function to prevent multiple registrations
 - **💰 ADMIN TAX FIX**: Restored missing -$3.00 tax discount that should persist during admin order edits
