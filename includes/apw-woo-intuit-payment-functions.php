@@ -263,16 +263,8 @@ function apw_woo_add_intuit_surcharge_fee() {
         return;
     }
     
-    // Check if surcharge already exists (WooCommerce might call this multiple times)
-    $existing_fees = WC()->cart->get_fees();
-    foreach ($existing_fees as $fee) {
-        if (strpos($fee->name, 'Credit Card Surcharge') !== false) {
-            if (APW_WOO_DEBUG_MODE) {
-                apw_woo_log("BEST PRACTICES: Surcharge already exists: $" . number_format($fee->amount, 2));
-            }
-            return; // WooCommerce handles duplicate prevention naturally
-        }
-    }
+    // REMOVED: Fee existence check that prevented recalculation when cart state changed
+    // Let WooCommerce handle fee lifecycle naturally without artificial barriers
     
     // Calculate surcharge: (subtotal + shipping - VIP discounts) × 3%
     $cart_totals = WC()->cart->get_totals();

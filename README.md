@@ -2,7 +2,7 @@
 
 A comprehensive WordPress plugin that extends WooCommerce functionality with advanced e-commerce features. Built specifically for the **Flatsome theme**, this plugin provides enhanced product displays, custom checkout processes, dynamic pricing integration, payment gateway enhancements, and sophisticated cart management systems.
 
-**Current Version**: 1.23.18
+**Current Version**: 1.23.19
 
 ## 🚀 Features
 
@@ -343,7 +343,16 @@ Log files will be created in the `logs/` directory.
 
 ## 📝 Changelog
 
-### Version 1.23.18 (Latest)
+### Version 1.23.19 (Latest)
+- **🎯 SURCHARGE CALCULATION FIX**: Removed fee existence check that prevented recalculation when cart state changed
+- **🔄 DYNAMIC RECALCULATION**: Surcharge now properly recalculates when VIP discounts are applied or removed
+- **✅ RESOLVES $17.14 PERSISTENCE**: Eliminates stale surcharge amounts by allowing fresh calculation on every cart update
+- **🏗️ PROPER HOOK SEQUENCE**: Combined with v1.23.18 hook timing, ensures discounts apply before surcharge calculation
+- **💰 CORRECT CALCULATION**: Should now display $15.64 surcharge instead of $17.14 for Product #80 (5 qty)
+- **🚫 NO ARTIFICIAL BARRIERS**: Let WooCommerce handle fee lifecycle naturally without manual existence checks
+- **Per user request**: Remove final barrier preventing fresh surcharge calculation when discounts change cart state
+
+### Version 1.23.18
 - **🎯 HOOK TIMING FIX**: Moved bulk discount calculation to `woocommerce_before_calculate_totals` hook (priority 5)
 - **⏰ CALCULATION SEQUENCE**: Ensured discounts are applied to cart BEFORE surcharge calculations begin
 - **🔄 SURCHARGE OPTIMIZATION**: Adjusted surcharge hook to priority 10 on `woocommerce_cart_calculate_fees`
