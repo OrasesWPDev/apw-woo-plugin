@@ -288,17 +288,38 @@ function apw_woo_add_intuit_surcharge_fee() {
         return;
     }
     
-    // Check if surcharge already exists in current fees (additional safety check)
+    // Check if surcharge already exists - if fresh calculation, we need to clear it first
     $existing_fees = WC()->cart->get_fees();
-    foreach ($existing_fees as $fee) {
+    $surcharge_exists = false;
+    foreach ($existing_fees as $fee_key => $fee) {
         if (strpos($fee->name, 'Credit Card Surcharge') !== false) {
-            if (APW_WOO_DEBUG_MODE) {
-                apw_woo_log("CONDITIONAL SURCHARGE: Surcharge already exists with amount: $" . number_format($fee->amount, 2));
+            $surcharge_exists = true;
+            if ($is_fresh_calculation) {
+                // Fresh calculation cycle - remove the old surcharge so we can recalculate
+                if (APW_WOO_DEBUG_MODE) {
+                    apw_woo_log("CONDITIONAL SURCHARGE: Fresh cycle detected - removing existing surcharge of $" . number_format($fee->amount, 2));
+                }
+                unset(WC()->cart->fees[$fee_key]);
+                $surcharge_exists = false; // We removed it, so proceed with new calculation
+                break;
+            } else {
+                // Not fresh calculation - surcharge exists and is valid
+                if (APW_WOO_DEBUG_MODE) {
+                    apw_woo_log("CONDITIONAL SURCHARGE: Surcharge already exists with amount: $" . number_format($fee->amount, 2) . " (not fresh calculation)");
+                }
+                WC()->session->set('apw_surcharge_calculated_this_cycle', true);
+                return;
             }
-            // Mark as calculated to prevent re-addition
-            WC()->session->set('apw_surcharge_calculated_this_cycle', true);
-            return;
         }
+    }
+    
+    // If surcharge still exists after check (and it's not a fresh calculation), don't add another
+    if ($surcharge_exists && !$is_fresh_calculation) {
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log("CONDITIONAL SURCHARGE: Surcharge exists and not fresh calculation - skipping");
+        }
+        WC()->session->set('apw_surcharge_calculated_this_cycle', true);
+        return;
     }
     
     // Calculate surcharge base: subtotal + shipping - VIP discounts (before tax)

@@ -2,7 +2,7 @@
 
 A comprehensive WordPress plugin that extends WooCommerce functionality with advanced e-commerce features. Built specifically for the **Flatsome theme**, this plugin provides enhanced product displays, custom checkout processes, dynamic pricing integration, payment gateway enhancements, and sophisticated cart management systems.
 
-**Current Version**: 1.23.12
+**Current Version**: 1.23.13
 
 ## 🚀 Features
 
@@ -343,7 +343,17 @@ Log files will be created in the `logs/` directory.
 
 ## 📝 Changelog
 
-### Version 1.23.12 (Latest)
+### Version 1.23.13 (Latest)
+- **🔧 CRITICAL SURCHARGE FIX**: Fixed fresh calculation cycle logic to properly remove stale $17.14 surcharge before recalculating
+- **💰 STALE FEE REMOVAL**: When fresh calculation is detected, existing surcharge is removed via `unset(WC()->cart->fees[$fee_key])`
+- **✅ CORRECT FLOW**: Fresh cycle now: detects existing $17.14 → removes it → calculates correct $15.64 → adds new fee
+- **🔍 ENHANCED LOGGING**: Added "Fresh cycle detected - removing existing surcharge" debug messages to track fee removal
+- **🛡️ PREVENTS PERSISTENCE**: Eliminates stale surcharge persistence when VIP discounts are applied/removed
+- **⚡ DIRECT ARRAY ACCESS**: Uses direct `WC()->cart->fees` array manipulation for immediate fee removal
+- **🎯 CONDITIONAL LOGIC**: Maintains session-based duplicate prevention while allowing fresh calculations when needed
+- **Per user instructions**: Fix stale $17.14 surcharge persistence by removing it during fresh calculation cycles
+
+### Version 1.23.12
 - **🔧 ARCHITECTURAL FIX**: Replaced flawed fee removal approach with proper WooCommerce conditional logic architecture
 - **💡 CONDITIONAL CALCULATION**: Uses session-based tracking instead of trying to remove fees (which WooCommerce doesn't support)
 - **🚫 ELIMINATES FAKE METHODS**: Removed incorrect `fees_api()` and `remove_fee()` method calls that don't exist in WooCommerce
