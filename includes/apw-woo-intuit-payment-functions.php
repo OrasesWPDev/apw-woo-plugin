@@ -124,21 +124,10 @@ function apw_woo_enqueue_intuit_scripts() {
 add_action('wp_enqueue_scripts', 'apw_woo_enqueue_intuit_scripts');
 
 /**
- * BEST PRACTICES v1.23.16: Simple cart change detection
- * Triggers WooCommerce native cart update when significant changes occur
- * Follows WooCommerce patterns - let the system handle fee lifecycle naturally
+ * BEST PRACTICES v1.23.16: Removed to prevent infinite loops
+ * WooCommerce handles cart updates naturally through its hook system
+ * Manual calculate_totals() calls can trigger recursive fee recalculation
  */
-function apw_woo_trigger_cart_update_on_changes() {
-    // Simply trigger WooCommerce's native cart update
-    // This will cause all fees to be recalculated naturally
-    if (function_exists('WC') && WC()->cart) {
-        WC()->cart->calculate_totals();
-        
-        if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log('BEST PRACTICES: Triggered native WooCommerce cart totals recalculation');
-        }
-    }
-}
 
 /**
  * BEST PRACTICES v1.23.16: Removed complex cart state tracking
@@ -164,24 +153,10 @@ function apw_woo_ensure_cart_fragments_update() {
 }
 
 /**
- * BEST PRACTICES v1.23.16: Simple checkout initialization
- * Let WooCommerce handle checkout state naturally
- * Only ensure cart totals are calculated (which WooCommerce does anyway)
+ * BEST PRACTICES v1.23.16: Removed to prevent infinite loops
+ * WooCommerce calculates totals automatically during checkout
+ * Manual calculate_totals() calls are unnecessary and cause recursion
  */
-function apw_woo_ensure_checkout_totals_calculated() {
-    if (!is_checkout() || is_admin()) {
-        return;
-    }
-    
-    // WooCommerce calculates totals automatically, but ensure it happens
-    if (function_exists('WC') && WC()->cart) {
-        WC()->cart->calculate_totals();
-        
-        if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log('BEST PRACTICES: Ensured cart totals are calculated on checkout');
-        }
-    }
-}
 
 /**
  * Initialize Intuit payment gateway integration
@@ -223,12 +198,10 @@ function apw_woo_init_intuit_integration() {
     // Add the surcharge calculation hook with priority 15 to run after discounts (priority 5)
     add_action('woocommerce_cart_calculate_fees', 'apw_woo_add_intuit_surcharge_fee', 15);
     
-    // BEST PRACTICES v1.23.16: Simple hooks for natural WooCommerce integration
-    add_action('apw_woo_bulk_discount_applied', 'apw_woo_trigger_cart_update_on_changes', 10);
-    add_action('woocommerce_cart_updated', 'apw_woo_trigger_cart_update_on_changes', 10);
+    // REMOVED: Hooks that were causing infinite loops by triggering calculate_totals()
+    // WooCommerce handles cart updates naturally without manual intervention
     
-    // BEST PRACTICES v1.23.16: Ensure checkout totals are calculated
-    add_action('woocommerce_checkout_init', 'apw_woo_ensure_checkout_totals_calculated', 5);
+    // REMOVED: checkout totals calculation hook that was causing infinite loops
     
     // Mark as initialized
     $initialized = true;
