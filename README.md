@@ -2,7 +2,7 @@
 
 A comprehensive WordPress plugin that extends WooCommerce functionality with advanced e-commerce features. Built specifically for the **Flatsome theme**, this plugin provides enhanced product displays, custom checkout processes, dynamic pricing integration, payment gateway enhancements, and sophisticated cart management systems.
 
-**Current Version**: 1.23.15
+**Current Version**: 1.23.16
 
 ## 🚀 Features
 
@@ -343,7 +343,24 @@ Log files will be created in the `logs/` directory.
 
 ## 📝 Changelog
 
-### Version 1.23.15 (Latest)
+### Version 1.23.16 (Latest)
+- **🏆 WOOCOMMERCE BEST PRACTICES**: Complete architectural overhaul following WooCommerce's intended patterns and practices
+- **🧹 CLEAN ARCHITECTURE**: Removed all manual fee manipulation, cache clearing, and complex state management code
+- **✅ CONDITIONAL LOGIC**: Implemented simple conditional fee addition that works WITH WooCommerce's natural fee lifecycle
+- **🔄 NATIVE INTEGRATION**: Let WooCommerce handle fee recalculation, cache management, and frontend synchronization automatically
+- **📱 ENHANCED JAVASCRIPT**: Simplified frontend integration to properly trigger native WooCommerce `update_checkout` events
+- **🚫 NO MORE HACKS**: Eliminated attempts to manually remove fees, clear cache, or manipulate internal WooCommerce properties
+- **🎯 PAYMENT METHOD FOCUS**: Enhanced payment method change detection to ensure proper cart updates for all methods
+- **💡 TRUST THE SYSTEM**: Philosophy shift from "fighting WooCommerce" to "working with WooCommerce's design"
+- **🛡️ ERROR PREVENTION**: Removed all usage of non-existent methods like `reset_fees()` and `WC()->cart->fees` property access
+- **🔍 SIMPLIFIED DEBUG**: Clean debug logging without manual intervention or complex state tracking
+- **⚡ PERFORMANCE**: Reduced complexity and overhead by leveraging WooCommerce's built-in systems
+- **📊 EARLY EXIT PATTERN**: Clean early returns when fees shouldn't apply instead of complex removal logic
+- **🔧 STANDARD HOOKS**: Uses only documented WooCommerce hooks and follows their intended usage patterns
+- **✨ MAINTAINABLE**: Code is now easier to understand, debug, and maintain following established patterns
+- **Per user instructions**: Implement WooCommerce best practices approach - work WITH the system, not against it
+
+### Version 1.23.15
 - **🚀 FRONTEND SYNCHRONIZATION FIX**: Comprehensive solution to resolve frontend/backend surcharge calculation mismatch
 - **🔧 CHECKOUT INITIALIZATION HOOK**: Added `woocommerce_checkout_init` hook to force fresh surcharge calculation on page load
 - **💻 ENHANCED JAVASCRIPT INTEGRATION**: Intelligent frontend monitoring with automatic checkout updates when stale amounts detected

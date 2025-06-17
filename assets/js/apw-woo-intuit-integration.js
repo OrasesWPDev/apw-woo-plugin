@@ -36,37 +36,30 @@
         }
     }
 
-    // FRONTEND SYNC v1.23.15: Check surcharge amount and force update if incorrect
-    function checkSurchargeAmount() {
+    // BEST PRACTICES v1.23.16: Ensure payment method changes trigger proper updates
+    function ensurePaymentMethodUpdateTriggers() {
+        var selectedPayment = $('input[name="payment_method"]:checked').val();
+        if (selectedPayment === 'intuit_payments_credit_card') {
+            logWithTime('BEST PRACTICES: Intuit payment method - ensuring checkout updates');
+            // Use WooCommerce's native update mechanism
+            $('body').trigger('update_checkout');
+        }
+    }
+
+    // BEST PRACTICES v1.23.16: Simple verification without manual intervention  
+    function logCurrentSurchargeState() {
         var surchargeRow = $('.order-total tr:contains("Credit Card Surcharge")');
         if (surchargeRow.length) {
             var amount = surchargeRow.find('.amount').text();
-            logWithTime('Current surcharge amount: ' + amount);
-            
-            // If we detect the wrong amount, force another update
-            if (amount.includes('$17.14')) {
-                logWithTime('Detected stale surcharge amount $17.14 - forcing update');
-                setTimeout(function() {
-                    $('body').trigger('update_checkout');
-                }, 500);
-                return true; // Indicates update was triggered
-            }
-        }
-        return false; // No update needed
-    }
-
-    // FRONTEND SYNC v1.23.15: Force checkout refresh for Intuit payment method
-    function forceCheckoutRefreshForIntuit() {
-        var selectedPayment = $('input[name="payment_method"]:checked').val();
-        if (selectedPayment === 'intuit_payments_credit_card') {
-            logWithTime('Intuit payment method detected - forcing checkout update');
-            $('body').trigger('update_checkout');
+            logWithTime('BEST PRACTICES: Current surcharge amount: ' + amount);
+        } else {
+            logWithTime('BEST PRACTICES: No surcharge currently displayed');
         }
     }
 
     // Main initialization
     function initialize() {
-        logWithTime('Initializing Intuit payment integration with frontend sync');
+        logWithTime('BEST PRACTICES: Initializing Intuit payment integration');
         if (!apwWooIntuitData.is_checkout) {
             logWithTime('Not on checkout page, integration inactive');
             return;
@@ -74,42 +67,42 @@
         
         initIntuitPayment();
         
-        // FRONTEND SYNC v1.23.15: Force refresh on page load if Intuit is selected
-        setTimeout(forceCheckoutRefreshForIntuit, 1000);
+        // BEST PRACTICES v1.23.16: Ensure proper payment method handling on load
+        setTimeout(ensurePaymentMethodUpdateTriggers, 1000);
         
-        // Re-init after checkout update
+        // Re-init after checkout update (standard WooCommerce pattern)
         $(document.body).on('updated_checkout', function() {
-            logWithTime('Checkout updated, re-init Intuit integration');
+            logWithTime('BEST PRACTICES: Checkout updated, re-init Intuit integration');
             initIntuitPayment();
             
-            // FRONTEND SYNC v1.23.15: Check surcharge amount after update
-            setTimeout(checkSurchargeAmount, 500);
+            // Log current state for debugging
+            setTimeout(logCurrentSurchargeState, 500);
         });
         
-        // Re-init after payment method change
+        // Re-init after payment method change (standard WooCommerce pattern)
         $(document.body).on('payment_method_selected', function() {
-            logWithTime('Payment method changed, re-init Intuit integration');
+            logWithTime('BEST PRACTICES: Payment method selected event, re-init Intuit');
             setTimeout(initIntuitPayment, 300);
         });
         
-        // FRONTEND SYNC v1.23.15: Monitor payment method changes for Intuit
+        // BEST PRACTICES v1.23.16: Proper payment method change handling
         $(document).on('change', 'input[name="payment_method"]', function() {
             var method = $(this).val();
-            logWithTime('Payment method changed to: ' + method);
-            if (method === 'intuit_payments_credit_card') {
-                logWithTime('Intuit selected - triggering checkout update');
-                $('body').trigger('update_checkout');
-            }
+            logWithTime('BEST PRACTICES: Payment method changed to: ' + method);
+            
+            // Always trigger checkout update for any payment method change
+            // WooCommerce will handle fee recalculation automatically
+            $('body').trigger('update_checkout');
         });
         
-        // FRONTEND SYNC v1.23.15: Periodic surcharge verification
+        // BEST PRACTICES v1.23.16: Simple debug logging (no intervention)
         if (apwWooIntuitData.debug_mode) {
             setInterval(function() {
                 var selectedPayment = $('input[name="payment_method"]:checked').val();
                 if (selectedPayment === 'intuit_payments_credit_card') {
-                    checkSurchargeAmount();
+                    logCurrentSurchargeState();
                 }
-            }, 10000); // Check every 10 seconds in debug mode
+            }, 10000); // Log state every 10 seconds in debug mode
         }
     }
 
