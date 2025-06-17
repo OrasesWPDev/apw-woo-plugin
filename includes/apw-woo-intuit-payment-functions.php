@@ -133,11 +133,18 @@ function apw_woo_reset_surcharge_calculation_flags() {
     WC()->session->set('apw_surcharge_calculated_this_cycle', false);
     WC()->session->set('apw_cart_state_hash', ''); // Force hash mismatch
     
+    // ENHANCED v1.23.15: Clear any WooCommerce totals cache
+    WC()->cart->reset_fees();
+    
+    // ENHANCED v1.23.15: Force session regeneration for cart hash
+    $cart_hash = WC()->cart->get_cart_hash();
+    WC()->session->set('cart_hash', $cart_hash);
+    
     // Set global flag for backward compatibility
     $GLOBALS['apw_woo_force_surcharge_recalc'] = true;
     
     if (APW_WOO_DEBUG_MODE) {
-        apw_woo_log('CONDITIONAL SURCHARGE: Reset calculation flags due to cart changes - next calculation will be fresh');
+        apw_woo_log('ENHANCED RESET: Cleared all surcharge session data and cart cache');
     }
 }
 
@@ -154,6 +161,60 @@ function apw_woo_get_cart_state_hash() {
         'payment_method' => WC()->session->get('chosen_payment_method')
     );
     return md5(serialize($cart_data));
+}
+
+/**
+ * FRONTEND SYNC v1.23.15: Aggressive cache clearing function
+ * Clears ALL possible sources of cached cart data to force frontend updates
+ */
+function apw_woo_clear_all_cart_cache() {
+    // Clear WooCommerce sessions
+    WC()->session->set('wc_fragments_hash', '');
+    WC()->session->set('wc_cart_hash', '');
+    WC()->session->set('cart_hash', '');
+    
+    // Clear WordPress object cache for cart
+    $customer_id = WC()->session->get_customer_id();
+    if ($customer_id) {
+        wp_cache_delete('cart-' . $customer_id, 'woocommerce');
+        wp_cache_delete('cart_totals_' . $customer_id, 'woocommerce');
+    }
+    
+    // Force fragments refresh
+    if (function_exists('wc_setcookie')) {
+        wc_setcookie('woocommerce_cart_hash', '', time() - 3600);
+    }
+    
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log('AGGRESSIVE CACHE CLEAR: Cleared all cart-related cache for frontend sync');
+    }
+}
+
+/**
+ * FRONTEND SYNC v1.23.15: Force checkout surcharge recalculation
+ * Ensures fresh surcharge calculation when checkout page loads
+ */
+function apw_woo_force_checkout_surcharge_recalc() {
+    if (!is_checkout() || is_admin()) {
+        return;
+    }
+    
+    $chosen_gateway = WC()->session->get('chosen_payment_method');
+    if ($chosen_gateway === 'intuit_payments_credit_card') {
+        // Clear all surcharge-related session data to force fresh calculation
+        WC()->session->set('apw_surcharge_calculated_this_cycle', false);
+        WC()->session->set('apw_cart_state_hash', '');
+        
+        // Clear all cart cache
+        apw_woo_clear_all_cart_cache();
+        
+        // Force cart totals recalculation
+        WC()->cart->calculate_totals();
+        
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('CHECKOUT LOAD: Forced surcharge recalculation and cache clearing for checkout page');
+        }
+    }
 }
 
 /**
@@ -199,6 +260,9 @@ function apw_woo_init_intuit_integration() {
     // CRITICAL FIX: Hook into discount application to trigger surcharge recalculation
     add_action('apw_woo_bulk_discount_applied', 'apw_woo_reset_surcharge_calculation_flags', 10);
     add_action('woocommerce_cart_updated', 'apw_woo_reset_surcharge_calculation_flags', 10);
+    
+    // FRONTEND SYNC v1.23.15: Hook into checkout initialization to force fresh calculation
+    add_action('woocommerce_checkout_init', 'apw_woo_force_checkout_surcharge_recalc', 5);
     
     // Mark as initialized
     $initialized = true;
@@ -302,12 +366,11 @@ function apw_woo_add_intuit_surcharge_fee() {
                 unset(WC()->cart->fees[$fee_key]);
                 $surcharge_exists = false; // We removed it, so proceed with new calculation
                 
-                // Force cart fragments refresh after removing stale fee
-                WC()->session->set('wc_fragments_hash', '');
-                WC()->session->set('wc_cart_hash', '');
+                // FRONTEND SYNC v1.23.15: Use aggressive cache clearing after stale fee removal
+                apw_woo_clear_all_cart_cache();
                 
                 if (APW_WOO_DEBUG_MODE) {
-                    apw_woo_log("CONDITIONAL SURCHARGE: Cleared cart fragments cache after removing stale fee");
+                    apw_woo_log("CONDITIONAL SURCHARGE: Applied aggressive cache clearing after removing stale fee");
                 }
                 break;
             } else {
@@ -355,12 +418,8 @@ function apw_woo_add_intuit_surcharge_fee() {
         // Mark this calculation cycle as complete
         WC()->session->set('apw_surcharge_calculated_this_cycle', true);
         
-        // Force cart fragments refresh to update frontend display
-        if (function_exists('wc_clear_cart_after_payment')) {
-            // Clear any cached cart fragments
-            WC()->session->set('wc_fragments_hash', '');
-            WC()->session->set('wc_cart_hash', '');
-        }
+        // FRONTEND SYNC v1.23.15: Use aggressive cache clearing to force frontend updates
+        apw_woo_clear_all_cart_cache();
         
         if (APW_WOO_DEBUG_MODE) {
             apw_woo_log("CONDITIONAL SURCHARGE: Added Credit Card Surcharge:");

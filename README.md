@@ -2,7 +2,7 @@
 
 A comprehensive WordPress plugin that extends WooCommerce functionality with advanced e-commerce features. Built specifically for the **Flatsome theme**, this plugin provides enhanced product displays, custom checkout processes, dynamic pricing integration, payment gateway enhancements, and sophisticated cart management systems.
 
-**Current Version**: 1.23.14
+**Current Version**: 1.23.15
 
 ## 🚀 Features
 
@@ -343,14 +343,19 @@ Log files will be created in the `logs/` directory.
 
 ## 📝 Changelog
 
-### Version 1.23.14 (Latest)
-- **🔧 CACHE-BUSTING FIX**: Added cart fragments cache clearing to force frontend display updates when surcharge changes
-- **💾 FRAGMENT REFRESH**: Clear `wc_fragments_hash` and `wc_cart_hash` session values after fee removal and addition
-- **🔄 FRONTEND SYNC**: Ensures frontend immediately reflects backend surcharge calculations ($15.64 vs $17.14)
-- **⚡ IMMEDIATE UPDATE**: Forces WooCommerce to refresh cart display when stale fees are removed
-- **🎯 DOUBLE CACHE-BUST**: Cache clearing after both fee removal and fee addition for maximum reliability
-- **📊 ENHANCED LOGGING**: Added "Cache-busting" debug messages to track fragment clearing
-- **Per user instructions**: Fix frontend/backend sync issue where logs showed correct $15.64 but display showed stale $17.14
+### Version 1.23.15 (Latest)
+- **🚀 FRONTEND SYNCHRONIZATION FIX**: Comprehensive solution to resolve frontend/backend surcharge calculation mismatch
+- **🔧 CHECKOUT INITIALIZATION HOOK**: Added `woocommerce_checkout_init` hook to force fresh surcharge calculation on page load
+- **💻 ENHANCED JAVASCRIPT INTEGRATION**: Intelligent frontend monitoring with automatic checkout updates when stale amounts detected
+- **🗑️ AGGRESSIVE CACHE CLEARING**: Multi-layered cache elimination including WordPress object cache, WooCommerce sessions, and cookies
+- **🔄 ENHANCED SESSION MANAGEMENT**: Improved `reset_fees()` and cart hash regeneration for session data consistency
+- **⚡ REAL-TIME SURCHARGE VERIFICATION**: JavaScript actively monitors for $17.14 stale amounts and triggers updates automatically
+- **🎯 PAYMENT METHOD MONITORING**: Automatic checkout refresh when Intuit payment method is selected or changed
+- **📊 PERIODIC VERIFICATION**: Debug mode includes 10-second interval checks to ensure surcharge accuracy
+- **🛡️ MULTI-PRONGED APPROACH**: Attacks frontend/backend sync issue from both server-side (PHP hooks) and client-side (JavaScript)
+- **✅ FORCED CART TOTALS RECALCULATION**: Ensures `WC()->cart->calculate_totals()` runs with cleared cache for fresh calculations
+- **🔍 ENHANCED DEBUG LOGGING**: Comprehensive logging for frontend sync operations, cache clearing, and checkout initialization
+- **Per user instructions**: Implement JavaScript-based frontend synchronization to force cart refresh and eliminate stale $17.14 display
 
 ### Version 1.23.13
 - **🔧 CRITICAL SURCHARGE FIX**: Fixed fresh calculation cycle logic to properly remove stale $17.14 surcharge before recalculating
