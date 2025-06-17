@@ -301,6 +301,14 @@ function apw_woo_add_intuit_surcharge_fee() {
                 }
                 unset(WC()->cart->fees[$fee_key]);
                 $surcharge_exists = false; // We removed it, so proceed with new calculation
+                
+                // Force cart fragments refresh after removing stale fee
+                WC()->session->set('wc_fragments_hash', '');
+                WC()->session->set('wc_cart_hash', '');
+                
+                if (APW_WOO_DEBUG_MODE) {
+                    apw_woo_log("CONDITIONAL SURCHARGE: Cleared cart fragments cache after removing stale fee");
+                }
                 break;
             } else {
                 // Not fresh calculation - surcharge exists and is valid
@@ -347,6 +355,13 @@ function apw_woo_add_intuit_surcharge_fee() {
         // Mark this calculation cycle as complete
         WC()->session->set('apw_surcharge_calculated_this_cycle', true);
         
+        // Force cart fragments refresh to update frontend display
+        if (function_exists('wc_clear_cart_after_payment')) {
+            // Clear any cached cart fragments
+            WC()->session->set('wc_fragments_hash', '');
+            WC()->session->set('wc_cart_hash', '');
+        }
+        
         if (APW_WOO_DEBUG_MODE) {
             apw_woo_log("CONDITIONAL SURCHARGE: Added Credit Card Surcharge:");
             apw_woo_log("- Subtotal: $" . number_format($subtotal, 2));
@@ -355,6 +370,7 @@ function apw_woo_add_intuit_surcharge_fee() {
             apw_woo_log("- Base for surcharge: $" . number_format($surcharge_base, 2));
             apw_woo_log("- Applied 3% surcharge: $" . number_format($surcharge, 2));
             apw_woo_log("- Fresh calculation: " . ($is_fresh_calculation ? 'YES' : 'NO'));
+            apw_woo_log("- Cache-busting: Cart fragments cleared for frontend update");
         }
     }
 }

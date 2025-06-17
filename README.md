@@ -2,7 +2,7 @@
 
 A comprehensive WordPress plugin that extends WooCommerce functionality with advanced e-commerce features. Built specifically for the **Flatsome theme**, this plugin provides enhanced product displays, custom checkout processes, dynamic pricing integration, payment gateway enhancements, and sophisticated cart management systems.
 
-**Current Version**: 1.23.13
+**Current Version**: 1.23.14
 
 ## 🚀 Features
 
@@ -343,7 +343,16 @@ Log files will be created in the `logs/` directory.
 
 ## 📝 Changelog
 
-### Version 1.23.13 (Latest)
+### Version 1.23.14 (Latest)
+- **🔧 CACHE-BUSTING FIX**: Added cart fragments cache clearing to force frontend display updates when surcharge changes
+- **💾 FRAGMENT REFRESH**: Clear `wc_fragments_hash` and `wc_cart_hash` session values after fee removal and addition
+- **🔄 FRONTEND SYNC**: Ensures frontend immediately reflects backend surcharge calculations ($15.64 vs $17.14)
+- **⚡ IMMEDIATE UPDATE**: Forces WooCommerce to refresh cart display when stale fees are removed
+- **🎯 DOUBLE CACHE-BUST**: Cache clearing after both fee removal and fee addition for maximum reliability
+- **📊 ENHANCED LOGGING**: Added "Cache-busting" debug messages to track fragment clearing
+- **Per user instructions**: Fix frontend/backend sync issue where logs showed correct $15.64 but display showed stale $17.14
+
+### Version 1.23.13
 - **🔧 CRITICAL SURCHARGE FIX**: Fixed fresh calculation cycle logic to properly remove stale $17.14 surcharge before recalculating
 - **💰 STALE FEE REMOVAL**: When fresh calculation is detected, existing surcharge is removed via `unset(WC()->cart->fees[$fee_key])`
 - **✅ CORRECT FLOW**: Fresh cycle now: detects existing $17.14 → removes it → calculates correct $15.64 → adds new fee
