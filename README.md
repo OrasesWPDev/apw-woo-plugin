@@ -2,7 +2,7 @@
 
 A comprehensive WordPress plugin that extends WooCommerce functionality with advanced e-commerce features. Built specifically for the **Flatsome theme**, this plugin provides enhanced product displays, custom checkout processes, dynamic pricing integration, payment gateway enhancements, and sophisticated cart management systems.
 
-**Current Version**: 1.23.11
+**Current Version**: 1.23.12
 
 ## 🚀 Features
 
@@ -343,7 +343,20 @@ Log files will be created in the `logs/` directory.
 
 ## 📝 Changelog
 
-### Version 1.23.11 (Latest)
+### Version 1.23.12 (Latest)
+- **🔧 ARCHITECTURAL FIX**: Replaced flawed fee removal approach with proper WooCommerce conditional logic architecture
+- **💡 CONDITIONAL CALCULATION**: Uses session-based tracking instead of trying to remove fees (which WooCommerce doesn't support)
+- **🚫 ELIMINATES FAKE METHODS**: Removed incorrect `fees_api()` and `remove_fee()` method calls that don't exist in WooCommerce
+- **⚡ SESSION MANAGEMENT**: Implements `apw_surcharge_calculated_this_cycle` session flag to prevent duplicate calculations
+- **🔄 FRESH CALCULATION CYCLE**: Detects cart state changes and marks cycles for fresh surcharge calculation
+- **🎯 EARLY EXIT LOGIC**: Returns early when surcharge shouldn't be applied instead of trying to remove existing fees
+- **🛡️ PREVENTS FEE PERSISTENCE**: Works WITH WooCommerce's fee recalculation architecture instead of fighting against it
+- **✅ RESPECTS WOOCOMMERCE DESIGN**: Follows WooCommerce's non-persistent fee pattern where fees are recalculated on every cart update
+- **💰 CORRECT CALCULATION**: Now properly calculates $15.64 surcharge instead of stale $17.14 amount
+- **🔍 ENHANCED LOGGING**: New "CONDITIONAL SURCHARGE" debug messages show proper calculation flow
+- **Per user instructions**: Stop trying to remove fees, start controlling what gets added - conditional logic approach
+
+### Version 1.23.11
 - **🔧 CRITICAL SURCHARGE FIX**: Completely resolved credit card surcharge recalculation issue - now properly shows $15.64 instead of $17.14
 - **💰 SMART RECALCULATION**: Implemented cart state change detection to trigger surcharge updates when VIP/quantity discounts are applied
 - **🔄 FEE REMOVAL LOGIC**: Added proper fee removal and recalculation system using force recalculation flags
