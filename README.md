@@ -2,7 +2,7 @@
 
 A comprehensive WordPress plugin that extends WooCommerce functionality with advanced e-commerce features. Built specifically for the **Flatsome theme**, this plugin provides enhanced product displays, custom checkout processes, dynamic pricing integration, payment gateway enhancements, and sophisticated cart management systems.
 
-**Current Version**: 1.23.10
+**Current Version**: 1.23.11
 
 ## 🚀 Features
 
@@ -343,7 +343,19 @@ Log files will be created in the `logs/` directory.
 
 ## 📝 Changelog
 
-### Version 1.23.10 (Latest)
+### Version 1.23.11 (Latest)
+- **🔧 CRITICAL SURCHARGE FIX**: Completely resolved credit card surcharge recalculation issue - now properly shows $15.64 instead of $17.14
+- **💰 SMART RECALCULATION**: Implemented cart state change detection to trigger surcharge updates when VIP/quantity discounts are applied
+- **🔄 FEE REMOVAL LOGIC**: Added proper fee removal and recalculation system using force recalculation flags
+- **⚡ PERFORMANCE ENHANCED**: Cart state hashing prevents unnecessary recalculations while ensuring accuracy
+- **🛡️ COMPATIBILITY**: Multi-tier fee removal system works across different WooCommerce versions
+- **📊 CALCULATION ACCURACY**: Surcharge now correctly calculates as (subtotal + shipping - discounts) × 3%
+- **🚫 NO MORE STALE FEES**: Eliminates persistence of outdated surcharge amounts when cart totals change
+- **✅ PRODUCTION READY**: Resolves the fundamental architecture issue causing incorrect surcharge display
+- **🔍 ENHANCED DEBUG**: Comprehensive logging for cart state changes and fee recalculation processes
+- **Per user instructions**: Credit card surcharge fix - immediate implementation to resolve $17.14→$15.64 calculation error
+
+### Version 1.23.10
 - **🔧 FINAL SURCHARGE FIX**: Implemented fee existence check to prevent duplicate credit card surcharges
 - **🚫 DUPLICATE PREVENTION**: Skip surcharge addition if Credit Card Surcharge already exists in cart
 - **⚡ SIMPLIFIED APPROACH**: Replaced complex fee removal logic with existence check for reliability  

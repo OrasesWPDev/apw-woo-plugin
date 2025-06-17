@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The **APW WooCommerce Plugin** is a comprehensive WordPress plugin that extends WooCommerce functionality. This file contains development-specific information for maintaining and extending the codebase.
 
-**Current Version**: 1.23.2
+**Current Version**: 1.23.11
 
 ## Core Architecture
 
@@ -384,6 +384,78 @@ define('APW_GITHUB_TOKEN', 'your_github_personal_access_token');
 - **Added**: Hook-based registration field implementation
 - **Added**: Comprehensive export system with admin interface
 - **Enhanced**: Plugin architecture with proper initialization functions
+
+## Credit Card Surcharge Fix Implementation
+
+### Problem Overview
+The credit card surcharge calculation issue where surcharge shows incorrect amounts (e.g., $17.14 instead of $15.64) when VIP/quantity discounts are applied. The surcharge should be calculated as: (subtotal + shipping - discounts) × 3%.
+
+### Recommended Implementation Steps
+
+1. **Immediate Fix (Minimal Risk)**
+   - Remove the existence check in `apw_woo_add_intuit_surcharge_fee()`
+   - Clear all fees before recalculating
+   - Add proper change detection using the `apw_woo_force_surcharge_recalc` flag
+
+2. **Medium-term Solution**
+   - Implement fee manager class
+   - Add cart state tracking
+   - Proper event-driven updates
+
+3. **Long-term Architecture**
+   - Consider moving VIP discounts to Dynamic Pricing rules
+   - Use WooCommerce native systems where possible
+   - Reduce custom fee manipulation
+
+### Immediate Fix Implementation Plan
+
+#### Files to Modify
+- `includes/apw-woo-intuit-payment-functions.php` (primary changes)
+- Test the fix thoroughly before deployment
+
+#### Changes Required
+
+1. **Remove Existence Check** (lines 237-258)
+   - Current code prevents recalculation once surcharge exists
+   - Replace with proper fee removal logic
+
+2. **Implement Fee Removal** 
+   ```php
+   // Check if we need to force recalculation
+   $force_recalc = isset($GLOBALS['apw_woo_force_surcharge_recalc']) && $GLOBALS['apw_woo_force_surcharge_recalc'];
+   
+   // Remove existing surcharge if forcing recalculation
+   if ($force_recalc) {
+       $fees = WC()->cart->get_fees();
+       foreach ($fees as $key => $fee) {
+           if (strpos($fee->name, 'Credit Card Surcharge') !== false) {
+               unset(WC()->cart->fees[$key]);
+           }
+       }
+       // Reset the flag
+       $GLOBALS['apw_woo_force_surcharge_recalc'] = false;
+   }
+   ```
+
+3. **Fix Flag Usage** (lines 130-137)
+   - Currently `apw_woo_force_surcharge_recalc` flag is set but never used
+   - Integrate flag checking into surcharge calculation logic
+
+4. **Add Change Detection**
+   - Create cart state hash to detect when recalculation is needed
+   - Compare current cart totals with cached values
+
+#### Testing Strategy
+1. Test with Product #80, quantity 5 (should show $15.64 surcharge)
+2. Test discount application/removal scenarios
+3. Test payment method switching
+4. Verify no duplicate surcharges
+5. Test admin order editing functionality
+
+#### Rollback Plan
+- Keep current v1.23.10 code as backup
+- Document all changes for easy reversion
+- Test thoroughly in staging environment first
 
 ## Development Notes
 

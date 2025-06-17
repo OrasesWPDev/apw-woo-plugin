@@ -137,6 +137,21 @@ function apw_woo_reset_surcharge_calculation_flags() {
 }
 
 /**
+ * Generate cart state hash for change detection
+ * Used to detect when cart totals change and surcharge needs recalculation
+ */
+function apw_woo_get_cart_state_hash() {
+    $cart_data = array(
+        'subtotal' => WC()->cart->get_subtotal(),
+        'shipping_total' => WC()->cart->get_shipping_total(),
+        'discount_total' => WC()->cart->get_discount_total(),
+        'fee_total' => WC()->cart->get_fee_total(),
+        'payment_method' => WC()->session->get('chosen_payment_method')
+    );
+    return md5(serialize($cart_data));
+}
+
+/**
  * Initialize Intuit payment gateway integration
  */
 function apw_woo_init_intuit_integration() {
@@ -234,27 +249,55 @@ function apw_woo_add_intuit_surcharge_fee() {
     $chosen_gateway = WC()->session->get('chosen_payment_method');
     if ($chosen_gateway === 'intuit_payments_credit_card') {
         
-        // NEW APPROACH: Check if surcharge already exists instead of trying to remove
-        // This prevents duplicate fees when fee removal methods don't work
-        $existing_fees = WC()->cart->get_fees();
-        $surcharge_already_exists = false;
+        // Generate current cart state hash for change detection
+        $current_cart_hash = apw_woo_get_cart_state_hash();
+        $stored_cart_hash = WC()->session->get('apw_cart_state_hash');
         
-        foreach ($existing_fees as $fee) {
-            if (strpos($fee->name, 'Credit Card Surcharge') !== false) {
-                $surcharge_already_exists = true;
-                if (APW_WOO_DEBUG_MODE) {
-                    apw_woo_log("SURCHARGE FIX: Credit card surcharge already exists with amount: $" . number_format($fee->amount, 2));
-                }
-                break;
+        // If cart state changed, force recalculation
+        if ($current_cart_hash !== $stored_cart_hash) {
+            $GLOBALS['apw_woo_force_surcharge_recalc'] = true;
+            WC()->session->set('apw_cart_state_hash', $current_cart_hash);
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log('SURCHARGE FIX: Cart state changed, forcing recalculation');
             }
         }
         
-        // Skip adding surcharge if one already exists
-        if ($surcharge_already_exists) {
-            if (APW_WOO_DEBUG_MODE) {
-                apw_woo_log("SURCHARGE FIX: Skipping surcharge addition - already exists in cart");
+        // Check if we need to force recalculation due to cart changes
+        $force_recalc = isset($GLOBALS['apw_woo_force_surcharge_recalc']) && $GLOBALS['apw_woo_force_surcharge_recalc'];
+        
+        // Remove existing surcharge fees if forcing recalculation
+        if ($force_recalc) {
+            $cart_fees = WC()->cart->get_fees();
+            $removed_surcharge = false;
+            foreach ($cart_fees as $fee_key => $fee) {
+                if (strpos($fee->name, 'Credit Card Surcharge') !== false) {
+                    // Try multiple removal methods for compatibility
+                    if (isset(WC()->cart->fees_api()->fees[$fee_key])) {
+                        unset(WC()->cart->fees_api()->fees[$fee_key]);
+                        $removed_surcharge = true;
+                    } elseif (method_exists(WC()->cart, 'remove_fee')) {
+                        WC()->cart->remove_fee($fee_key);
+                        $removed_surcharge = true;
+                    }
+                }
             }
-            return;
+            // Reset the recalculation flag
+            $GLOBALS['apw_woo_force_surcharge_recalc'] = false;
+            
+            if (APW_WOO_DEBUG_MODE && $removed_surcharge) {
+                apw_woo_log('SURCHARGE FIX: Removed existing surcharge for recalculation');
+            }
+        }
+        
+        // Check if surcharge already exists to prevent duplicates within same calculation cycle
+        $existing_fees = WC()->cart->get_fees();
+        foreach ($existing_fees as $fee) {
+            if (strpos($fee->name, 'Credit Card Surcharge') !== false) {
+                if (APW_WOO_DEBUG_MODE) {
+                    apw_woo_log("SURCHARGE FIX: Surcharge already exists with amount: $" . number_format($fee->amount, 2));
+                }
+                return; // Skip if surcharge already exists in current calculation
+            }
         }
         
         // Calculate surcharge base: subtotal + shipping - VIP discounts (before tax)
