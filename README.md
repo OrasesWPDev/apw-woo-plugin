@@ -2,7 +2,7 @@
 
 A comprehensive WordPress plugin that extends WooCommerce functionality with advanced e-commerce features. Built specifically for the **Flatsome theme**, this plugin provides enhanced product displays, custom checkout processes, dynamic pricing integration, payment gateway enhancements, and sophisticated cart management systems.
 
-**Current Version**: 1.23.16
+**Current Version**: 1.23.18
 
 ## 🚀 Features
 
@@ -343,7 +343,16 @@ Log files will be created in the `logs/` directory.
 
 ## 📝 Changelog
 
-### Version 1.23.16 (Latest)
+### Version 1.23.18 (Latest)
+- **🎯 HOOK TIMING FIX**: Moved bulk discount calculation to `woocommerce_before_calculate_totals` hook (priority 5)
+- **⏰ CALCULATION SEQUENCE**: Ensured discounts are applied to cart BEFORE surcharge calculations begin
+- **🔄 SURCHARGE OPTIMIZATION**: Adjusted surcharge hook to priority 10 on `woocommerce_cart_calculate_fees`
+- **🎮 CART STATE SYNC**: Discounts now modify cart state before any fee calculations execute
+- **📊 FRONTEND ACCURACY**: Should resolve $17.14 vs $15.64 surcharge display mismatch
+- **🏗️ WOOCOMMERCE COMPLIANCE**: Uses proper hook sequence per WooCommerce architecture documentation
+- **Per user instructions**: "implement option 1" - Split hooks between cart modification and fee calculation phases
+
+### Version 1.23.16
 - **🏆 WOOCOMMERCE BEST PRACTICES**: Complete architectural overhaul following WooCommerce's intended patterns and practices
 - **🧹 CLEAN ARCHITECTURE**: Removed all manual fee manipulation, cache clearing, and complex state management code
 - **✅ CONDITIONAL LOGIC**: Implemented simple conditional fee addition that works WITH WooCommerce's natural fee lifecycle

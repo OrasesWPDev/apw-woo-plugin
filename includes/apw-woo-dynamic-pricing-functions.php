@@ -810,7 +810,7 @@ function apw_woo_init_dynamic_pricing()
 
     // MOVED: Register bulk discount and admin hooks inside protected function to prevent duplicates
     // These were previously at file level causing duplicate VIP discounts and missing tax discounts
-    add_action('woocommerce_cart_calculate_fees', 'apw_woo_apply_role_based_bulk_discounts', 5);
+    add_action('woocommerce_before_calculate_totals', 'apw_woo_apply_role_based_bulk_discounts', 5);
     add_action('wp', 'apw_woo_ensure_cart_calculated_on_load', 20);
     add_action('woocommerce_checkout_create_order', 'apw_woo_save_discount_rules_to_order', 10, 2);
     add_action('woocommerce_order_before_calculate_totals', 'apw_woo_reapply_admin_discounts_before_calc', 10, 2);

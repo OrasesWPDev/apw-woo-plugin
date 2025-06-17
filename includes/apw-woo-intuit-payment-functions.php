@@ -195,8 +195,8 @@ function apw_woo_init_intuit_integration() {
     // Add a filter to ensure our fields are preserved during checkout
     add_filter('woocommerce_checkout_posted_data', 'apw_woo_preserve_intuit_fields');
     
-    // Add the surcharge calculation hook with priority 15 to run after discounts (priority 5)
-    add_action('woocommerce_cart_calculate_fees', 'apw_woo_add_intuit_surcharge_fee', 15);
+    // Add the surcharge calculation hook with priority 10 to run after discounts are applied to cart
+    add_action('woocommerce_cart_calculate_fees', 'apw_woo_add_intuit_surcharge_fee', 10);
     
     // REMOVED: Hooks that were causing infinite loops by triggering calculate_totals()
     // WooCommerce handles cart updates naturally without manual intervention
