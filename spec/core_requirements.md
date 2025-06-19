@@ -147,4 +147,32 @@ This document defines the 5 core business requirements for the APW WooCommerce P
 3. **MEDIUM**: Code organization and reduction
 4. **LOW**: Performance optimizations and cleanup
 
+## Mandatory Testing Gates
+
+### ⚠️ CRITICAL: Testing Required Before Any Changes
+**Before starting ANY refactor work, establish baseline:**
+
+```bash
+# REQUIRED: Install testing environment first
+composer install
+./bin/setup-tests.sh
+
+# REQUIRED: Establish baseline functionality
+composer run test:all        # Document current test results
+# Manually test critical paths and document current behavior
+# Test Product #80, qty 5 scenario - document current $17.14 surcharge bug
+```
+
+### Pre-Refactor Documentation Requirements
+- [ ] **Current Bug Documentation**: Record the $17.14 vs $15.64 surcharge issue
+- [ ] **Functionality Baseline**: Test all shortcodes and template rendering
+- [ ] **Performance Baseline**: Capture current page load times and memory usage
+- [ ] **Test Coverage Baseline**: Establish starting test coverage percentage
+
+### Continuous Testing Requirements
+- [ ] **After Each Phase**: All previous phase tests must continue passing
+- [ ] **Before Each Commit**: Linting and basic functionality tests
+- [ ] **Weekly Reviews**: Complete test suite and manual verification
+- [ ] **Before Deployment**: Full regression test including manual browser testing
+
 This specification ensures the refactor maintains all existing functionality while addressing critical bugs and improving the codebase for future development.

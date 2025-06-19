@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+<phpunit
+    bootstrap="tests/bootstrap.php"
+    backupGlobals="false"
+    colors="true"
+    convertErrorsToExceptions="true"
+    convertNoticesToExceptions="true"
+    convertWarningsToExceptions="true"
+    processIsolation="false"
+    stopOnFailure="false"
+    testdox="true"
+    verbose="true">
+    
+    <testsuites>
+        <testsuite name="APW WooCommerce Plugin Tests">
+            <directory>./tests/</directory>
+        </testsuite>
+        <testsuite name="Phase 1 - Critical Payment Processing">
+            <directory>./tests/phase1/</directory>
+        </testsuite>
+        <testsuite name="Phase 2 - Service Consolidation">
+            <directory>./tests/phase2/</directory>
+        </testsuite>
+        <testsuite name="Phase 3 - Code Optimization">
+            <directory>./tests/phase3/</directory>
+        </testsuite>
+        <testsuite name="Integration Tests">
+            <directory>./tests/integration/</directory>
+        </testsuite>
+    </testsuites>
+    
+    <groups>
+        <include>
+            <group>payment</group>
+            <group>customer</group>
+            <group>product</group>
+            <group>cart</group>
+            <group>phase1</group>
+            <group>phase2</group>
+            <group>phase3</group>
+            <group>integration</group>
+        </include>
+    </groups>
+    
+    <coverage>
+        <include>
+            <directory suffix=".php">./includes/</directory>
+            <file>./apw-woo-plugin.php</file>
+        </include>
+        <exclude>
+            <directory>./includes/vendor/</directory>
+            <directory>./tests/</directory>
+            <directory>./vendor/</directory>
+        </exclude>
+    </coverage>
+    
+    <logging>
+        <log type="coverage-html" target="./tests/coverage" lowUpperBound="50" highLowerBound="80"/>
+        <log type="coverage-text" target="php://stdout" showUncoveredFiles="false"/>
+        <log type="coverage-clover" target="./tests/coverage/clover.xml"/>
+    </logging>
+    
+    <php>
+        <env name="WP_TESTS_DIR" value="/tmp/wordpress-tests-lib"/>
+        <env name="WP_CORE_DIR" value="/tmp/wordpress"/>
+        <env name="WP_TESTS_DOMAIN" value="example.org"/>
+        <env name="WP_TESTS_EMAIL" value="admin@example.org"/>
+        <env name="WP_TESTS_TITLE" value="Test Blog"/>
+        <env name="WP_PHP_BINARY" value="php"/>
+        <env name="WPLANG" value=""/>
+        <env name="WP_DEBUG" value="1"/>
+        <env name="WP_TESTS_FORCE_KNOWN_BUGS" value="1"/>
+        <const name="APW_WOO_DEBUG_MODE" value="false"/>
+    </php>
+</phpunit>

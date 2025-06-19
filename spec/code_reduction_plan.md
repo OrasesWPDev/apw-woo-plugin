@@ -318,6 +318,36 @@ find includes/ -name "*.php" -exec wc -l {} + | tail -1
 2. **Integration Tests**: Verify WordPress/WooCommerce compatibility
 3. **User Acceptance**: Test all user-facing features
 
+## Mandatory Testing Gates
+
+### ⚠️ CRITICAL: Testing Required at Each Reduction Stage
+**Every code reduction must be validated before proceeding:**
+
+```bash
+# REQUIRED: Test before any major reduction
+composer run test:all        # Full test suite must pass
+composer run test:phase3     # Phase 3 optimization tests
+composer run lint           # Code standards maintained
+composer run analyze        # No new static analysis issues
+
+# REQUIRED: Performance validation
+phpunit --coverage-html tests/coverage  # Maintain test coverage
+# Monitor memory usage and performance metrics
+```
+
+### Reduction Validation Process
+1. **Before Reduction**: Run baseline tests and capture metrics
+2. **During Reduction**: Test incrementally after each file consolidation
+3. **After Reduction**: Verify functionality and performance maintained
+
+### Blocking Issues
+❌ **DO NOT PROCEED** with further reduction if:
+- Any existing tests are failing
+- Test coverage drops below 80%
+- Performance degrades more than 10%
+- Memory usage increases
+- Functionality is lost or broken
+
 ## Success Metrics
 
 ### Quantitative Goals

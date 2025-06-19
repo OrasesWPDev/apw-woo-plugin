@@ -385,6 +385,38 @@ add_action('woocommerce_cart_calculate_fees', 'apw_woo_apply_credit_card_surchar
 3. **CSV Format**: Verify proper CSV escaping
 4. **Large Dataset**: Test performance with 1000+ customers
 
+## Mandatory Testing Gates
+
+### ⚠️ CRITICAL: No Progression Without Testing
+**Before proceeding to Phase 3, ALL Phase 2 tests must pass:**
+
+```bash
+# REQUIRED: Run these tests and verify all pass
+composer run test:phase2     # All Phase 2 service tests must pass
+composer run test:customer   # Customer service functionality tests
+composer run test:phase1     # Ensure no regressions from Phase 1
+composer run lint           # Code must meet WordPress standards
+composer run analyze        # No static analysis errors allowed
+
+# REQUIRED: Manual verification of VIP integration
+# Test VIP discount + payment surcharge combination
+# Verify timing: VIP discount (priority 10) → Payment surcharge (priority 20)
+```
+
+### Test Coverage Requirements
+- [ ] **Unit Tests**: 90% coverage for customer service methods
+- [ ] **Integration Tests**: VIP discount + payment surcharge scenarios
+- [ ] **Regression Tests**: All Phase 1 payment tests still pass
+- [ ] **Data Migration Tests**: Customer data preserved during consolidation
+
+### Blocking Issues
+❌ **DO NOT PROCEED** to Phase 3 if:
+- Any customer service tests are failing
+- VIP discount timing issues with payment surcharge
+- Customer registration validation broken
+- Referral export functionality lost
+- Phase 1 payment tests now failing (regression)
+
 ## Success Metrics
 
 ### Code Quality

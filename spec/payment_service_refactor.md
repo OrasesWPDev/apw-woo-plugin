@@ -215,6 +215,37 @@ function apw_woo_init_payment_processing() {
 - Track admin order processing for anomalies
 - Verify with test transactions before production
 
+## Mandatory Testing Gates
+
+### ⚠️ CRITICAL: No Progression Without Testing
+**Before proceeding to Phase 2, ALL Phase 1 tests must pass:**
+
+```bash
+# REQUIRED: Run these tests and verify all pass
+composer run test:phase1     # All Phase 1 payment tests must pass
+composer run test:payment    # Specific payment processing tests must pass
+composer run lint           # Code must meet WordPress standards
+composer run analyze        # No static analysis errors allowed
+
+# REQUIRED: Manual verification of critical bug fix
+# Test Product #80, Quantity 5, VIP customer scenario
+# Verify surcharge shows $15.64, NOT $17.14
+```
+
+### Test Coverage Requirements
+- [ ] **Unit Tests**: 95% coverage for payment processing functions
+- [ ] **Integration Tests**: All payment method scenarios tested
+- [ ] **Regression Tests**: Existing functionality preserved
+- [ ] **Manual Testing**: Critical bug fix verified in browser
+
+### Blocking Issues
+❌ **DO NOT PROCEED** to Phase 2 if:
+- Any payment tests are failing
+- Surcharge calculation still shows $17.14 instead of $15.64
+- Infinite loops detected in cart calculations
+- Code linting failures exist
+- Static analysis shows errors
+
 ## Success Metrics
 
 ### Bug Resolution

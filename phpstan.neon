@@ -1,0 +1,49 @@
+parameters:
+    level: 5
+    paths:
+        - includes/
+        - apw-woo-plugin.php
+    
+    excludePaths:
+        - includes/vendor/
+        - tests/
+        - vendor/
+    
+    bootstrapFiles:
+        - tests/stubs/wordpress-stubs.php
+        - tests/stubs/woocommerce-stubs.php
+    
+    ignoreErrors:
+        # WordPress globals that PHPStan doesn't understand
+        - '#Undefined variable: \$wpdb#'
+        - '#Undefined variable: \$wp_query#'
+        - '#Undefined variable: \$post#'
+        - '#Function wp_verify_nonce not found#'
+        - '#Function sanitize_text_field not found#'
+        - '#Function esc_html not found#'
+        - '#Function esc_attr not found#'
+        - '#Function esc_url not found#'
+        - '#Function wp_die not found#'
+        - '#Function current_user_can not found#'
+        - '#Function get_current_user_id not found#'
+        - '#Function is_admin not found#'
+        - '#Function wp_create_user not found#'
+        - '#Function update_user_meta not found#'
+        - '#Function get_user_meta not found#'
+        - '#Function wp_cache_get not found#'
+        - '#Function wp_cache_set not found#'
+        - '#Function apply_filters not found#'
+        - '#Function do_action not found#'
+        - '#Function add_action not found#'
+        - '#Function add_filter not found#'
+        
+        # WooCommerce functions
+        - '#Function WC not found#'
+        - '#Function wc_get_product not found#'
+        - '#Function wc_get_cart_url not found#'
+        - '#Function wc_price not found#'
+        - '#Function is_checkout not found#'
+        - '#Function is_product not found#'
+        - '#Class WC_Product not found#'
+        - '#Class WC_Customer not found#'
+        - '#Class WC_Cart not found#'

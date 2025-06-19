@@ -295,8 +295,64 @@ if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE) {
 
 ## Testing & Development Commands
 
-When working on this plugin, use these commands for testing:
+### CRITICAL: Before Starting Any Refactor Work
 
+1. **Start MySQL Service** (required for testing):
+```bash
+brew services start mysql
+```
+
+2. **Complete WordPress Test Suite Setup**:
+```bash
+./bin/setup-tests.sh
+```
+
+3. **Verify Testing Environment**:
+```bash
+composer run test
+```
+
+### Mandatory Phase-Based Testing (Per Spec Requirements)
+
+Each phase MUST pass testing before proceeding to the next:
+
+```bash
+# Phase 1 - Critical Payment Processing (95% coverage required)
+composer run test:phase1
+
+# Phase 2 - Service Consolidation (90% coverage required)  
+composer run test:phase2
+
+# Phase 3 - Code Optimization (maintain coverage while reducing code)
+composer run test:phase3
+```
+
+### Feature-Specific Testing Commands
+```bash
+composer run test:payment    # CRITICAL for credit card surcharge bug fixes
+composer run test:customer   # VIP/referral functionality testing
+composer run test:cart       # Cart quantity indicators testing
+composer run test:product    # Product-related features testing
+```
+
+### Code Quality Commands (Run Before Each Commit)
+```bash
+composer run quality         # All quality checks (lint + analyze + mess-detect)
+composer run test:all        # Complete test suite + quality checks
+composer run test:critical   # Payment + Phase 1 testing only
+composer run test:coverage   # Generate HTML coverage report
+```
+
+### Individual Quality Tools
+```bash
+composer run lint            # WordPress/WooCommerce coding standards
+composer run lint:fix        # Auto-fix coding standard violations
+composer run analyze         # PHPStan static analysis (level 5)
+composer run analyze:strict  # PHPStan strict analysis (level 8)
+composer run mess-detect     # PHP Mess Detector for code quality
+```
+
+### Debug Mode & Logging
 ```bash
 # Enable debug mode in apw-woo-plugin.php
 define('APW_WOO_DEBUG_MODE', true);
@@ -307,6 +363,14 @@ tail -f logs/debug-$(date +%Y-%m-%d).log
 # Test with different themes for compatibility
 # Test with minimum required versions of dependencies
 ```
+
+### Testing Environment Details
+
+- **Full setup instructions**: See `TESTING_SETUP.md`
+- **Test database**: `wordpress_test` (auto-created)
+- **Coverage reports**: Generated in `tests/coverage/index.html`
+- **WordPress/WooCommerce stubs**: Available for PHPStan analysis
+- **Phase-based testing**: Organized by refactor phases for iterative development
 
 ## Auto-Updater System
 

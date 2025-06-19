@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+<ruleset name="APW WooCommerce Plugin Coding Standards">
+    <description>Coding standards for APW WooCommerce Plugin</description>
+    
+    <!-- Show progress and sniff codes -->
+    <arg value="ps"/>
+    
+    <!-- Colorize output -->
+    <arg name="colors"/>
+    
+    <!-- Check all PHP files -->
+    <arg name="extensions" value="php"/>
+    
+    <!-- What to scan -->
+    <file>.</file>
+    
+    <!-- Exclude directories -->
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/tests/coverage/*</exclude-pattern>
+    <exclude-pattern>*/node_modules/*</exclude-pattern>
+    <exclude-pattern>*/logs/*</exclude-pattern>
+    <exclude-pattern>*/.git/*</exclude-pattern>
+    
+    <!-- Use WordPress coding standards -->
+    <rule ref="WordPress">
+        <!-- Allow short array syntax -->
+        <exclude name="Generic.Arrays.DisallowShortArraySyntax"/>
+        <!-- Allow assignments in conditions (common in WordPress) -->
+        <exclude name="WordPress.CodeAnalysis.AssignmentInCondition"/>
+        <!-- Allow multiple assignments (sometimes needed) -->
+        <exclude name="Squiz.PHP.DisallowMultipleAssignments"/>
+    </rule>
+    
+    <!-- Use WooCommerce coding standards for WooCommerce-specific files -->
+    <rule ref="WooCommerce-Core">
+        <include-pattern>*/includes/*woocommerce*</include-pattern>
+        <include-pattern>*/templates/woocommerce/*</include-pattern>
+    </rule>
+    
+    <!-- Enforce short prefixes for this plugin -->
+    <rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+        <properties>
+            <property name="prefixes" type="array">
+                <element value="apw_woo"/>
+                <element value="APW_Woo"/>
+                <element value="APW_WOO"/>
+            </property>
+        </properties>
+    </rule>
+    
+    <!-- Check for PHP compatibility -->
+    <rule ref="PHPCompatibility"/>
+    <config name="testVersion" value="7.2-"/>
+    
+    <!-- Set minimum supported WP version -->
+    <config name="minimum_supported_wp_version" value="5.3"/>
+    
+    <!-- Text domain check -->
+    <rule ref="WordPress.WP.I18n">
+        <properties>
+            <property name="text_domain" type="array">
+                <element value="apw-woo-plugin"/>
+            </property>
+        </properties>
+    </rule>
+</ruleset>

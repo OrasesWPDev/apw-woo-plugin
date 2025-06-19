@@ -107,6 +107,15 @@ function apw_woo_test_payment_scenarios() {
 - [ ] Payment method switching works properly
 - [ ] All existing payment functionality preserved
 
+### ⚠️ MANDATORY: Phase 1 Testing Gate
+**STOP: No Phase 2 work until these tests pass:**
+```bash
+composer run test:phase1     # ALL tests must pass
+composer run test:payment    # Payment-specific tests must pass
+composer run lint           # No coding standard violations
+composer run analyze        # No static analysis errors
+```
+
 #### Deliverables Phase 1
 - Fixed payment calculation logic
 - Comprehensive debug logging for payment issues
@@ -216,6 +225,16 @@ class APW_Woo_Cart_Service {
 - [ ] Code reduction of 45% in function files achieved
 - [ ] Service classes follow WordPress singleton pattern
 
+### ⚠️ MANDATORY: Phase 2 Testing Gate
+**STOP: No Phase 3 work until these tests pass:**
+```bash
+composer run test:phase2     # ALL Phase 2 tests must pass
+composer run test:phase1     # No regressions from Phase 1
+composer run test:customer   # Customer service tests must pass
+composer run lint           # No coding standard violations
+composer run analyze        # No static analysis errors
+```
+
 #### Deliverables Phase 2
 - 4 new service classes with consolidated functionality
 - Updated plugin initialization to load services
@@ -319,6 +338,18 @@ public function get_customer_vip_status($customer_id) {
 - [ ] Asset loading optimized for context
 - [ ] Performance caching implemented
 - [ ] Overall 30-40% code reduction achieved
+
+### ⚠️ MANDATORY: Phase 3 Testing Gate
+**STOP: Verify complete refactor success:**
+```bash
+composer run test:all        # ALL tests must pass
+composer run test:phase3     # Phase 3 optimization tests must pass
+composer run test:phase2     # No regressions from Phase 2
+composer run test:phase1     # No regressions from Phase 1
+composer run lint           # No coding standard violations
+composer run analyze        # No static analysis errors
+phpunit --coverage-html tests/coverage  # Generate final coverage report
+```
 
 #### Deliverables Phase 3
 - Optimized templates with minimal debug output
