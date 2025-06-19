@@ -508,3 +508,449 @@ assert($new_performance['memory'] <= $old_performance['memory'], 'New code shoul
 - [ ] Cache hit rates improved
 
 This testing strategy ensures the refactored plugin maintains reliability while delivering the expected improvements in code quality and performance.
+
+## Local Testing Environment Setup
+
+### Required Packages for Phase-by-Phase Validation
+
+#### 1. Composer Dependencies (Create composer.json)
+```json
+{
+    "name": "orases/apw-woo-plugin",
+    "description": "APW WooCommerce Plugin Testing Environment",
+    "type": "wordpress-plugin",
+    "require-dev": {
+        "phpunit/phpunit": "^9.5",
+        "wp-phpunit/wp-phpunit": "^6.0",
+        "woocommerce/woocommerce-sniffs": "^0.1",
+        "phpstan/phpstan": "^1.10",
+        "squizlabs/php_codesniffer": "^3.7",
+        "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+        "brain/monkey": "^2.6",
+        "mockery/mockery": "^1.5",
+        "vlucas/phpdotenv": "^5.5"
+    },
+    "scripts": {
+        "test": "phpunit",
+        "test:phase1": "phpunit --group=phase1",
+        "test:phase2": "phpunit --group=phase2", 
+        "test:phase3": "phpunit --group=phase3",
+        "test:payment": "phpunit --group=payment",
+        "test:customer": "phpunit --group=customer",
+        "lint": "phpcs --standard=WordPress includes/ apw-woo-plugin.php",
+        "lint:fix": "phpcbf --standard=WordPress includes/ apw-woo-plugin.php",
+        "analyze": "phpstan analyze includes/ apw-woo-plugin.php --level=5",
+        "test:all": [
+            "@lint",
+            "@analyze", 
+            "@test"
+        ]
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    }
+}
+```
+
+#### 2. PHPUnit Configuration (phpunit.xml)
+```xml
+<?xml version="1.0"?>
+<phpunit
+    bootstrap="tests/bootstrap.php"
+    backupGlobals="false"
+    colors="true"
+    convertErrorsToExceptions="true"
+    convertNoticesToExceptions="true"
+    convertWarningsToExceptions="true"
+    processIsolation="false"
+    stopOnFailure="false"
+    testdox="true">
+    
+    <testsuites>
+        <testsuite name="APW WooCommerce Plugin Tests">
+            <directory>./tests/</directory>
+        </testsuite>
+        <testsuite name="Phase 1 - Payment Processing">
+            <directory>./tests/phase1/</directory>
+        </testsuite>
+        <testsuite name="Phase 2 - Service Consolidation">
+            <directory>./tests/phase2/</directory>
+        </testsuite>
+        <testsuite name="Phase 3 - Code Optimization">
+            <directory>./tests/phase3/</directory>
+        </testsuite>
+    </testsuites>
+    
+    <groups>
+        <include>
+            <group>payment</group>
+            <group>customer</group>
+            <group>product</group>
+            <group>cart</group>
+            <group>phase1</group>
+            <group>phase2</group>
+            <group>phase3</group>
+        </include>
+    </groups>
+    
+    <coverage>
+        <include>
+            <directory suffix=".php">./includes/</directory>
+            <file>./apw-woo-plugin.php</file>
+        </include>
+        <exclude>
+            <directory>./includes/vendor/</directory>
+            <directory>./tests/</directory>
+        </exclude>
+    </coverage>
+    
+    <logging>
+        <log type="coverage-html" target="./tests/coverage"/>
+        <log type="coverage-text" target="php://stdout" showUncoveredFiles="false"/>
+    </logging>
+</phpunit>
+```
+
+#### 3. Test Bootstrap (tests/bootstrap.php)
+```php
+<?php
+/**
+ * PHPUnit bootstrap file for APW WooCommerce Plugin
+ */
+
+// Composer autoloader
+if (file_exists(dirname(__DIR__) . '/vendor/autoload.php')) {
+    require_once dirname(__DIR__) . '/vendor/autoload.php';
+}
+
+// Load WordPress test functions
+if (defined('WP_TESTS_DIR') && file_exists(WP_TESTS_DIR . '/includes/functions.php')) {
+    require_once WP_TESTS_DIR . '/includes/functions.php';
+} else {
+    // Fallback - try to find WordPress test suite
+    $wp_tests_dir = getenv('WP_TESTS_DIR');
+    if (!$wp_tests_dir) {
+        $wp_tests_dir = '/tmp/wordpress-tests-lib';
+    }
+    require_once rtrim($wp_tests_dir, '/') . '/includes/functions.php';
+}
+
+// Manually load our plugin
+function _manually_load_apw_plugin() {
+    require dirname(__DIR__) . '/apw-woo-plugin.php';
+}
+tests_add_filter('muplugins_loaded', '_manually_load_apw_plugin');
+
+// Manually load WooCommerce if available
+function _manually_load_woocommerce() {
+    if (defined('WP_PLUGIN_DIR') && file_exists(WP_PLUGIN_DIR . '/woocommerce/woocommerce.php')) {
+        require WP_PLUGIN_DIR . '/woocommerce/woocommerce.php';
+    }
+}
+tests_add_filter('plugins_loaded', '_manually_load_woocommerce', 0);
+
+// Load WordPress test suite
+require WP_TESTS_DIR . '/includes/bootstrap.php';
+
+// Additional test utilities
+require_once __DIR__ . '/utilities/test-helpers.php';
+require_once __DIR__ . '/utilities/cart-helpers.php';
+require_once __DIR__ . '/utilities/payment-helpers.php';
+```
+
+#### 4. Phase-Specific Test Structure
+```
+tests/
+├── bootstrap.php
+├── utilities/
+│   ├── test-helpers.php
+│   ├── cart-helpers.php
+│   └── payment-helpers.php
+├── phase1/
+│   ├── test-payment-surcharge.php
+│   ├── test-vip-discount-timing.php
+│   └── test-payment-method-switching.php
+├── phase2/
+│   ├── test-customer-service.php
+│   ├── test-product-service.php
+│   ├── test-cart-service.php
+│   └── test-service-integration.php
+├── phase3/
+│   ├── test-code-reduction.php
+│   ├── test-performance.php
+│   └── test-optimization.php
+└── integration/
+    ├── test-wordpress-compatibility.php
+    ├── test-woocommerce-integration.php
+    └── test-template-rendering.php
+```
+
+#### 5. Installation Commands
+```bash
+# Initialize composer
+composer init
+
+# Install testing dependencies
+composer require --dev phpunit/phpunit:^9.5
+composer require --dev wp-phpunit/wp-phpunit:^6.0
+composer require --dev woocommerce/woocommerce-sniffs:^0.1
+composer require --dev phpstan/phpstan:^1.10
+composer require --dev squizlabs/php_codesniffer:^3.7
+composer require --dev brain/monkey:^2.6
+composer require --dev mockery/mockery:^1.5
+
+# Install WordPress test suite
+./bin/install-wp-tests.sh wordpress_test root '' localhost latest
+
+# Create test directories
+mkdir -p tests/{phase1,phase2,phase3,integration,utilities}
+```
+
+### Phase Validation Commands
+
+#### Phase 1: Critical Payment Fixes
+```bash
+# Test payment processing specifically
+composer run test:payment
+
+# Test Phase 1 completion
+composer run test:phase1
+
+# Lint new payment service code
+composer run lint includes/services/class-apw-woo-payment-service.php
+
+# Static analysis
+composer run analyze
+```
+
+#### Phase 2: Service Consolidation  
+```bash
+# Test customer service consolidation
+composer run test:customer
+
+# Test all Phase 2 services
+composer run test:phase2
+
+# Verify no regressions from Phase 1
+composer run test:phase1
+
+# Full lint check
+composer run lint
+```
+
+#### Phase 3: Code Optimization
+```bash
+# Test optimization results
+composer run test:phase3
+
+# Full test suite
+composer run test:all
+
+# Generate coverage report
+phpunit --coverage-html tests/coverage
+```
+
+### Critical Test Examples for Each Phase
+
+#### Phase 1: Payment Processing Test
+```php
+// tests/phase1/test-payment-surcharge.php
+<?php
+
+/**
+ * @group phase1
+ * @group payment
+ */
+class Test_Payment_Surcharge extends WP_UnitTestCase {
+    
+    public function setUp(): void {
+        parent::setUp();
+        // Clear cart before each test
+        if (function_exists('WC') && WC()->cart) {
+            WC()->cart->empty_cart();
+        }
+    }
+    
+    /**
+     * Test the critical bug fix: Product #80, Quantity 5, VIP customer
+     * Should show $15.64 surcharge, not $17.14
+     */
+    public function test_surcharge_with_vip_discount_bug_fix() {
+        // Setup
+        $subtotal = 500.00; // $100 × 5 items
+        $vip_discount = 50.00; // 10% VIP discount
+        $expected_surcharge = 13.50; // (500 - 50) × 3%
+        
+        // Add items to cart
+        WC()->cart->add_fee('Product Total', $subtotal);
+        WC()->cart->add_fee('VIP Discount (10%)', -$vip_discount, false);
+        
+        // Set payment method
+        WC()->session->set('chosen_payment_method', 'intuit_payments_credit_card');
+        
+        // Calculate totals (this applies surcharge)
+        WC()->cart->calculate_totals();
+        
+        // Verify surcharge amount
+        $surcharge_amount = $this->get_surcharge_fee_amount();
+        
+        $this->assertNotFalse($surcharge_amount, 'Surcharge fee should be applied');
+        $this->assertEquals(
+            $expected_surcharge, 
+            $surcharge_amount, 
+            'Surcharge should be $13.50 (fixed from $17.14 bug)',
+            0.01 // Delta for float comparison
+        );
+    }
+    
+    private function get_surcharge_fee_amount() {
+        $fees = WC()->cart->get_fees();
+        foreach ($fees as $fee) {
+            if (strpos($fee->name, 'Credit Card Surcharge') !== false) {
+                return $fee->amount;
+            }
+        }
+        return false;
+    }
+}
+```
+
+#### Phase 2: Service Integration Test
+```php
+// tests/phase2/test-customer-service.php
+<?php
+
+/**
+ * @group phase2
+ * @group customer
+ */
+class Test_Customer_Service extends WP_UnitTestCase {
+    
+    private $customer_service;
+    
+    public function setUp(): void {
+        parent::setUp();
+        $this->customer_service = APW_Woo_Customer_Service::get_instance();
+    }
+    
+    public function test_vip_status_calculation() {
+        $customer_id = $this->factory->user->create();
+        
+        // Set customer total spent above VIP threshold
+        update_user_meta($customer_id, '_money_spent', 150.00);
+        
+        $is_vip = $this->customer_service->is_vip_customer($customer_id);
+        $this->assertTrue($is_vip, 'Customer with $150 spent should be VIP');
+        
+        $tier = $this->customer_service->get_vip_discount_tier($customer_id);
+        $this->assertEquals('silver', $tier['tier']);
+        $this->assertEquals(0.05, $tier['discount']);
+    }
+}
+```
+
+### Code Quality Gates
+
+#### Pre-Commit Hooks (Optional but Recommended)
+```bash
+# Install pre-commit hook
+echo '#!/bin/sh
+composer run lint
+composer run analyze
+composer run test:payment
+' > .git/hooks/pre-commit
+chmod +x .git/hooks/pre-commit
+```
+
+#### GitHub Actions Workflow (.github/workflows/test.yml)
+```yaml
+name: Test APW Plugin Refactor
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: wordpress_test
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          extensions: mbstring, intl, bcmath, exif, gd, mysqli, zip
+          
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress
+        
+      - name: Install WordPress Test Suite
+        run: bash bin/install-wp-tests.sh wordpress_test root root 127.0.0.1:3306 latest
+        
+      - name: Run Phase 1 Tests (Payment Processing)
+        run: composer run test:phase1
+        
+      - name: Run Code Quality Checks
+        run: |
+          composer run lint
+          composer run analyze
+          
+      - name: Run Full Test Suite
+        run: composer run test
+```
+
+### Installation Script (bin/setup-tests.sh)
+```bash
+#!/bin/bash
+
+echo "Setting up APW WooCommerce Plugin testing environment..."
+
+# Install composer dependencies
+if [ ! -f "composer.json" ]; then
+    echo "Creating composer.json..."
+    cp tests/fixtures/composer.json.template composer.json
+fi
+
+composer install
+
+# Install WordPress test suite
+if [ ! -d "/tmp/wordpress-tests-lib" ]; then
+    echo "Installing WordPress test suite..."
+    bash bin/install-wp-tests.sh wordpress_test root '' localhost latest
+fi
+
+# Create test database
+mysql -u root -e "CREATE DATABASE IF NOT EXISTS wordpress_test;"
+
+# Set up test directories
+mkdir -p tests/{phase1,phase2,phase3,integration,utilities,fixtures}
+
+echo "Test environment setup complete!"
+echo ""
+echo "Available commands:"
+echo "  composer run test:phase1  - Test Phase 1 (Payment Processing)"
+echo "  composer run test:phase2  - Test Phase 2 (Service Consolidation)"
+echo "  composer run test:phase3  - Test Phase 3 (Code Optimization)"
+echo "  composer run test:all     - Run all tests with linting"
+echo "  composer run lint         - Code style checking"
+echo "  composer run analyze      - Static analysis"
+```
+
+This comprehensive testing setup allows Claude Code to validate each phase iteratively:
+
+1. **Install once**: `composer install && ./bin/setup-tests.sh`
+2. **Test Phase 1**: `composer run test:phase1` (Critical payment fixes)
+3. **Test Phase 2**: `composer run test:phase2` (Service consolidation)  
+4. **Test Phase 3**: `composer run test:phase3` (Code optimization)
+5. **Full validation**: `composer run test:all` (Everything together)
+
+Each phase can be validated independently before proceeding to the next, ensuring no regressions and confirming the refactor is working correctly.
