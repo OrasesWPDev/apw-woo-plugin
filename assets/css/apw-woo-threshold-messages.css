@@ -1,0 +1,190 @@
+/**
+ * APW WooCommerce Threshold Messages Styling
+ * Styles for quantity discount and shipping threshold notifications
+ * Based on actual discount rules from bulk discount system
+ */
+
+.apw-woo-threshold-messages {
+    margin: 15px 0;
+    padding: 0;
+    display: none; /* Hidden by default, shown via JavaScript */
+}
+
+.apw-threshold-message {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.4;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.apw-threshold-message:last-child {
+    margin-bottom: 0;
+}
+
+/* Discount threshold message styling */
+.apw-threshold-discount {
+    background-color: #e8f5e8;
+    border: 1px solid #4caf50;
+    color: #2e7d32;
+}
+
+/* Shipping threshold message styling */
+.apw-threshold-shipping {
+    background-color: #e3f2fd;
+    border: 1px solid #2196f3;
+    color: #1565c0;
+}
+
+/* Message icon styling */
+.message-icon {
+    font-size: 16px;
+    margin-right: 8px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.8);
+}
+
+.apw-threshold-discount .message-icon {
+    color: #4caf50;
+}
+
+.apw-threshold-shipping .message-icon {
+    color: #2196f3;
+}
+
+/* Message text styling */
+.message-text {
+    flex: 1;
+    font-weight: 500;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .apw-threshold-message {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+    
+    .message-icon {
+        font-size: 14px;
+        width: 18px;
+        height: 18px;
+        margin-right: 6px;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .apw-threshold-discount {
+        background-color: #1b5e20;
+        border-color: #4caf50;
+        color: #a5d6a7;
+    }
+    
+    .apw-threshold-shipping {
+        background-color: #0d47a1;
+        border-color: #2196f3;
+        color: #90caf9;
+    }
+    
+    .message-icon {
+        background-color: rgba(0, 0, 0, 0.3);
+    }
+}
+
+/* Animation for showing/hiding messages */
+.apw-woo-threshold-messages.fade-in {
+    animation: fadeInUp 0.3s ease forwards;
+}
+
+.apw-woo-threshold-messages.fade-out {
+    animation: fadeOutDown 0.3s ease forwards;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeOutDown {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+}
+
+/* Integration with Flatsome theme */
+.flatsome .apw-threshold-message {
+    border-radius: 4px;
+    font-family: inherit;
+}
+
+/* Integration with common WooCommerce themes */
+.woocommerce .apw-woo-threshold-messages {
+    margin: 15px 0 20px 0;
+}
+
+.woocommerce-page .apw-woo-threshold-messages {
+    margin: 15px 0 20px 0;
+}
+
+/* Ensure proper spacing with quantity selectors */
+.quantity + .apw-woo-threshold-messages,
+.apw-woo-price-display + .apw-woo-threshold-messages {
+    margin-top: 15px;
+}
+
+/* Ensure proper spacing before add to cart button */
+.apw-woo-threshold-messages + .single_add_to_cart_button,
+.apw-woo-threshold-messages + .add_to_cart_button {
+    margin-top: 15px;
+}
+
+/* VIP user specific styling */
+.apw-threshold-message.vip-discount {
+    background-color: #fff3e0;
+    border: 1px solid #ff9800;
+    color: #e65100;
+}
+
+.apw-threshold-message.vip-discount .message-icon {
+    color: #ff9800;
+    background-color: rgba(255, 152, 0, 0.1);
+}
+
+/* Success states for achieved thresholds */
+.apw-threshold-message.achieved {
+    border-width: 2px;
+    font-weight: 600;
+}
+
+.apw-threshold-discount.achieved {
+    background-color: #c8e6c9;
+    border-color: #2e7d32;
+}
+
+.apw-threshold-shipping.achieved {
+    background-color: #bbdefb;
+    border-color: #1565c0;
+}
