@@ -106,7 +106,10 @@ function apw_woo_enqueue_intuit_scripts() {
             'apwWooIntuitData',
             array(
                 'debug_mode' => APW_WOO_DEBUG_MODE,
-                'is_checkout' => is_checkout()
+                'is_checkout' => is_checkout(),
+                'surcharge_updated' => WC()->session ? WC()->session->get('apw_surcharge_updated') : null,
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('apw_woo_nonce')
             )
         );
         
@@ -474,6 +477,20 @@ function apw_woo_add_intuit_surcharge_fee() {
         // Store new baseline hash after successful calculation
         WC()->session->set('apw_baseline_cart_hash', $current_baseline_hash);
         
+        // FRONTEND CACHE FIX v1.23.26: Force cart fragments refresh to update frontend display
+        // This ensures the frontend shows the updated surcharge amount instead of cached values
+        if (function_exists('wc_add_to_cart_message')) {
+            // Trigger WooCommerce to refresh cart fragments on next AJAX call
+            WC()->session->set('wc_fragments_should_refresh', true);
+            
+            // Set flag for JavaScript to detect and force frontend updates
+            WC()->session->set('apw_surcharge_updated', time());
+            
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log("FRONTEND CACHE FIX: Set fragment refresh flags for frontend update");
+            }
+        }
+        
         if (APW_WOO_DEBUG_MODE) {
             apw_woo_log("HOOK TIMING FIX: Starting surcharge calculation");
             apw_woo_log("- Baseline hash changed: " . ($baseline_hash !== $current_baseline_hash ? 'YES' : 'NO'));
@@ -487,6 +504,31 @@ function apw_woo_add_intuit_surcharge_fee() {
         }
     }
 }
+
+/**
+ * FRONTEND CACHE FIX v1.23.26: AJAX endpoint to clear surcharge update flag
+ * This prevents the flag from persisting across page loads after frontend update
+ */
+function apw_woo_clear_surcharge_flag() {
+    // Verify nonce for security
+    if (!wp_verify_nonce($_POST['nonce'] ?? '', 'apw_woo_nonce')) {
+        wp_send_json_error('Invalid nonce');
+        return;
+    }
+    
+    // Clear the surcharge update flag
+    if (WC()->session) {
+        WC()->session->set('apw_surcharge_updated', null);
+        
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log("FRONTEND CACHE FIX: Cleared surcharge update flag via AJAX");
+        }
+    }
+    
+    wp_send_json_success('Flag cleared');
+}
+add_action('wp_ajax_apw_clear_surcharge_flag', 'apw_woo_clear_surcharge_flag');
+add_action('wp_ajax_nopriv_apw_clear_surcharge_flag', 'apw_woo_clear_surcharge_flag');
 
 // REMOVED: File-level hook registration that was causing duplicate surcharge calculations
 // Hook registration now handled in apw_woo_init_intuit_integration() function with static protection

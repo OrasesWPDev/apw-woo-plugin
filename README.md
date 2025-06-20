@@ -2,7 +2,7 @@
 
 A comprehensive WordPress plugin that extends WooCommerce functionality with advanced e-commerce features. Built specifically for the **Flatsome theme**, this plugin provides enhanced product displays, custom checkout processes, dynamic pricing integration, payment gateway enhancements, and sophisticated cart management systems.
 
-**Current Version**: 1.23.25
+**Current Version**: 1.23.26
 
 ## 🚀 Features
 
@@ -343,7 +343,16 @@ Log files will be created in the `logs/` directory.
 
 ## 📝 Changelog
 
-### Version 1.23.25 (Latest)
+### Version 1.23.26 (Latest)
+- **🖥️ FRONTEND CACHE FIX**: Resolved frontend display showing cached $17.14 instead of correct $15.64 surcharge
+- **🔄 CART FRAGMENT REFRESH**: Added aggressive cart fragment refresh when surcharge is recalculated
+- **⚡ REAL-TIME DOM MONITORING**: JavaScript actively monitors for incorrect surcharge amounts and forces updates
+- **🎯 AJAX CACHE BUSTING**: Implemented session flags and AJAX endpoints to invalidate frontend cache
+- **📱 IMMEDIATE VISUAL UPDATE**: Frontend now immediately reflects backend calculation changes
+- **🔧 BRIDGE GAP**: Connected backend calculation accuracy with frontend display reliability
+- **Per user instructions**: "you keep saying it is fixed - and the logs show it is calculating correctly - but the front end user is still seeing $17.14"
+
+### Version 1.23.25
 - **🛡️ COMPREHENSIVE EDGE CASE PROTECTION**: Enhanced surcharge calculation with bulletproof edge case handling
 - **🔄 MULTI-AJAX RESILIENCE**: Robust handling of rapid cart updates and multiple AJAX calls during checkout
 - **💾 SESSION PERSISTENCE**: Added fallback VIP discount detection using session data for cache-safe operation

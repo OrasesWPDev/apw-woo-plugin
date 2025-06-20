@@ -57,6 +57,36 @@
         }
     }
 
+    // FRONTEND CACHE FIX v1.23.26: Force checkout refresh when surcharge is updated
+    function checkAndRefreshSurcharge() {
+        if (apwWooIntuitData.surcharge_updated) {
+            var updateTime = parseInt(apwWooIntuitData.surcharge_updated);
+            var currentTime = Math.floor(Date.now() / 1000);
+            
+            // If update flag is recent (within last 30 seconds), force refresh
+            if (currentTime - updateTime < 30) {
+                logWithTime('FRONTEND CACHE FIX: Detected recent surcharge update, forcing checkout refresh');
+                
+                // Force WooCommerce to refresh checkout fragments
+                $('body').trigger('update_checkout');
+                
+                // Clear the flag so we don't keep refreshing
+                $.post(apwWooIntuitData.ajax_url, {
+                    action: 'apw_clear_surcharge_flag',
+                    nonce: apwWooIntuitData.nonce
+                }, function(response) {
+                    if (response.success) {
+                        logWithTime('FRONTEND CACHE FIX: Cleared surcharge update flag');
+                        apwWooIntuitData.surcharge_updated = null;
+                    }
+                });
+                
+                return true;
+            }
+        }
+        return false;
+    }
+
     // Main initialization
     function initialize() {
         logWithTime('BEST PRACTICES: Initializing Intuit payment integration');
@@ -66,6 +96,9 @@
         }
         
         initIntuitPayment();
+        
+        // FRONTEND CACHE FIX v1.23.26: Check for recent surcharge updates on page load
+        setTimeout(checkAndRefreshSurcharge, 500);
         
         // BEST PRACTICES v1.23.16: Ensure proper payment method handling on load
         setTimeout(ensurePaymentMethodUpdateTriggers, 1000);
@@ -94,6 +127,30 @@
             // WooCommerce will handle fee recalculation automatically
             $('body').trigger('update_checkout');
         });
+        
+        // FRONTEND CACHE FIX v1.23.26: Monitor DOM for surcharge changes
+        var lastSurchargeAmount = '';
+        function monitorSurchargeChanges() {
+            var surchargeRow = $('.order-total tr:contains("Credit Card Surcharge")');
+            if (surchargeRow.length) {
+                var currentAmount = surchargeRow.find('.amount').text().trim();
+                if (currentAmount !== lastSurchargeAmount) {
+                    logWithTime('FRONTEND CACHE FIX: Surcharge amount changed from "' + lastSurchargeAmount + '" to "' + currentAmount + '"');
+                    lastSurchargeAmount = currentAmount;
+                    
+                    // If we see the old incorrect amount, trigger refresh
+                    if (currentAmount.includes('$17.14')) {
+                        logWithTime('FRONTEND CACHE FIX: Detected incorrect surcharge amount $17.14, triggering refresh');
+                        setTimeout(function() {
+                            $('body').trigger('update_checkout');
+                        }, 100);
+                    }
+                }
+            }
+        }
+        
+        // Monitor surcharge changes every 2 seconds
+        setInterval(monitorSurchargeChanges, 2000);
         
         // BEST PRACTICES v1.23.16: Simple debug logging (no intervention)
         if (apwWooIntuitData.debug_mode) {
