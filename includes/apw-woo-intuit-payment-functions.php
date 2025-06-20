@@ -106,7 +106,8 @@ function apw_woo_enqueue_intuit_scripts() {
             'apwWooIntuitData',
             array(
                 'debug_mode' => APW_WOO_DEBUG_MODE,
-                'is_checkout' => is_checkout()
+                'is_checkout' => is_checkout(),
+                'version' => '1.23.27'
             )
         );
         
@@ -198,6 +199,9 @@ function apw_woo_init_intuit_integration() {
     // Add the surcharge calculation hook with priority 20 to run after VIP discounts (priority 5) are fully committed
     add_action('woocommerce_cart_calculate_fees', 'apw_woo_add_intuit_surcharge_fee', 20);
     
+    // WOOCOMMERCE FRAGMENTS v1.23.27: Add proper checkout fragment update filter
+    add_filter('woocommerce_update_order_review_fragments', 'apw_woo_add_checkout_fragments');
+    
     // REMOVED: Hooks that were causing infinite loops by triggering calculate_totals()
     // WooCommerce handles cart updates naturally without manual intervention
     
@@ -258,12 +262,12 @@ function apw_woo_add_intuit_surcharge_fee() {
     $chosen_gateway = WC()->session->get('chosen_payment_method');
     if ($chosen_gateway !== 'intuit_payments_credit_card') {
         if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log("BEST PRACTICES: No surcharge - payment method is: " . ($chosen_gateway ?: 'none'));
+            apw_woo_log("WOOCOMMERCE FRAGMENTS: No surcharge - payment method is: " . ($chosen_gateway ?: 'none'));
         }
         return;
     }
     
-    // SMART DUPLICATE PREVENTION: Generate cart state hash for change detection
+    // WOOCOMMERCE FRAGMENTS v1.23.27: Generate cart state hash for change detection
     $current_cart_hash = md5(serialize([
         WC()->cart->get_subtotal(),
         WC()->cart->get_shipping_total(),
@@ -276,7 +280,7 @@ function apw_woo_add_intuit_surcharge_fee() {
 
     if ($stored_hash === $current_cart_hash) {
         if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log("SMART DUPLICATE PREVENTION: Cart state unchanged, skipping recalculation");
+            apw_woo_log("WOOCOMMERCE FRAGMENTS: Cart state unchanged, skipping recalculation");
         }
         return; // Cart unchanged, don't recalculate
     }
@@ -287,7 +291,7 @@ function apw_woo_add_intuit_surcharge_fee() {
         if (strpos($fee->name, 'Credit Card Surcharge') !== false) {
             unset(WC()->cart->fees[$key]);
             if (APW_WOO_DEBUG_MODE) {
-                apw_woo_log("SMART DUPLICATE PREVENTION: Removed existing surcharge of $" . number_format($fee->amount, 2));
+                apw_woo_log("WOOCOMMERCE FRAGMENTS: Removed existing surcharge of $" . number_format($fee->amount, 2));
             }
         }
     }
@@ -297,7 +301,7 @@ function apw_woo_add_intuit_surcharge_fee() {
     $subtotal = $cart_totals['subtotal'] ?? 0;
     $shipping_total = $cart_totals['shipping_total'] ?? 0;
     
-    // Get VIP discounts (negative fee amounts) - FIXED: Use actual cart fees
+    // Get VIP discounts (negative fee amounts)
     $existing_fees = WC()->cart->get_fees();
     $total_discount = 0;
     foreach ($existing_fees as $fee) {
@@ -318,7 +322,7 @@ function apw_woo_add_intuit_surcharge_fee() {
         WC()->session->set('apw_surcharge_cart_hash', $current_cart_hash);
         
         if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log("COMPREHENSIVE FIX: Starting surcharge calculation");
+            apw_woo_log("WOOCOMMERCE FRAGMENTS: Starting surcharge calculation");
             apw_woo_log("- VIP discounts found: $" . number_format($total_discount, 2));
             apw_woo_log("- Cart hash: " . substr($current_cart_hash, 0, 8));
             apw_woo_log("- Calculation base: $" . number_format($surcharge_base, 2));
@@ -326,6 +330,34 @@ function apw_woo_add_intuit_surcharge_fee() {
             apw_woo_log("- Final surcharge: $" . number_format($surcharge, 2));
         }
     }
+}
+
+/**
+ * WOOCOMMERCE FRAGMENTS v1.23.27: Add checkout fragments for order review updates
+ * 
+ * This is the proper WooCommerce way to ensure frontend checkout displays update
+ * when fees (like our surcharge) change. Uses the official woocommerce_update_order_review_fragments
+ * filter to add the order review table to the fragments that get updated via AJAX.
+ * 
+ * @param array $fragments Array of fragments to update
+ * @return array Modified fragments array
+ */
+function apw_woo_add_checkout_fragments($fragments) {
+    // Only add fragments if we're dealing with Intuit payment method
+    $chosen_gateway = WC()->session ? WC()->session->get('chosen_payment_method') : null;
+    
+    if ($chosen_gateway === 'intuit_payments_credit_card') {
+        // Add the order review table to fragments for update
+        ob_start();
+        woocommerce_order_review();
+        $fragments['.woocommerce-checkout-review-order-table'] = ob_get_clean();
+        
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log("WOOCOMMERCE FRAGMENTS: Added order review table fragment for Intuit payment method");
+        }
+    }
+    
+    return $fragments;
 }
 
 // REMOVED: File-level hook registration that was causing duplicate surcharge calculations

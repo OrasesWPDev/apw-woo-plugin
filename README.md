@@ -2,7 +2,7 @@
 
 A comprehensive WordPress plugin that extends WooCommerce functionality with advanced e-commerce features. Built specifically for the **Flatsome theme**, this plugin provides enhanced product displays, custom checkout processes, dynamic pricing integration, payment gateway enhancements, and sophisticated cart management systems.
 
-**Current Version**: 1.23.20
+**Current Version**: 1.23.27
 
 ## 🚀 Features
 
@@ -343,7 +343,19 @@ Log files will be created in the `logs/` directory.
 
 ## 📝 Changelog
 
-### Version 1.23.20 (Latest)
+### Version 1.23.27 (Latest)
+- **🎯 WOOCOMMERCE-COMPLIANT FRONTEND FIX**: Implemented proper WooCommerce checkout fragment update system to resolve frontend cache issue
+- **✅ OFFICIAL SOLUTION**: Uses `woocommerce_update_order_review_fragments` filter - the official WooCommerce way to update checkout displays
+- **🔧 PROPER FRAGMENT HANDLING**: Added order review table to fragments array for automatic AJAX updates when fees change
+- **🚫 REMOVED INCORRECT APPROACH**: Eliminated the v1.23.26 session flag and JavaScript monitoring approach that was based on incorrect assumptions
+- **📚 DOCUMENTATION-BASED**: Solution follows official WooCommerce hooks and filters documentation exactly
+- **⚡ NATIVE INTEGRATION**: Lets WooCommerce handle frontend updates through its built-in AJAX order review system
+- **🛡️ PROPER TIMING**: Fragment updates triggered automatically when payment method changes or cart recalculates
+- **💰 FRONTEND ACCURACY**: Should now properly display $15.64 instead of cached $17.14 when VIP discounts are applied
+- **🔍 SIMPLIFIED LOGGING**: Clean debug messages tracking WooCommerce fragment operations
+- **Per research findings**: Correct implementation using WooCommerce's intended checkout update architecture
+
+### Version 1.23.20
 - **🎯 COMPREHENSIVE SURCHARGE FIX**: Complete resolution of credit card surcharge calculation issue - now correctly shows $15.64 instead of $17.14
 - **🔧 CRITICAL BUG FIX**: Fixed undefined `$existing_fees` variable that was preventing discount detection in surcharge calculation
 - **🔄 SMART DUPLICATE PREVENTION**: Implemented cart state hash tracking to prevent duplicate surcharges while allowing proper recalculation
