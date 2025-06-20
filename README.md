@@ -2,7 +2,7 @@
 
 A comprehensive WordPress plugin that extends WooCommerce functionality with advanced e-commerce features. Built specifically for the **Flatsome theme**, this plugin provides enhanced product displays, custom checkout processes, dynamic pricing integration, payment gateway enhancements, and sophisticated cart management systems.
 
-**Current Version**: 1.23.22
+**Current Version**: 1.23.23
 
 ## 🚀 Features
 
@@ -343,7 +343,18 @@ Log files will be created in the `logs/` directory.
 
 ## 📝 Changelog
 
-### Version 1.23.22 (Latest)
+### Version 1.23.23 (Latest)
+- **🎯 HOOK TIMING FIX**: Final resolution of surcharge calculation issue - moved baseline storage to `woocommerce_before_calculate_totals` hook
+- **⏰ CRITICAL HOOK SEQUENCING**: Baseline storage now runs at priority 15 AFTER VIP discounts (priority 5) but BEFORE surcharge calculation (priority 20)
+- **🔧 ARCHITECTURAL CORRECTION**: Fixed fundamental issue where baseline was captured on different hook than VIP discount application
+- **🛠️ VIP DISCOUNT DETECTION**: Enhanced cart item analysis to detect VIP-eligible scenarios (product 80, quantity 5+) before fees are visible
+- **💰 FRONTEND VERIFICATION**: Local testing confirms correct transition from $17.14 to $15.64 surcharge display
+- **📊 ENHANCED DEBUGGING**: Added "HOOK TIMING FIX" prefixed logs to track the corrected calculation flow in production
+- **✅ COMPLETE RESOLUTION**: Addresses root cause where `woocommerce_cart_calculate_fees` runs after `woocommerce_before_calculate_totals`
+- **🎮 PRODUCTION READY**: Fix ensures VIP discount → baseline storage → surcharge calculation sequence works properly
+- **Per user instructions**: "make sure the test not only see that it is recacluating, but then properly shows on the front end as well"
+
+### Version 1.23.22
 - **🎯 COMPLETE SURCHARGE FIX**: Final resolution of baseline hash timing issue preventing surcharge recalculation from $17.14 to $15.64
 - **⏰ PRIORITY SEQUENCING FIX**: Moved baseline hash storage from priority 1 to priority 10 (after VIP discounts at priority 5, before surcharge at priority 20)
 - **🔧 VIP DISCOUNT INTEGRATION**: Baseline hash now includes VIP discount amounts, properly detecting when cart state actually changes

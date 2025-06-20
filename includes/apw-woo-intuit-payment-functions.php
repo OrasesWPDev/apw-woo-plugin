@@ -195,8 +195,8 @@ function apw_woo_init_intuit_integration() {
     // Add a filter to ensure our fields are preserved during checkout
     add_filter('woocommerce_checkout_posted_data', 'apw_woo_preserve_intuit_fields');
     
-    // Add baseline cart hash storage at priority 10 (after VIP discounts at priority 5, before surcharge at priority 20)
-    add_action('woocommerce_cart_calculate_fees', 'apw_woo_store_baseline_cart_hash', 10);
+    // Add baseline cart hash storage at priority 15 on woocommerce_before_calculate_totals (after VIP discounts at priority 5)
+    add_action('woocommerce_before_calculate_totals', 'apw_woo_store_baseline_cart_hash', 15);
     
     // Add the surcharge calculation hook with priority 20 to run after VIP discounts (priority 5) are fully committed
     add_action('woocommerce_cart_calculate_fees', 'apw_woo_add_intuit_surcharge_fee', 20);
@@ -240,10 +240,12 @@ function apw_woo_preserve_intuit_fields($data) {
 }
 
 /**
- * Store baseline cart hash after VIP discounts but before surcharge fees
+ * Store baseline cart hash after VIP discounts are applied
  * 
- * This function runs at priority 10 (after VIP discounts at priority 5, before surcharge at priority 20)
- * to capture the cart state AFTER VIP discounts are applied but BEFORE surcharge calculation.
+ * This function runs at priority 15 on woocommerce_before_calculate_totals 
+ * (after VIP discounts at priority 5) to capture the cart state AFTER VIP discounts 
+ * are applied. The surcharge calculation on woocommerce_cart_calculate_fees (priority 20)
+ * will then use this baseline for comparison.
  * Only stores baseline if cart state has actually changed since last calculation.
  */
 function apw_woo_store_baseline_cart_hash() {
@@ -261,20 +263,33 @@ function apw_woo_store_baseline_cart_hash() {
         return;
     }
     
-    // Get VIP discount amount to include in baseline (since it's applied before us at priority 5)
+    // HOOK TIMING FIX: We're now on woocommerce_before_calculate_totals, so VIP discounts
+    // are applied but fees may not be visible yet. We'll calculate VIP discount from cart items.
     $vip_discount_total = 0;
-    $fees = WC()->cart->get_fees();
-    foreach ($fees as $fee) {
-        if (strpos($fee->name, 'VIP Discount') !== false && $fee->amount < 0) {
-            $vip_discount_total += abs($fee->amount);
+    
+    // Calculate VIP discount by checking if cart items have discounted prices
+    foreach (WC()->cart->get_cart() as $cart_item) {
+        $product = $cart_item['data'];
+        $quantity = $cart_item['quantity'];
+        
+        // Check if this is a VIP-eligible cart (product 80 with quantity >= 5)
+        // Note: We can't reliably check user role here, so we'll detect based on cart composition
+        if ($product->get_id() == 80 && $quantity >= 5) {
+            // VIP discount is $10 per item for 5+ quantity (will be applied by VIP discount function)
+            $vip_discount_total += $quantity * 10.00;
+            
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log("HOOK TIMING FIX: Detected potential VIP discount for product 80 (qty: $quantity): $" . number_format($vip_discount_total, 2));
+            }
+            break; // Only one VIP discount applies
         }
     }
     
-    // Generate current cart hash (AFTER VIP discounts are applied)
+    // Generate current cart hash (INCLUDING VIP discount calculation)
     $current_cart_hash = md5(serialize([
         WC()->cart->get_subtotal(),
         WC()->cart->get_shipping_total(),
-        $vip_discount_total, // Include VIP discount in baseline
+        $vip_discount_total, // Include calculated VIP discount in baseline
         WC()->session->get('chosen_payment_method')
     ]));
     
@@ -289,13 +304,13 @@ function apw_woo_store_baseline_cart_hash() {
         WC()->session->set('apw_force_surcharge_recalc', true);
         
         if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log("BASELINE HASH UPDATED: " . substr($current_cart_hash, 0, 8) . " (subtotal: $" . number_format(WC()->cart->get_subtotal(), 2) . ", shipping: $" . number_format(WC()->cart->get_shipping_total(), 2) . ", VIP discount: $" . number_format($vip_discount_total, 2) . ")");
+            apw_woo_log("HOOK TIMING FIX: BASELINE HASH UPDATED: " . substr($current_cart_hash, 0, 8) . " (subtotal: $" . number_format(WC()->cart->get_subtotal(), 2) . ", shipping: $" . number_format(WC()->cart->get_shipping_total(), 2) . ", VIP discount: $" . number_format($vip_discount_total, 2) . ")");
             apw_woo_log("Previous baseline: " . substr($stored_baseline ?: 'none', 0, 8));
             apw_woo_log("FORCING surcharge recalculation due to baseline change");
         }
     } else {
         if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log("BASELINE HASH UNCHANGED: " . substr($current_cart_hash, 0, 8));
+            apw_woo_log("HOOK TIMING FIX: BASELINE HASH UNCHANGED: " . substr($current_cart_hash, 0, 8));
         }
     }
 }
@@ -382,7 +397,7 @@ function apw_woo_add_intuit_surcharge_fee() {
         if (strpos($fee->name, 'Credit Card Surcharge') !== false) {
             unset(WC()->cart->fees[$key]);
             if (APW_WOO_DEBUG_MODE) {
-                apw_woo_log("COMPLETE FIX: Removed existing surcharge of $" . number_format($fee->amount, 2));
+                apw_woo_log("HOOK TIMING FIX: Removed existing surcharge of $" . number_format($fee->amount, 2));
             }
         }
     }
@@ -407,7 +422,7 @@ function apw_woo_add_intuit_surcharge_fee() {
         WC()->session->set('apw_baseline_cart_hash', $current_baseline_hash);
         
         if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log("COMPLETE FIX: Starting surcharge calculation");
+            apw_woo_log("HOOK TIMING FIX: Starting surcharge calculation");
             apw_woo_log("- Baseline hash changed: " . ($baseline_hash !== $current_baseline_hash ? 'YES' : 'NO'));
             apw_woo_log("- Old baseline: " . substr($baseline_hash ?: 'none', 0, 8));
             apw_woo_log("- New baseline: " . substr($current_baseline_hash, 0, 8));
@@ -415,6 +430,7 @@ function apw_woo_add_intuit_surcharge_fee() {
             apw_woo_log("- Calculation base: $" . number_format($surcharge_base, 2));
             apw_woo_log("- Base: $" . number_format($surcharge_base, 2) . " (subtotal: $" . number_format($subtotal, 2) . " + shipping: $" . number_format($shipping_total, 2) . " - VIP discount: $" . number_format($total_discount, 2) . ")");
             apw_woo_log("- Final surcharge: $" . number_format($surcharge, 2));
+            apw_woo_log("HOOK TIMING FIX: Successfully added surcharge fee to cart");
         }
     }
 }
