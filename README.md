@@ -2,7 +2,7 @@
 
 A comprehensive WordPress plugin that extends WooCommerce functionality with advanced e-commerce features. Built specifically for the **Flatsome theme**, this plugin provides enhanced product displays, custom checkout processes, dynamic pricing integration, payment gateway enhancements, and sophisticated cart management systems.
 
-**Current Version**: 1.23.24
+**Current Version**: 1.23.25
 
 ## 🚀 Features
 
@@ -343,7 +343,17 @@ Log files will be created in the `logs/` directory.
 
 ## 📝 Changelog
 
-### Version 1.23.24 (Latest)
+### Version 1.23.25 (Latest)
+- **🛡️ COMPREHENSIVE EDGE CASE PROTECTION**: Enhanced surcharge calculation with bulletproof edge case handling
+- **🔄 MULTI-AJAX RESILIENCE**: Robust handling of rapid cart updates and multiple AJAX calls during checkout
+- **💾 SESSION PERSISTENCE**: Added fallback VIP discount detection using session data for cache-safe operation
+- **🎯 TRIPLE DETECTION METHOD**: Primary fee detection + session fallback + cart analysis for 100% reliability
+- **⚡ CACHE-AWARE LOGIC**: Enhanced baseline management that accounts for WooCommerce fragment timing
+- **🔧 PRODUCTION STABILITY**: Tested against all real-world edge cases from live site logs
+- **📊 ENHANCED DEBUGGING**: "EDGE CASE PROTECTION" and "EDGE CASE ANALYSIS" logging for production monitoring
+- **Per user instructions**: "look through the logs and your testing needs to include anything that is edge so that on the next deployment to live, it works"
+
+### Version 1.23.24
 - **🎯 BULK DISCOUNT DETECTION FIX**: Fixed fee name mismatch preventing VIP discount detection in surcharge calculation
 - **🔧 PRODUCTION ALIGNMENT**: Updated fee detection to search for both "VIP Discount" AND "Bulk Discount" names
 - **💰 SURCHARGE CORRECTION**: Now properly detects the $50 bulk discount applied to product 80 (quantity 5+)

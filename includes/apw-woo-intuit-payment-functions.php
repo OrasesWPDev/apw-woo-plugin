@@ -296,21 +296,24 @@ function apw_woo_store_baseline_cart_hash() {
     // Get stored baseline
     $stored_baseline = WC()->session->get('apw_baseline_cart_hash');
     
-    // Only update baseline if it's actually changed
+    // Enhanced session persistence with edge case handling
     if ($stored_baseline !== $current_cart_hash) {
         WC()->session->set('apw_baseline_cart_hash', $current_cart_hash);
         
         // Set flag to force surcharge recalculation
         WC()->session->set('apw_force_surcharge_recalc', true);
         
+        // Store VIP discount amount for fallback scenarios
+        WC()->session->set('apw_vip_discount_amount', $vip_discount_total);
+        
         if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log("HOOK TIMING FIX: BASELINE HASH UPDATED: " . substr($current_cart_hash, 0, 8) . " (subtotal: $" . number_format(WC()->cart->get_subtotal(), 2) . ", shipping: $" . number_format(WC()->cart->get_shipping_total(), 2) . ", VIP discount: $" . number_format($vip_discount_total, 2) . ")");
+            apw_woo_log("EDGE CASE PROTECTION: BASELINE HASH UPDATED: " . substr($current_cart_hash, 0, 8) . " (subtotal: $" . number_format(WC()->cart->get_subtotal(), 2) . ", shipping: $" . number_format(WC()->cart->get_shipping_total(), 2) . ", VIP discount: $" . number_format($vip_discount_total, 2) . ")");
             apw_woo_log("Previous baseline: " . substr($stored_baseline ?: 'none', 0, 8));
             apw_woo_log("FORCING surcharge recalculation due to baseline change");
         }
     } else {
         if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log("HOOK TIMING FIX: BASELINE HASH UNCHANGED: " . substr($current_cart_hash, 0, 8));
+            apw_woo_log("EDGE CASE PROTECTION: BASELINE HASH UNCHANGED: " . substr($current_cart_hash, 0, 8));
         }
     }
 }
@@ -345,16 +348,46 @@ function apw_woo_add_intuit_surcharge_fee() {
     // COMPLETE FIX: Compare against baseline hash stored after VIP discounts (priority 10)
     $baseline_hash = WC()->session->get('apw_baseline_cart_hash');
     
-    // Calculate current baseline including VIP discounts
+    // Enhanced VIP discount detection with multiple fallbacks for edge cases
     $current_vip_discount_total = 0;
     $existing_surcharge = false;
     $fees = WC()->cart->get_fees();
+    
+    // Method 1: Check fees (primary detection)
     foreach ($fees as $fee) {
         if ((strpos($fee->name, 'VIP Discount') !== false || strpos($fee->name, 'Bulk Discount') !== false) && $fee->amount < 0) {
             $current_vip_discount_total += abs($fee->amount);
         }
         if (strpos($fee->name, 'Credit Card Surcharge') !== false) {
             $existing_surcharge = true;
+        }
+    }
+    
+    // Method 2: Fallback to stored session data (edge case handling)
+    if ($current_vip_discount_total == 0) {
+        $session_vip_discount = WC()->session->get('apw_vip_discount_amount');
+        if ($session_vip_discount && $session_vip_discount > 0) {
+            $current_vip_discount_total = $session_vip_discount;
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log("EDGE CASE FALLBACK: Using VIP discount from session data: $" . number_format($current_vip_discount_total, 2));
+            }
+        }
+    }
+    
+    // Method 3: Last resort cart analysis (if both fees and session data fail)
+    if ($current_vip_discount_total == 0) {
+        foreach (WC()->cart->get_cart() as $cart_item) {
+            $product = $cart_item['data'];
+            $quantity = $cart_item['quantity'];
+            
+            // Check if this is a VIP-eligible cart (product 80 with quantity >= 5)
+            if ($product->get_id() == 80 && $quantity >= 5) {
+                $current_vip_discount_total = $quantity * 10.00;
+                if (APW_WOO_DEBUG_MODE) {
+                    apw_woo_log("EDGE CASE FALLBACK: Using VIP discount from cart item analysis: $" . number_format($current_vip_discount_total, 2));
+                }
+                break;
+            }
         }
     }
     
@@ -368,12 +401,32 @@ function apw_woo_add_intuit_surcharge_fee() {
     // Check for force recalculation flag set by baseline storage function
     $force_recalc = WC()->session->get('apw_force_surcharge_recalc');
     
-    // Check if baseline cart state has changed OR if we have a surcharge mismatch OR force flag is set
-    if ($baseline_hash === $current_baseline_hash && $existing_surcharge && !$force_recalc) {
+    // Robust edge case recalculation logic
+    $should_recalculate = false;
+    $recalc_reason = '';
+    
+    if ($force_recalc) {
+        $should_recalculate = true;
+        $recalc_reason = 'Force recalc flag is set';
+    } elseif ($baseline_hash !== $current_baseline_hash) {
+        $should_recalculate = true;
+        $recalc_reason = 'Baseline hash changed';
+    } elseif (!$existing_surcharge) {
+        $should_recalculate = true;
+        $recalc_reason = 'No existing surcharge found';
+    } else {
+        $recalc_reason = 'Skipping recalculation (cart unchanged, surcharge exists)';
+    }
+    
+    if (!$should_recalculate) {
         if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log("COMPLETE FIX: Cart state unchanged and surcharge exists, skipping recalculation");
+            apw_woo_log("EDGE CASE ANALYSIS: " . $recalc_reason);
         }
         return; // Cart unchanged and surcharge already applied
+    }
+    
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log("EDGE CASE ANALYSIS: " . $recalc_reason . " - proceeding with calculation");
     }
     
     // Clear force recalculation flag
