@@ -2,7 +2,7 @@
 
 A comprehensive WordPress plugin that extends WooCommerce functionality with advanced e-commerce features. Built specifically for the **Flatsome theme**, this plugin provides enhanced product displays, custom checkout processes, dynamic pricing integration, payment gateway enhancements, and sophisticated cart management systems.
 
-**Current Version**: 1.23.21
+**Current Version**: 1.23.22
 
 ## 🚀 Features
 
@@ -343,7 +343,19 @@ Log files will be created in the `logs/` directory.
 
 ## 📝 Changelog
 
-### Version 1.23.21 (Latest)
+### Version 1.23.22 (Latest)
+- **🎯 COMPLETE SURCHARGE FIX**: Final resolution of baseline hash timing issue preventing surcharge recalculation from $17.14 to $15.64
+- **⏰ PRIORITY SEQUENCING FIX**: Moved baseline hash storage from priority 1 to priority 10 (after VIP discounts at priority 5, before surcharge at priority 20)
+- **🔧 VIP DISCOUNT INTEGRATION**: Baseline hash now includes VIP discount amounts, properly detecting when cart state actually changes
+- **✅ ACCURATE COMPARISON**: Fixed false "cart unchanged" detection by comparing cart state AFTER VIP discounts are applied
+- **🚫 ELIMINATES $17.14 PERSISTENCE**: Resolves issue where surcharge calculation was skipped due to incorrect timing of baseline hash capture
+- **📊 COMPREHENSIVE DEBUG**: Enhanced logging shows old vs new baseline hashes, VIP discount detection, and complete calculation flow
+- **💰 CORRECT CALCULATION**: Now properly calculates (subtotal + shipping - VIP discount) × 3% = $15.64 instead of stale $17.14
+- **🛡️ MAINTAINS SMART PREVENTION**: Keeps duplicate prevention benefits while fixing core timing issue
+- **🔄 PROPER HOOK SEQUENCE**: VIP discounts (priority 5) → baseline hash (priority 10) → surcharge calculation (priority 20)
+- **Per user instructions**: "work on a new branch" - Complete fix for baseline hash timing preventing legitimate surcharge recalculation
+
+### Version 1.23.21
 - **🎯 CART HASH TIMING FIX**: Resolved smart duplicate prevention causing "Cart state unchanged, skipping recalculation" when VIP discounts were applied
 - **🔧 BASELINE HASH SYSTEM**: Implemented proper baseline cart hash storage at priority 1 (before VIP discounts at priority 5) to detect actual cart changes
 - **✅ PROPER CHANGE DETECTION**: Now compares current cart state against baseline stored before any fees were applied, not after
