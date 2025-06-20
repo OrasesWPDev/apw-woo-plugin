@@ -195,6 +195,9 @@ function apw_woo_init_intuit_integration() {
     // Add a filter to ensure our fields are preserved during checkout
     add_filter('woocommerce_checkout_posted_data', 'apw_woo_preserve_intuit_fields');
     
+    // Add baseline cart hash storage at priority 1 (before VIP discounts at priority 5)
+    add_action('woocommerce_cart_calculate_fees', 'apw_woo_store_baseline_cart_hash', 1);
+    
     // Add the surcharge calculation hook with priority 20 to run after VIP discounts (priority 5) are fully committed
     add_action('woocommerce_cart_calculate_fees', 'apw_woo_add_intuit_surcharge_fee', 20);
     
@@ -237,6 +240,44 @@ function apw_woo_preserve_intuit_fields($data) {
 }
 
 /**
+ * Store baseline cart hash before any fees are calculated
+ * 
+ * This function runs at priority 1 (before VIP discounts at priority 5)
+ * to capture the cart state before any discounts or fees are applied.
+ * This allows proper change detection in the surcharge calculation.
+ */
+function apw_woo_store_baseline_cart_hash() {
+    // Only store baseline if we're in a context where surcharge might apply
+    if (is_admin() && !defined('DOING_AJAX')) {
+        return;
+    }
+
+    if (!is_checkout()) {
+        return;
+    }
+
+    $chosen_gateway = WC()->session->get('chosen_payment_method');
+    if ($chosen_gateway !== 'intuit_payments_credit_card') {
+        return;
+    }
+    
+    // Generate baseline cart hash (before any fees or discounts)
+    $baseline_cart_hash = md5(serialize([
+        WC()->cart->get_subtotal(),
+        WC()->cart->get_shipping_total(),
+        0, // No fees counted in baseline
+        WC()->session->get('chosen_payment_method')
+    ]));
+    
+    // Store baseline hash for comparison during surcharge calculation
+    WC()->session->set('apw_baseline_cart_hash', $baseline_cart_hash);
+    
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log("BASELINE HASH STORED: " . substr($baseline_cart_hash, 0, 8) . " (subtotal: $" . number_format(WC()->cart->get_subtotal(), 2) . ", shipping: $" . number_format(WC()->cart->get_shipping_total(), 2) . ")");
+    }
+}
+
+/**
  * BEST PRACTICES v1.23.16: Clean conditional surcharge fee
  * 
  * Follows WooCommerce best practices:
@@ -263,22 +304,32 @@ function apw_woo_add_intuit_surcharge_fee() {
         return;
     }
     
-    // SMART DUPLICATE PREVENTION: Generate cart state hash for change detection
-    $current_cart_hash = md5(serialize([
+    // FIXED HASH TIMING: Compare against baseline hash stored before any fees were applied
+    $baseline_hash = WC()->session->get('apw_baseline_cart_hash');
+    $current_baseline_hash = md5(serialize([
         WC()->cart->get_subtotal(),
         WC()->cart->get_shipping_total(),
-        count(WC()->cart->get_fees()),
+        0, // No fees in baseline comparison
         WC()->session->get('chosen_payment_method')
     ]));
 
-    // Check if cart state has changed since last surcharge calculation
-    $stored_hash = WC()->session->get('apw_surcharge_cart_hash');
-
-    if ($stored_hash === $current_cart_hash) {
-        if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log("SMART DUPLICATE PREVENTION: Cart state unchanged, skipping recalculation");
+    // Check if baseline cart state has changed (this properly detects VIP discount application)
+    if ($baseline_hash === $current_baseline_hash) {
+        $existing_surcharge = false;
+        $fees = WC()->cart->get_fees();
+        foreach ($fees as $fee) {
+            if (strpos($fee->name, 'Credit Card Surcharge') !== false) {
+                $existing_surcharge = true;
+                break;
+            }
         }
-        return; // Cart unchanged, don't recalculate
+        
+        if ($existing_surcharge) {
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log("FIXED HASH TIMING: Baseline cart unchanged and surcharge exists, skipping recalculation");
+            }
+            return; // Baseline unchanged and surcharge already applied
+        }
     }
 
     // Remove any existing surcharge before adding new one
@@ -314,13 +365,14 @@ function apw_woo_add_intuit_surcharge_fee() {
         // Simple fee addition - let WooCommerce handle the rest
         WC()->cart->add_fee(__('Credit Card Surcharge (3%)', 'apw-woo-plugin'), $surcharge, true);
         
-        // Store new cart state hash after successful calculation
-        WC()->session->set('apw_surcharge_cart_hash', $current_cart_hash);
+        // Store new baseline hash after successful calculation
+        WC()->session->set('apw_baseline_cart_hash', $current_baseline_hash);
         
         if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log("COMPREHENSIVE FIX: Starting surcharge calculation");
+            apw_woo_log("HASH TIMING FIX: Starting surcharge calculation");
+            apw_woo_log("- Baseline hash changed: " . ($baseline_hash !== $current_baseline_hash ? 'YES' : 'NO'));
             apw_woo_log("- VIP discounts found: $" . number_format($total_discount, 2));
-            apw_woo_log("- Cart hash: " . substr($current_cart_hash, 0, 8));
+            apw_woo_log("- New baseline hash: " . substr($current_baseline_hash, 0, 8));
             apw_woo_log("- Calculation base: $" . number_format($surcharge_base, 2));
             apw_woo_log("- Base: $" . number_format($surcharge_base, 2) . " (subtotal: $" . number_format($subtotal, 2) . " + shipping: $" . number_format($shipping_total, 2) . " - discounts: $" . number_format($total_discount, 2) . ")");
             apw_woo_log("- Final surcharge: $" . number_format($surcharge, 2));

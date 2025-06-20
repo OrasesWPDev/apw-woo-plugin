@@ -2,7 +2,7 @@
 
 A comprehensive WordPress plugin that extends WooCommerce functionality with advanced e-commerce features. Built specifically for the **Flatsome theme**, this plugin provides enhanced product displays, custom checkout processes, dynamic pricing integration, payment gateway enhancements, and sophisticated cart management systems.
 
-**Current Version**: 1.23.20
+**Current Version**: 1.23.21
 
 ## 🚀 Features
 
@@ -343,7 +343,19 @@ Log files will be created in the `logs/` directory.
 
 ## 📝 Changelog
 
-### Version 1.23.20 (Latest)
+### Version 1.23.21 (Latest)
+- **🎯 CART HASH TIMING FIX**: Resolved smart duplicate prevention causing "Cart state unchanged, skipping recalculation" when VIP discounts were applied
+- **🔧 BASELINE HASH SYSTEM**: Implemented proper baseline cart hash storage at priority 1 (before VIP discounts at priority 5) to detect actual cart changes
+- **✅ PROPER CHANGE DETECTION**: Now compares current cart state against baseline stored before any fees were applied, not after
+- **🚫 ELIMINATES FALSE NEGATIVES**: Fixed issue where cart hash was calculated after VIP discount application, making system think nothing changed
+- **⏰ HOOK ARCHITECTURE**: Added `apw_woo_store_baseline_cart_hash()` function at priority 1 to capture clean cart state before any modifications
+- **🔄 INTELLIGENT COMPARISON**: Surcharge calculation now properly detects when VIP discounts change the underlying cart totals
+- **📊 ENHANCED DEBUG LOGGING**: Added baseline hash change detection and comprehensive timing debug information
+- **💰 RESOLVES $17.14 PERSISTENCE**: Should now correctly recalculate to show $15.64 surcharge when VIP discounts are applied
+- **🛡️ MAINTAINS DUPLICATE PREVENTION**: Keeps smart duplicate prevention benefits while fixing timing issue that prevented legitimate recalculation
+- **Per user instructions**: "work on a new branch" - Fix cart hash timing issue causing surcharge to remain at $17.14 instead of recalculating to $15.64
+
+### Version 1.23.20
 - **🎯 COMPREHENSIVE SURCHARGE FIX**: Complete resolution of credit card surcharge calculation issue - now correctly shows $15.64 instead of $17.14
 - **🔧 CRITICAL BUG FIX**: Fixed undefined `$existing_fees` variable that was preventing discount detection in surcharge calculation
 - **🔄 SMART DUPLICATE PREVENTION**: Implemented cart state hash tracking to prevent duplicate surcharges while allowing proper recalculation
