@@ -33,7 +33,7 @@ class MockCart {
     }
     
     public function add_vip_discount($amount) {
-        $this->add_fee('VIP Discount (InHand I-22 Wireless Router)', -$amount);
+        $this->add_fee('Bulk Discount', -$amount);
     }
     
     public function clear_surcharge_fees() {
@@ -69,7 +69,7 @@ function test_surcharge_calculation($cart, $session, $payment_method = 'intuit_p
     if (count($cart->get_fees()) > 0) {
         // If fees exist, we're after VIP discount application
         foreach ($cart->get_fees() as $fee) {
-            if (strpos($fee->name, 'VIP Discount') !== false && $fee->amount < 0) {
+            if ((strpos($fee->name, 'VIP Discount') !== false || strpos($fee->name, 'Bulk Discount') !== false) && $fee->amount < 0) {
                 $vip_discount_total += abs($fee->amount);
             }
         }
@@ -109,7 +109,7 @@ function test_surcharge_calculation($cart, $session, $payment_method = 'intuit_p
     $current_vip_discount_total = 0;
     $existing_surcharge = false;
     foreach ($cart->get_fees() as $fee) {
-        if (strpos($fee->name, 'VIP Discount') !== false && $fee->amount < 0) {
+        if ((strpos($fee->name, 'VIP Discount') !== false || strpos($fee->name, 'Bulk Discount') !== false) && $fee->amount < 0) {
             $current_vip_discount_total += abs($fee->amount);
         }
         if (strpos($fee->name, 'Credit Card Surcharge') !== false) {
@@ -195,7 +195,7 @@ echo "- Target result: $15.64 (matches production expectation)\n";
 
 echo "\n🎯 FRONTEND VERIFICATION:\n";
 echo "After VIP discount application:\n";
-echo "- Cart should show: VIP Discount (InHand I-22 Wireless Router): -$50.00\n";
+echo "- Cart should show: Bulk Discount: -$50.00\n";
 echo "- Cart should show: Credit Card Surcharge (3%): $15.64\n";
 echo "- Frontend should display: $15.64 surcharge (NOT $17.14)\n";
 echo "- This fix addresses the hook timing issue where baseline was captured before VIP discounts\n";

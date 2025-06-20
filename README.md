@@ -2,7 +2,7 @@
 
 A comprehensive WordPress plugin that extends WooCommerce functionality with advanced e-commerce features. Built specifically for the **Flatsome theme**, this plugin provides enhanced product displays, custom checkout processes, dynamic pricing integration, payment gateway enhancements, and sophisticated cart management systems.
 
-**Current Version**: 1.23.23
+**Current Version**: 1.23.24
 
 ## 🚀 Features
 
@@ -343,7 +343,16 @@ Log files will be created in the `logs/` directory.
 
 ## 📝 Changelog
 
-### Version 1.23.23 (Latest)
+### Version 1.23.24 (Latest)
+- **🎯 BULK DISCOUNT DETECTION FIX**: Fixed fee name mismatch preventing VIP discount detection in surcharge calculation
+- **🔧 PRODUCTION ALIGNMENT**: Updated fee detection to search for both "VIP Discount" AND "Bulk Discount" names
+- **💰 SURCHARGE CORRECTION**: Now properly detects the $50 bulk discount applied to product 80 (quantity 5+)
+- **✅ LIVE SITE RESOLUTION**: Addresses issue where production logs showed "VIP discounts found: $0.00" despite bulk discount being applied
+- **📊 VERIFIED CALCULATION**: Local testing confirms transition from $17.14 to correct $15.64 surcharge after bulk discount detection
+- **🛠️ FRONTEND VALIDATION**: Updated test suite to match production fee naming ("Bulk Discount" instead of "VIP Discount")
+- **Per user instructions**: "make sure the test you run looks for what is expected as the discount so it will work on the live site"
+
+### Version 1.23.23
 - **🎯 HOOK TIMING FIX**: Final resolution of surcharge calculation issue - moved baseline storage to `woocommerce_before_calculate_totals` hook
 - **⏰ CRITICAL HOOK SEQUENCING**: Baseline storage now runs at priority 15 AFTER VIP discounts (priority 5) but BEFORE surcharge calculation (priority 20)
 - **🔧 ARCHITECTURAL CORRECTION**: Fixed fundamental issue where baseline was captured on different hook than VIP discount application

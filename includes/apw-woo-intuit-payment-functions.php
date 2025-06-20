@@ -350,7 +350,7 @@ function apw_woo_add_intuit_surcharge_fee() {
     $existing_surcharge = false;
     $fees = WC()->cart->get_fees();
     foreach ($fees as $fee) {
-        if (strpos($fee->name, 'VIP Discount') !== false && $fee->amount < 0) {
+        if ((strpos($fee->name, 'VIP Discount') !== false || strpos($fee->name, 'Bulk Discount') !== false) && $fee->amount < 0) {
             $current_vip_discount_total += abs($fee->amount);
         }
         if (strpos($fee->name, 'Credit Card Surcharge') !== false) {
