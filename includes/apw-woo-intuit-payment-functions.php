@@ -195,8 +195,8 @@ function apw_woo_init_intuit_integration() {
     // Add a filter to ensure our fields are preserved during checkout
     add_filter('woocommerce_checkout_posted_data', 'apw_woo_preserve_intuit_fields');
     
-    // Add the surcharge calculation hook with priority 10 to run after discounts are applied to cart
-    add_action('woocommerce_cart_calculate_fees', 'apw_woo_add_intuit_surcharge_fee', 10);
+    // Add the surcharge calculation hook with priority 20 to run after VIP discounts (priority 5) are fully committed
+    add_action('woocommerce_cart_calculate_fees', 'apw_woo_add_intuit_surcharge_fee', 20);
     
     // REMOVED: Hooks that were causing infinite loops by triggering calculate_totals()
     // WooCommerce handles cart updates naturally without manual intervention
@@ -263,15 +263,42 @@ function apw_woo_add_intuit_surcharge_fee() {
         return;
     }
     
-    // REMOVED: Fee existence check that prevented recalculation when cart state changed
-    // Let WooCommerce handle fee lifecycle naturally without artificial barriers
+    // SMART DUPLICATE PREVENTION: Generate cart state hash for change detection
+    $current_cart_hash = md5(serialize([
+        WC()->cart->get_subtotal(),
+        WC()->cart->get_shipping_total(),
+        count(WC()->cart->get_fees()),
+        WC()->session->get('chosen_payment_method')
+    ]));
+
+    // Check if cart state has changed since last surcharge calculation
+    $stored_hash = WC()->session->get('apw_surcharge_cart_hash');
+
+    if ($stored_hash === $current_cart_hash) {
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log("SMART DUPLICATE PREVENTION: Cart state unchanged, skipping recalculation");
+        }
+        return; // Cart unchanged, don't recalculate
+    }
+
+    // Remove any existing surcharge before adding new one
+    $fees = WC()->cart->get_fees();
+    foreach ($fees as $key => $fee) {
+        if (strpos($fee->name, 'Credit Card Surcharge') !== false) {
+            unset(WC()->cart->fees[$key]);
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log("SMART DUPLICATE PREVENTION: Removed existing surcharge of $" . number_format($fee->amount, 2));
+            }
+        }
+    }
     
     // Calculate surcharge: (subtotal + shipping - VIP discounts) × 3%
     $cart_totals = WC()->cart->get_totals();
     $subtotal = $cart_totals['subtotal'] ?? 0;
     $shipping_total = $cart_totals['shipping_total'] ?? 0;
     
-    // Get VIP discounts (negative fee amounts)
+    // Get VIP discounts (negative fee amounts) - FIXED: Use actual cart fees
+    $existing_fees = WC()->cart->get_fees();
     $total_discount = 0;
     foreach ($existing_fees as $fee) {
         if ($fee->amount < 0) {
@@ -287,10 +314,16 @@ function apw_woo_add_intuit_surcharge_fee() {
         // Simple fee addition - let WooCommerce handle the rest
         WC()->cart->add_fee(__('Credit Card Surcharge (3%)', 'apw-woo-plugin'), $surcharge, true);
         
+        // Store new cart state hash after successful calculation
+        WC()->session->set('apw_surcharge_cart_hash', $current_cart_hash);
+        
         if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log("BEST PRACTICES: Added surcharge:");
+            apw_woo_log("COMPREHENSIVE FIX: Starting surcharge calculation");
+            apw_woo_log("- VIP discounts found: $" . number_format($total_discount, 2));
+            apw_woo_log("- Cart hash: " . substr($current_cart_hash, 0, 8));
+            apw_woo_log("- Calculation base: $" . number_format($surcharge_base, 2));
             apw_woo_log("- Base: $" . number_format($surcharge_base, 2) . " (subtotal: $" . number_format($subtotal, 2) . " + shipping: $" . number_format($shipping_total, 2) . " - discounts: $" . number_format($total_discount, 2) . ")");
-            apw_woo_log("- Surcharge (3%): $" . number_format($surcharge, 2));
+            apw_woo_log("- Final surcharge: $" . number_format($surcharge, 2));
         }
     }
 }
