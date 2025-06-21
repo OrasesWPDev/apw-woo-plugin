@@ -195,14 +195,94 @@ composer run test:phase3     # Optimization tests
 ```
 
 ### Test Environment Setup
-```bash
-# Install testing dependencies
-composer install
-./bin/setup-tests.sh
 
-# Validate environment
-composer run test:all
+**CRITICAL: Complete setup before starting any refactor work**
+
+#### Prerequisites Required
+- **Composer**: Testing packages installed (56 packages including PHPUnit, PHPStan, PHPCS)
+- **Subversion**: Required for WordPress test suite (`brew install svn`)
+- **MySQL**: Required for test database (`brew install mysql`)
+
+#### Before Starting the Refactor
+
+1. **Start MySQL Service**
+```bash
+brew services start mysql
 ```
+
+2. **Complete WordPress Test Suite Setup**
+```bash
+./bin/setup-tests.sh
+```
+
+3. **Verify Testing Environment**
+```bash
+composer run test
+```
+
+#### Available Testing Commands
+
+**Phase-Based Testing (Required for Refactor)**
+```bash
+composer run test:phase1     # Test Phase 1 (Critical Payment Processing)
+composer run test:phase2     # Test Phase 2 (Service Consolidation)  
+composer run test:phase3     # Test Phase 3 (Code Optimization)
+```
+
+**Feature-Specific Testing**
+```bash
+composer run test:payment    # Test payment processing specifically
+composer run test:customer   # Test customer functionality
+composer run test:product    # Test product functionality
+composer run test:cart       # Test cart functionality
+```
+
+**Code Quality Checks**
+```bash
+composer run lint            # WordPress/WooCommerce coding standards
+composer run lint:fix        # Auto-fix coding standard violations
+composer run analyze         # PHPStan static analysis (level 5)
+composer run analyze:strict  # PHPStan strict analysis (level 8)
+composer run mess-detect     # PHP Mess Detector
+composer run quality         # Run all quality checks
+```
+
+**Comprehensive Testing**
+```bash
+composer run test:all        # All tests + quality checks
+composer run test:critical   # Payment + Phase 1 tests only
+composer run test:coverage   # Generate HTML coverage report
+```
+
+#### Testing Directory Structure
+```
+tests/
+├── phase1/          # Phase 1 critical fixes tests
+├── phase2/          # Phase 2 consolidation tests
+├── phase3/          # Phase 3 optimization tests
+├── integration/     # Cross-feature integration tests
+├── utilities/       # Test utilities and helpers
+├── fixtures/        # Test data and fixtures
+├── stubs/          # WordPress/WooCommerce stubs for PHPStan
+├── coverage/       # HTML coverage reports (generated)
+└── bootstrap.php   # PHPUnit bootstrap file
+```
+
+#### Configuration Files Ready
+- **composer.json**: All testing dependencies installed
+- **phpunit.xml**: Phase-based test organization with coverage
+- **phpcs.xml**: WordPress/WooCommerce coding standards
+- **phpstan.neon**: Static analysis with WordPress/WooCommerce stubs
+- **bin/setup-tests.sh**: Complete environment setup script
+- **bin/install-wp-tests.sh**: WordPress test suite installer
+
+#### Development Workflow
+1. **Before Each Phase**: Run baseline tests
+2. **During Development**: Use feature-specific tests  
+3. **After Each Phase**: Run phase completion tests
+4. **Before Committing**: Run full quality checks
+
+**📋 See [TESTING_SETUP.md](TESTING_SETUP.md) for complete testing documentation**
 
 ## Risk Mitigation
 
