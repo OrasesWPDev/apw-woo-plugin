@@ -10,6 +10,31 @@ This directory contains comprehensive specifications for refactoring the APW Woo
 
 **Goal**: Reduce code bloat, fix payment issues, consolidate scattered functionality, and improve maintainability while preserving all existing features.
 
+## File Directory Tree
+
+**For developers: Focus on 2 files at a time during implementation to avoid overwhelm.**
+
+```
+spec/
+├── README.md                           # Master overview with navigation guide (this file)
+├── TESTING_SETUP.md                   # Complete testing documentation
+├── 0_refactor_phases.md               # Master implementation plan (3 phases, 5-week timeline)
+├── 1_core_requirements.md             # 5 core business requirements & success criteria
+├── 2_architecture_decisions.md        # WordPress-native patterns (no enterprise anti-patterns)
+├── 3_payment_service_refactor.md      # CRITICAL: Payment surcharge bug fix ($17.14→$15.64)
+├── 4_customer_vip_service.md          # Customer management, VIP status, referral consolidation
+├── 5_code_organization.md             # Directory structure & file organization strategy
+├── 6_code_reduction_plan.md           # Line reduction targets (20,539→12,323 lines)
+├── 7_security_standards.md            # WordPress security best practices & validation
+└── 8_testing_strategy.md              # Testing approach, mandatory gates, & validation
+```
+
+### Navigation Guide for Implementation
+
+**Phase 1 (Critical Fixes)**: Start with `3_payment_service_refactor.md` + `8_testing_strategy.md`  
+**Phase 2 (Consolidation)**: Read `4_customer_vip_service.md` + `5_code_organization.md`  
+**Phase 3 (Optimization)**: Review `6_code_reduction_plan.md` + `7_security_standards.md`
+
 ## Specification Files (Sequential Order)
 
 ### Phase 0: Planning & Overview
