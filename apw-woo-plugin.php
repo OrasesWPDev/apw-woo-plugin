@@ -11,7 +11,7 @@
  * Plugin Name:       APW WooCommerce Plugin
  * Plugin URI:        https://github.com/OrasesWPDev/apw-woo-plugin
  * Description:       Custom WooCommerce enhancements for displaying products across shop, category, and product pages.
- * Version:           1.24.0
+ * Version:           1.24.3
  * Requires at least: 5.3
  * Tested up to:      6.4
  * Requires PHP:      7.2
@@ -34,7 +34,7 @@ if (!defined('ABSPATH')) {
 /**
  * Plugin constants
  */
-define('APW_WOO_VERSION', '1.24.0');
+define('APW_WOO_VERSION', '1.24.3');
 define('APW_WOO_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('APW_WOO_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('APW_WOO_PLUGIN_FILE', __FILE__);
@@ -764,16 +764,17 @@ function apw_woo_init()
         apw_woo_log('Using legacy asset registration method.');
     }
 
-    // Initialize Product Add-ons integration
-    apw_woo_initialize_product_addons(); // Existing call
-    // Initialize Dynamic Pricing integration
-    apw_woo_init_dynamic_pricing(); // Existing call
+    // PHASE 2: Initialize consolidated Product Service (replaces add-ons and dynamic pricing)
+    apw_woo_initialize_product_service();
 
-    // Initialize Recurring Billing Field functionality
-    apw_woo_initialize_recurring_billing();
+    // PHASE 2: Initialize consolidated Payment Service (replaces recurring billing and Intuit integration)
+    apw_woo_initialize_payment_service();
 
     // PHASE 2: Initialize consolidated Customer Service (replaces separate registration and referral export)
     apw_woo_initialize_customer_service();
+    
+    // PHASE 2: Initialize consolidated Cart Service (replaces cart indicators and checkout fields)
+    apw_woo_initialize_cart_service();
 
     // Initialize Account Fields customization
     if (file_exists(APW_WOO_PLUGIN_DIR . 'includes/apw-woo-account-functions.php')) {
@@ -1102,5 +1103,5 @@ if (APW_WOO_DEBUG_MODE) {
 //--------------------------------------------------------------
 
 // Hook into WordPress 'plugins_loaded' to initialize our plugin
-add_action('woocommerce_init', 'apw_woo_init_intuit_integration', 20);
+// REMOVED: add_action('woocommerce_init', 'apw_woo_init_intuit_integration', 20); - now handled by Payment Service
 add_action('plugins_loaded', 'apw_woo_init');
