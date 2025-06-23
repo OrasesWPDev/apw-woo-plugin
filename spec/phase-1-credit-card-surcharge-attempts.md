@@ -50,7 +50,7 @@ The discrepancy between logged calculation ($15.64) and frontend display ($17.14
 - **Result**: Backend logs show correct $15.64 calculation but frontend still displays $17.14
 - **Status**: FAILED - Session cache clearing didn't resolve frontend display issue
 
-### ⚠️ Attempt 5: Enhanced Fee Management System
+### ❌ Attempt 5: Enhanced Fee Management System - FAILED (INFINITE LOOP)
 - **Files**: `includes/apw-woo-intuit-payment-functions.php` (lines 284-462), `apw-woo-plugin.php` (version bump)
 - **Changes**: 
   1. **Enhanced Fee Removal**: Multi-method fee removal (unset, array_filter, cache clearing, object cache)
@@ -59,7 +59,20 @@ The discrepancy between logged calculation ($15.64) and frontend display ($17.14
   4. **Aggressive Cache Clearing**: Clear session, object cache, transients, and WooCommerce groups
   5. **Late Hook Processing**: Use priority 999 hook to ensure frontend gets updated values
 - **Logic**: Address potential duplicate fees and WooCommerce-level caching issues
-- **Status**: TESTING REQUIRED - Comprehensive approach to frontend display issue
+- **Result**: DEATH LOOP - PHP Fatal memory exhaustion (536MB), spinning wheel, never resolves
+- **Root Cause**: `WC()->cart->calculate_totals()` inside fee hook causes infinite recursion
+- **Status**: FAILED - Created infinite loop, immediate rollback required
+
+### 🔧 Attempt 6: Safe Fee Management (No Forced Recalculation)
+- **Files**: `includes/apw-woo-intuit-payment-functions.php` (lines 284-434), `apw-woo-plugin.php` (version 1.23.23)
+- **Changes**: 
+  1. **REMOVED**: All `WC()->cart->calculate_totals()` calls that caused infinite recursion
+  2. **REMOVED**: Aggressive cache clearing (session, object cache, transients)
+  3. **REMOVED**: Late hook processing with priority 999
+  4. **KEPT**: Basic fee removal and deduplication logic
+  5. **SIMPLIFIED**: Let WooCommerce handle totals calculation naturally
+- **Logic**: Minimal intervention approach - only manage fees, let WooCommerce handle caching
+- **Status**: TESTING REQUIRED - Safe approach to prevent infinite loops
 
 ## Next Investigation Areas (NOT YET ATTEMPTED)
 

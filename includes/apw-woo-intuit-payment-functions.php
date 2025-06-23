@@ -281,7 +281,7 @@ function apw_woo_calculate_credit_card_surcharge() {
 }
 
 /**
- * Remove existing credit card surcharge fees (ENHANCED v1.23.22)
+ * Remove existing credit card surcharge fees (SAFE v1.23.23)
  */
 function apw_woo_remove_credit_card_surcharge() {
     $cart = WC()->cart;
@@ -289,54 +289,32 @@ function apw_woo_remove_credit_card_surcharge() {
     $removed_count = 0;
     
     if (APW_WOO_DEBUG_MODE) {
-        apw_woo_log("ENHANCED REMOVAL: Starting fee removal process");
-        apw_woo_log("ENHANCED REMOVAL: Found " . count($fees) . " total fees");
+        apw_woo_log("SAFE REMOVAL: Starting fee removal process");
+        apw_woo_log("SAFE REMOVAL: Found " . count($fees) . " total fees");
     }
     
-    // Method 1: Remove from fees array by key
+    // SAFE: Only remove from fees array by key (no aggressive caching)
     foreach ($fees as $key => $fee) {
         if (strpos($fee->name, 'Credit Card Surcharge') !== false || 
             strpos($fee->name, 'Surcharge') !== false) {
             if (APW_WOO_DEBUG_MODE) {
-                apw_woo_log("ENHANCED REMOVAL: Removing fee '$fee->name' (amount: $" . number_format($fee->amount, 2) . ") via key: $key");
+                apw_woo_log("SAFE REMOVAL: Removing fee '$fee->name' (amount: $" . number_format($fee->amount, 2) . ") via key: $key");
             }
             unset($cart->fees[$key]);
             $removed_count++;
         }
     }
     
-    // Method 2: Direct array manipulation for stubborn fees
-    if (isset($cart->fees) && is_array($cart->fees)) {
-        $cart->fees = array_filter($cart->fees, function($fee) {
-            $keep = strpos($fee->name, 'Credit Card Surcharge') === false && 
-                    strpos($fee->name, 'Surcharge') === false;
-            if (!$keep && APW_WOO_DEBUG_MODE) {
-                apw_woo_log("ENHANCED REMOVAL: Filtering out fee: '$fee->name'");
-            }
-            return $keep;
-        });
-    }
-    
-    // Method 3: Clear all WooCommerce fee-related caches
-    if (WC()->session) {
-        WC()->session->set('cart_fees', null);
-        WC()->session->set('cart_totals', null);
-        WC()->session->set('cart_contents_total', null);
-    }
-    
-    // Method 4: Clear object cache for cart
-    wp_cache_delete('cart_' . WC()->session->get_customer_id(), 'woocommerce');
-    
     if (APW_WOO_DEBUG_MODE) {
-        apw_woo_log("ENHANCED REMOVAL: Removed $removed_count surcharge fees");
-        apw_woo_log("ENHANCED REMOVAL: Remaining fees after removal: " . count($cart->get_fees()));
+        apw_woo_log("SAFE REMOVAL: Removed $removed_count surcharge fees");
+        apw_woo_log("SAFE REMOVAL: Remaining fees after removal: " . count($cart->get_fees()));
     }
 }
 
 /**
- * Apply credit card surcharge fee (ENHANCED v1.23.22)
+ * Apply credit card surcharge fee (SAFE v1.23.23)
  * 
- * Handles removal, deduplication, and application of surcharge with forced recalculation
+ * Simple fee application without forced recalculation to prevent infinite loops
  */
 function apw_woo_apply_credit_card_surcharge() {
     // Step 1: Remove existing surcharge to prevent duplicates
@@ -346,7 +324,7 @@ function apw_woo_apply_credit_card_surcharge() {
     $surcharge = apw_woo_calculate_credit_card_surcharge();
     
     if ($surcharge > 0) {
-        // Step 3: Double-check no surcharge already exists (deduplication)
+        // Step 3: Simple deduplication check
         $existing_fees = WC()->cart->get_fees();
         $surcharge_exists = false;
         
@@ -354,7 +332,7 @@ function apw_woo_apply_credit_card_surcharge() {
             if (strpos($fee->name, 'Credit Card Surcharge') !== false) {
                 $surcharge_exists = true;
                 if (APW_WOO_DEBUG_MODE) {
-                    apw_woo_log("DEDUPLICATION: Found existing surcharge fee: '$fee->name' ($" . number_format($fee->amount, 2) . ")");
+                    apw_woo_log("SAFE APPLY: Found existing surcharge fee: '$fee->name' ($" . number_format($fee->amount, 2) . ")");
                 }
                 break;
             }
@@ -362,43 +340,26 @@ function apw_woo_apply_credit_card_surcharge() {
         
         // Step 4: Only add if no existing surcharge found
         if (!$surcharge_exists) {
-            // Use unique fee ID to prevent WooCommerce-level duplication
-            $fee_id = 'apw_cc_surcharge_' . round($surcharge * 100); // Unique ID based on amount
-            
             WC()->cart->add_fee(__('Credit Card Surcharge (3%)', 'apw-woo-plugin'), $surcharge, true);
             
             if (APW_WOO_DEBUG_MODE) {
-                apw_woo_log("DEDUPLICATION: Added new surcharge: $" . number_format($surcharge, 2) . " (ID: $fee_id)");
+                apw_woo_log("SAFE APPLY: Added new surcharge: $" . number_format($surcharge, 2));
             }
         } else {
             if (APW_WOO_DEBUG_MODE) {
-                apw_woo_log("DEDUPLICATION: Skipped adding surcharge - already exists");
+                apw_woo_log("SAFE APPLY: Skipped adding surcharge - already exists");
             }
         }
         
-        // Step 5: Force complete WooCommerce recalculation
-        WC()->cart->calculate_totals();
-        
-        // Step 6: Clear multiple cache levels
-        if (WC()->session) {
-            WC()->session->set('cart_totals', null);
-            WC()->session->set('cart_fees', null);
-            WC()->session->set('cart_contents_total', null);
-            WC()->session->set('cart_contents_weight', null);
-        }
-        
-        // Step 7: Clear object cache
-        wp_cache_delete('cart_' . WC()->session->get_customer_id(), 'woocommerce');
-        
+        // SAFE: NO forced recalculation or aggressive cache clearing
         if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log("ENHANCED APPLY: Forced totals recalculation and cache clearing");
-            apw_woo_log("ENHANCED APPLY: Final fee count: " . count(WC()->cart->get_fees()));
+            apw_woo_log("SAFE APPLY: Final fee count: " . count(WC()->cart->get_fees()));
         }
     }
 }
 
 /**
- * Main surcharge fee handler for WooCommerce hooks (ENHANCED v1.23.22)
+ * Main surcharge fee handler for WooCommerce hooks (SAFE v1.23.23)
  * 
  * This function is called by WooCommerce during cart calculation
  */
@@ -415,49 +376,18 @@ function apw_woo_add_intuit_surcharge_fee() {
     $chosen_gateway = WC()->session->get('chosen_payment_method');
     if ($chosen_gateway !== 'intuit_payments_credit_card') {
         if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log("ENHANCED HANDLER: No surcharge - payment method is: " . ($chosen_gateway ?: 'none'));
+            apw_woo_log("SAFE HANDLER: No surcharge - payment method is: " . ($chosen_gateway ?: 'none'));
         }
-        // Remove surcharge if payment method changed and force recalculation
+        // SAFE: Only remove surcharge, no forced recalculation
         apw_woo_remove_credit_card_surcharge();
-        
-        // Force complete recalculation when removing surcharge
-        WC()->cart->calculate_totals();
-        
-        if (WC()->session) {
-            WC()->session->set('cart_totals', null);
-            WC()->session->set('cart_fees', null);
-        }
         return;
     }
     
-    // Apply surcharge with enhanced logic
+    // SAFE: Apply surcharge without forced recalculation
     apw_woo_apply_credit_card_surcharge();
     
-    // ENHANCED: Force immediate frontend updates for all contexts
-    if (defined('DOING_AJAX') && DOING_AJAX) {
-        // Schedule a late hook to ensure frontend gets updated values
-        add_action('woocommerce_after_calculate_totals', function() {
-            // Clear all cart-related transients
-            delete_transient('wc_cart_hash_' . WC()->session->get_customer_id());
-            
-            // Force session regeneration
-            if (WC()->session) {
-                WC()->session->set('cart_totals', null);
-                WC()->session->set('cart_fees', null);
-                WC()->session->save_data();
-            }
-            
-            // Clear object cache
-            wp_cache_flush_group('woocommerce');
-            
-            if (APW_WOO_DEBUG_MODE) {
-                apw_woo_log("ENHANCED HANDLER: Forced complete frontend refresh via late hook");
-            }
-        }, 999); // Very late priority to run after everything else
-    }
-    
     if (APW_WOO_DEBUG_MODE) {
-        apw_woo_log("ENHANCED HANDLER: Surcharge processing completed");
+        apw_woo_log("SAFE HANDLER: Surcharge processing completed");
     }
 }
 
