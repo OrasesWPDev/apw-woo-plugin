@@ -2,7 +2,7 @@
 
 A comprehensive WordPress plugin that extends WooCommerce functionality with advanced e-commerce features. Built specifically for the **Flatsome theme**, this plugin provides enhanced product displays, custom checkout processes, dynamic pricing integration, payment gateway enhancements, and sophisticated cart management systems.
 
-**Current Version**: 1.23.19
+**Current Version**: 1.23.20
 
 ## 🚀 Features
 
@@ -57,6 +57,55 @@ A comprehensive WordPress plugin that extends WooCommerce functionality with adv
    - Or upload to `/wp-content/plugins/` directory via FTP
 3. **Activate** the plugin through WordPress Admin → Plugins
 4. **Configure** settings as needed (see Configuration section)
+
+## 🧪 Live Server Testing (v1.23.20 Payment Bug Fix)
+
+### Critical Payment Surcharge Test
+To verify the Phase 1 payment bug fix is working correctly on your live server:
+
+#### Test Scenario Setup
+1. **Product**: Use Product #80 (or any product priced at $109)
+2. **Quantity**: Add 5 items to cart (subtotal should be $545)
+3. **Customer**: VIP customer eligible for 10% discount ($50 off)
+4. **Shipping**: Use address `2519 Mill Race Road, Frederick, MD 21701` (Ground shipping: $26.26)
+5. **Payment Method**: Select Credit Card payment (triggers 3% surcharge)
+
+#### Expected Results ✅
+- **Subtotal**: $545.00
+- **VIP Discount**: -$50.00 (should appear as negative fee)
+- **Shipping**: $26.26
+- **Credit Card Surcharge**: **$15.64** (FIXED - was showing $17.14)
+- **Order Total**: $536.90
+
+#### Verification Steps
+1. Add Product #80 × 5 to cart
+2. Apply VIP discount (should show -$50.00)
+3. Enter Frederick, MD shipping address
+4. Select credit card payment method
+5. **Verify surcharge shows $15.64 NOT $17.14**
+6. Test switching payment methods (surcharge should disappear with non-credit methods)
+
+#### Debug Mode Testing
+Enable debug mode for detailed verification:
+```php
+// Add to wp-config.php or main plugin file
+define('APW_WOO_DEBUG_MODE', true);
+```
+Check logs at `/wp-content/plugins/apw-woo-plugin/logs/debug-{date}.log` for:
+```
+Surcharge calculation:
+- Subtotal: $545.00
+- Shipping: $26.26
+- Discounts: $50.00
+- Base: $521.26
+- Surcharge (3%): $15.64
+```
+
+#### Production Deployment Notes
+- Test in staging environment first
+- Disable debug mode in production
+- Monitor initial transactions for correct surcharge amounts
+- Verify all existing WooCommerce functionality remains intact
 
 ## ⚙️ Configuration
 
@@ -343,7 +392,20 @@ Log files will be created in the `logs/` directory.
 
 ## 📝 Changelog
 
-### Version 1.23.19 (Latest)
+### Version 1.23.20 (Latest)
+- **🚀 CRITICAL PAYMENT BUG FIXED**: Phase 1 implementation completely resolves credit card surcharge calculation issue
+- **💰 VERIFIED CALCULATION**: Product #80 (qty 5) with Frederick MD shipping now shows correct $15.64 surcharge (was $17.14)
+- **🔧 ROOT CAUSE RESOLVED**: Fixed undefined $existing_fees variable that prevented VIP discount deduction
+- **✅ PROPER FEE COLLECTION**: Implemented WC()->cart->get_fees() for accurate fee detection and processing
+- **🎯 HOOK PRIORITY FIX**: Changed from priority 10 to 20 to run after VIP discounts are applied
+- **🔄 CLEAN ARCHITECTURE**: Separated calculation, removal, and application logic into dedicated functions
+- **🛡️ FRONTEND VERIFIED**: HTML output now displays correct surcharge amount in checkout totals
+- **📊 MATHEMATICAL ACCURACY**: Calculation: ($545 + $26.26 - $50) × 3% = $15.64 ✓
+- **🧪 COMPREHENSIVE TESTING**: Added complete testing infrastructure with PHPUnit and frontend verification
+- **📁 CODE QUALITY**: WordPress-native implementation following DRY and KISS principles
+- **🎉 PRODUCTION READY**: Tested with actual Product #80 scenario and Frederick MD shipping address
+
+### Version 1.23.19
 - **🎯 SURCHARGE CALCULATION FIX**: Removed fee existence check that prevented recalculation when cart state changed
 - **🔄 DYNAMIC RECALCULATION**: Surcharge now properly recalculates when VIP discounts are applied or removed
 - **✅ RESOLVES $17.14 PERSISTENCE**: Eliminates stale surcharge amounts by allowing fresh calculation on every cart update
