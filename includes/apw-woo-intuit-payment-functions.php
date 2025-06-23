@@ -195,8 +195,8 @@ function apw_woo_init_intuit_integration() {
     // Add a filter to ensure our fields are preserved during checkout
     add_filter('woocommerce_checkout_posted_data', 'apw_woo_preserve_intuit_fields');
     
-    // Add the surcharge calculation hook with priority 10 to run after discounts are applied to cart
-    add_action('woocommerce_cart_calculate_fees', 'apw_woo_add_intuit_surcharge_fee', 10);
+    // Add the surcharge calculation hook with priority 20 to run after VIP discounts (priority 10)
+    add_action('woocommerce_cart_calculate_fees', 'apw_woo_add_intuit_surcharge_fee', 20);
     
     // REMOVED: Hooks that were causing infinite loops by triggering calculate_totals()
     // WooCommerce handles cart updates naturally without manual intervention
@@ -237,13 +237,88 @@ function apw_woo_preserve_intuit_fields($data) {
 }
 
 /**
- * BEST PRACTICES v1.23.16: Clean conditional surcharge fee
+ * Calculate credit card surcharge amount
  * 
- * Follows WooCommerce best practices:
- * - Let WooCommerce handle fee lifecycle naturally
- * - Use simple conditional logic for when to add fees
- * - No manual fee removal or complex state management
- * - Trust WooCommerce's native recalculation system
+ * Pure calculation function that determines surcharge based on cart totals
+ * @return float Surcharge amount
+ */
+function apw_woo_calculate_credit_card_surcharge() {
+    // Only calculate if payment method is credit card
+    if (!is_checkout() || WC()->session->get('chosen_payment_method') !== 'intuit_payments_credit_card') {
+        return 0;
+    }
+    
+    // Get cart totals
+    $cart = WC()->cart;
+    $subtotal = $cart->get_subtotal();
+    $shipping_total = $cart->get_shipping_total();
+    
+    // Calculate total discounts from negative fees (VIP discounts)
+    $total_discounts = 0;
+    $existing_fees = $cart->get_fees();
+    
+    foreach ($existing_fees as $fee) {
+        // Only count negative fees that aren't surcharges themselves
+        if ($fee->amount < 0 && strpos($fee->name, 'Surcharge') === false) {
+            $total_discounts += abs($fee->amount);
+        }
+    }
+    
+    // Calculate surcharge base: subtotal + shipping - discounts
+    $surcharge_base = $subtotal + $shipping_total - $total_discounts;
+    $surcharge = max(0, $surcharge_base * 0.03); // 3%
+    
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log("Surcharge calculation:");
+        apw_woo_log("- Subtotal: $" . number_format($subtotal, 2));
+        apw_woo_log("- Shipping: $" . number_format($shipping_total, 2));
+        apw_woo_log("- Discounts: $" . number_format($total_discounts, 2));
+        apw_woo_log("- Base: $" . number_format($surcharge_base, 2));
+        apw_woo_log("- Surcharge (3%): $" . number_format($surcharge, 2));
+    }
+    
+    return $surcharge;
+}
+
+/**
+ * Remove existing credit card surcharge fees
+ */
+function apw_woo_remove_credit_card_surcharge() {
+    $cart = WC()->cart;
+    $fees = $cart->get_fees();
+    
+    foreach ($fees as $key => $fee) {
+        if (strpos($fee->name, 'Credit Card Surcharge') !== false) {
+            unset($cart->fees[$key]);
+        }
+    }
+}
+
+/**
+ * Apply credit card surcharge fee
+ * 
+ * Handles both removal of existing surcharge and application of new one
+ */
+function apw_woo_apply_credit_card_surcharge() {
+    // Remove existing surcharge to prevent duplicates
+    apw_woo_remove_credit_card_surcharge();
+    
+    // Calculate new surcharge
+    $surcharge = apw_woo_calculate_credit_card_surcharge();
+    
+    if ($surcharge > 0) {
+        WC()->cart->add_fee(__('Credit Card Surcharge (3%)', 'apw-woo-plugin'), $surcharge, true);
+        
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log("Applied credit card surcharge: $" . number_format($surcharge, 2));
+        }
+    }
+}
+
+/**
+ * Main surcharge fee handler for WooCommerce hooks
+ * 
+ * This function is called by WooCommerce during cart calculation
  */
 function apw_woo_add_intuit_surcharge_fee() {
     // Standard validations - early exits when fee shouldn't apply
@@ -258,41 +333,15 @@ function apw_woo_add_intuit_surcharge_fee() {
     $chosen_gateway = WC()->session->get('chosen_payment_method');
     if ($chosen_gateway !== 'intuit_payments_credit_card') {
         if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log("BEST PRACTICES: No surcharge - payment method is: " . ($chosen_gateway ?: 'none'));
+            apw_woo_log("No surcharge - payment method is: " . ($chosen_gateway ?: 'none'));
         }
+        // Remove surcharge if payment method changed
+        apw_woo_remove_credit_card_surcharge();
         return;
     }
     
-    // REMOVED: Fee existence check that prevented recalculation when cart state changed
-    // Let WooCommerce handle fee lifecycle naturally without artificial barriers
-    
-    // Calculate surcharge: (subtotal + shipping - VIP discounts) × 3%
-    $cart_totals = WC()->cart->get_totals();
-    $subtotal = $cart_totals['subtotal'] ?? 0;
-    $shipping_total = $cart_totals['shipping_total'] ?? 0;
-    
-    // Get VIP discounts (negative fee amounts)
-    $total_discount = 0;
-    foreach ($existing_fees as $fee) {
-        if ($fee->amount < 0) {
-            $total_discount += abs($fee->amount);
-        }
-    }
-    
-    // Calculate 3% surcharge on the base amount
-    $surcharge_base = $subtotal + $shipping_total - $total_discount;
-    $surcharge = $surcharge_base * 0.03;
-
-    if ($surcharge > 0) {
-        // Simple fee addition - let WooCommerce handle the rest
-        WC()->cart->add_fee(__('Credit Card Surcharge (3%)', 'apw-woo-plugin'), $surcharge, true);
-        
-        if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log("BEST PRACTICES: Added surcharge:");
-            apw_woo_log("- Base: $" . number_format($surcharge_base, 2) . " (subtotal: $" . number_format($subtotal, 2) . " + shipping: $" . number_format($shipping_total, 2) . " - discounts: $" . number_format($total_discount, 2) . ")");
-            apw_woo_log("- Surcharge (3%): $" . number_format($surcharge, 2));
-        }
-    }
+    // Apply surcharge with proper calculation
+    apw_woo_apply_credit_card_surcharge();
 }
 
 // REMOVED: File-level hook registration that was causing duplicate surcharge calculations
