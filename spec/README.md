@@ -19,7 +19,7 @@ spec/
 ├── README.md                           # Master overview with navigation guide (this file)
 ├── TESTING_SETUP.md                   # Complete testing documentation
 ├── 0_refactor_phases.md               # Master implementation plan (3 phases, 5-week timeline)
-├── 1_core_requirements.md             # 5 core business requirements & success criteria
+├── CLAUDE.md                           # Development guide with core requirements & 2-file constraint
 ├── 2_architecture_decisions.md        # WordPress-native patterns (no enterprise anti-patterns)
 ├── 3_payment_service_refactor.md      # CRITICAL: Payment surcharge bug fix ($17.14→$15.64)
 ├── 4_customer_vip_service.md          # Customer management, VIP status, referral consolidation
@@ -41,7 +41,6 @@ spec/
 - **[0_refactor_phases.md](0_refactor_phases.md)** - Master implementation plan with 3 phases, mandatory testing gates, and timeline
 
 ### Phase 1: Foundation & Requirements  
-- **[1_core_requirements.md](1_core_requirements.md)** - 5 core business requirements, success criteria, and constraints
 - **[2_architecture_decisions.md](2_architecture_decisions.md)** - WordPress-native patterns, rejected enterprise anti-patterns
 
 ### Phase 2: Critical Implementation

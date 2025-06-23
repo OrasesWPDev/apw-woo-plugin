@@ -19,6 +19,29 @@ This file provides guidance to Claude Code when working with the APW WooCommerce
 - **Phase-based Approach**: Complete each phase fully before moving to next
 - **2-File Focus**: Never read more than 2 specification files during implementation
 
+## Core Business Requirements
+
+### Critical Priority Order
+1. **CRITICAL**: Fix payment surcharge calculation ($17.14 → $15.64 with VIP discounts)
+2. **HIGH**: Consolidate customer and pricing services (10 function files → 4 service classes)
+3. **MEDIUM**: Code organization and reduction (20,539 → 12,323-14,377 lines)
+4. **LOW**: Performance optimizations and final cleanup
+
+### Must Preserve Functionality
+- All existing shortcode functionality (`[block id="third-level-woo-page-header"]`)
+- Custom product URL structure (`/products/%category%/%product%`)
+- FAQ system integration with ACF
+- Flatsome theme compatibility
+- VIP discount tiers: 5% ($100+), 8% ($300+), 10% ($500+)
+- Registration field validation (first_name, last_name, company_name, phone_number)
+- Referral tracking and CSV export functionality
+- Intuit/QuickBooks payment gateway integration
+
+### Cannot Break
+- Existing customer data or payment workflows
+- Product display templates or admin functionality
+- Auto-updater system or debug mode features
+
 ## Local Testing Setup (MANDATORY)
 
 ### Prerequisites Before Any Development
