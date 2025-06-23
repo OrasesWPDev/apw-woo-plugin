@@ -309,8 +309,15 @@ function apw_woo_apply_credit_card_surcharge() {
     if ($surcharge > 0) {
         WC()->cart->add_fee(__('Credit Card Surcharge (3%)', 'apw-woo-plugin'), $surcharge, true);
         
+        // CRITICAL: Clear WooCommerce session cache to force frontend update
+        if (WC()->session) {
+            WC()->session->set('cart_totals', null);
+            WC()->session->set('cart_fees', null);
+        }
+        
         if (APW_WOO_DEBUG_MODE) {
             apw_woo_log("Applied credit card surcharge: $" . number_format($surcharge, 2));
+            apw_woo_log("FRONTEND FIX: Cleared WooCommerce session cache for frontend display");
         }
     }
 }
@@ -335,13 +342,32 @@ function apw_woo_add_intuit_surcharge_fee() {
         if (APW_WOO_DEBUG_MODE) {
             apw_woo_log("No surcharge - payment method is: " . ($chosen_gateway ?: 'none'));
         }
-        // Remove surcharge if payment method changed
+        // Remove surcharge if payment method changed and clear cache
         apw_woo_remove_credit_card_surcharge();
+        if (WC()->session) {
+            WC()->session->set('cart_totals', null);
+            WC()->session->set('cart_fees', null);
+        }
         return;
     }
     
     // Apply surcharge with proper calculation
     apw_woo_apply_credit_card_surcharge();
+    
+    // FRONTEND FIX: Force cart fragments refresh for frontend display
+    if (defined('DOING_AJAX') && DOING_AJAX) {
+        add_action('woocommerce_after_calculate_totals', function() {
+            if (function_exists('wc_clear_cart_after_payment')) {
+                // Force fragment regeneration
+                if (WC()->session) {
+                    $session_data = WC()->session->get_session_data();
+                    if (isset($session_data['cart_totals'])) {
+                        WC()->session->set('cart_totals', null);
+                    }
+                }
+            }
+        }, 100);
+    }
 }
 
 // REMOVED: File-level hook registration that was causing duplicate surcharge calculations
