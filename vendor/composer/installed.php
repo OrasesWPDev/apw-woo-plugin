@@ -3,7 +3,7 @@
         'name' => 'orases/apw-woo-plugin',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => 'c4a7db430734c72448e2225a5fe5fa6b899cc6af',
+        'reference' => '2a64d86c1f80f91b9105c2f6c2ed865c476eb155',
         'type' => 'wordpress-plugin',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -130,7 +130,7 @@
         'orases/apw-woo-plugin' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => 'c4a7db430734c72448e2225a5fe5fa6b899cc6af',
+            'reference' => '2a64d86c1f80f91b9105c2f6c2ed865c476eb155',
             'type' => 'wordpress-plugin',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

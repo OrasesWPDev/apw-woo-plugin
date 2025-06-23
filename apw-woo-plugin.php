@@ -11,7 +11,7 @@
  * Plugin Name:       APW WooCommerce Plugin
  * Plugin URI:        https://github.com/OrasesWPDev/apw-woo-plugin
  * Description:       Custom WooCommerce enhancements for displaying products across shop, category, and product pages.
- * Version:           1.23.24
+ * Version:           1.24.0
  * Requires at least: 5.3
  * Tested up to:      6.4
  * Requires PHP:      7.2
@@ -34,7 +34,7 @@ if (!defined('ABSPATH')) {
 /**
  * Plugin constants
  */
-define('APW_WOO_VERSION', '1.23.24');
+define('APW_WOO_VERSION', '1.24.0');
 define('APW_WOO_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('APW_WOO_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('APW_WOO_PLUGIN_FILE', __FILE__);
@@ -557,7 +557,8 @@ function apw_woo_autoload_files()
     }
 
     // Finally, load subdirectory files if they exist
-    $subdirs = array('admin', 'frontend', 'templates', 'template');
+    // PHASE 2: Added services, integrations, admin, functions directories
+    $subdirs = array('services', 'integrations', 'admin', 'functions', 'frontend', 'templates', 'template');
     foreach ($subdirs as $subdir) {
         $subdir_path = $includes_dir . '/' . $subdir;
         if (file_exists($subdir_path)) {
@@ -771,11 +772,8 @@ function apw_woo_init()
     // Initialize Recurring Billing Field functionality
     apw_woo_initialize_recurring_billing();
 
-    // Initialize Registration Fields functionality
-    apw_woo_initialize_registration_fields();
-
-    // Initialize Referral Export functionality
-    apw_woo_initialize_referral_export();
+    // PHASE 2: Initialize consolidated Customer Service (replaces separate registration and referral export)
+    apw_woo_initialize_customer_service();
 
     // Initialize Account Fields customization
     if (file_exists(APW_WOO_PLUGIN_DIR . 'includes/apw-woo-account-functions.php')) {
@@ -926,10 +924,11 @@ function apw_woo_initialize_registration_fields()
 }
 
 /**
- * Initialize Referral Export functionality
+ * Initialize Referral Export functionality (DEPRECATED - use Customer Service)
  *
  * @return void
  * @since 1.18.0
+ * @deprecated 1.24.0 Use apw_woo_initialize_customer_service() instead
  */
 function apw_woo_initialize_referral_export()
 {
@@ -937,11 +936,32 @@ function apw_woo_initialize_referral_export()
         APW_Woo_Referral_Export::get_instance();
         
         if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
-            apw_woo_log('Referral Export functionality initialized');
+            apw_woo_log('Referral Export functionality initialized (DEPRECATED)');
         }
     } else {
         if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
             apw_woo_log('APW_Woo_Referral_Export class not found', 'warning');
+        }
+    }
+}
+
+/**
+ * Initialize Customer Service (Phase 2 - consolidates registration, referral, VIP)
+ *
+ * @return void
+ * @since 1.24.0
+ */
+function apw_woo_initialize_customer_service()
+{
+    if (class_exists('APW_Woo_Customer_Service')) {
+        APW_Woo_Customer_Service::get_instance();
+        
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('PHASE 2: Customer Service initialized (registration, VIP discounts, referral export)');
+        }
+    } else {
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('APW_Woo_Customer_Service class not found', 'warning');
         }
     }
 }
