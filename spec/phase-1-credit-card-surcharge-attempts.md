@@ -43,11 +43,23 @@ The discrepancy between logged calculation ($15.64) and frontend display ($17.14
 5. **Theme/Plugin Interference**: Other code modifying displayed totals
 6. **Template Caching**: Checkout template showing cached version
 
-### ⚠️ Attempt 4: WooCommerce Session Cache Clearing
+### ❌ Attempt 4: WooCommerce Session Cache Clearing
 - **Files**: `includes/apw-woo-intuit-payment-functions.php` (lines 313-316, 347-350, 358-370)
 - **Change**: Added session cache clearing mechanisms to force frontend display updates
 - **Logic**: Clear `cart_totals` and `cart_fees` from WC()->session after surcharge calculation
-- **Status**: TESTING REQUIRED - Addresses session/fragment caching issue
+- **Result**: Backend logs show correct $15.64 calculation but frontend still displays $17.14
+- **Status**: FAILED - Session cache clearing didn't resolve frontend display issue
+
+### ⚠️ Attempt 5: Enhanced Fee Management System
+- **Files**: `includes/apw-woo-intuit-payment-functions.php` (lines 284-462), `apw-woo-plugin.php` (version bump)
+- **Changes**: 
+  1. **Enhanced Fee Removal**: Multi-method fee removal (unset, array_filter, cache clearing, object cache)
+  2. **Fee Deduplication**: Check for existing surcharges before adding new ones
+  3. **Forced Recalculation**: Call `WC()->cart->calculate_totals()` after fee changes
+  4. **Aggressive Cache Clearing**: Clear session, object cache, transients, and WooCommerce groups
+  5. **Late Hook Processing**: Use priority 999 hook to ensure frontend gets updated values
+- **Logic**: Address potential duplicate fees and WooCommerce-level caching issues
+- **Status**: TESTING REQUIRED - Comprehensive approach to frontend display issue
 
 ## Next Investigation Areas (NOT YET ATTEMPTED)
 
