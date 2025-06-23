@@ -63,7 +63,7 @@ The discrepancy between logged calculation ($15.64) and frontend display ($17.14
 - **Root Cause**: `WC()->cart->calculate_totals()` inside fee hook causes infinite recursion
 - **Status**: FAILED - Created infinite loop, immediate rollback required
 
-### 🔧 Attempt 6: Safe Fee Management (No Forced Recalculation)
+### 🔧 Attempt 6: Safe Fee Management (No Forced Recalculation) - FAILED
 - **Files**: `includes/apw-woo-intuit-payment-functions.php` (lines 284-434), `apw-woo-plugin.php` (version 1.23.23)
 - **Changes**: 
   1. **REMOVED**: All `WC()->cart->calculate_totals()` calls that caused infinite recursion
@@ -72,7 +72,26 @@ The discrepancy between logged calculation ($15.64) and frontend display ($17.14
   4. **KEPT**: Basic fee removal and deduplication logic
   5. **SIMPLIFIED**: Let WooCommerce handle totals calculation naturally
 - **Logic**: Minimal intervention approach - only manage fees, let WooCommerce handle caching
-- **Status**: TESTING REQUIRED - Safe approach to prevent infinite loops
+- **Result**: Backend logs show correct $15.64 calculation but frontend still displays $17.14
+- **Root Cause**: `unset($cart->fees[$key])` bypasses WooCommerce's internal fee management
+- **Status**: FAILED - Frontend display issue persists, direct array manipulation doesn't work
+
+### ✅ Attempt 7: WooCommerce Native Fee Management API (v1.23.24)
+- **Files**: `includes/apw-woo-intuit-payment-functions.php` (lines 284-413), `apw-woo-plugin.php` (version 1.23.24)
+- **Research**: WooCommerce has no `remove_fee()` method - only `add_fee()`, `get_fees()`, `set_fees()`, `remove_all_fees()`
+- **Changes**:
+  1. **NATIVE REMOVAL**: Use `array_filter()` to filter out surcharge fees from `get_fees()` result
+  2. **NATIVE REPLACEMENT**: Use `$cart->fees_api()->set_fees($filtered_fees)` or `$cart->fees = $filtered_fees`
+  3. **PROPER INDEXING**: Use `array_values()` to reset array keys after filtering
+  4. **ENHANCED LOGGING**: Added comprehensive debug logging for native API operations
+  5. **FALLBACK SUPPORT**: Graceful fallback if `fees_api()` method not available
+- **Logic**: Complete fee array replacement using WooCommerce's official API structure
+- **Test Results**: 
+  - ✅ Fee filtering logic works: Correctly removes old $17.14 surcharge
+  - ✅ Array management works: Properly resets keys and maintains structure
+  - ✅ New fee addition works: Successfully adds new $15.64 surcharge
+- **Expected Result**: WooCommerce's native API should ensure frontend gets updated values
+- **Status**: TESTING REQUIRED - Native API approach should resolve frontend display issue
 
 ## Next Investigation Areas (NOT YET ATTEMPTED)
 

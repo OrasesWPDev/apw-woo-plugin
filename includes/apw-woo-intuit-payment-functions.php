@@ -281,87 +281,108 @@ function apw_woo_calculate_credit_card_surcharge() {
 }
 
 /**
- * Remove existing credit card surcharge fees (SAFE v1.23.23)
+ * Remove existing credit card surcharge fees (NATIVE API v1.23.24)
+ * Uses WooCommerce's official fee management API instead of direct array manipulation
  */
 function apw_woo_remove_credit_card_surcharge() {
     $cart = WC()->cart;
-    $fees = $cart->get_fees();
+    $all_fees = $cart->get_fees();
     $removed_count = 0;
     
     if (APW_WOO_DEBUG_MODE) {
-        apw_woo_log("SAFE REMOVAL: Starting fee removal process");
-        apw_woo_log("SAFE REMOVAL: Found " . count($fees) . " total fees");
+        apw_woo_log("NATIVE REMOVAL: Starting WooCommerce native fee removal process");
+        apw_woo_log("NATIVE REMOVAL: Found " . count($all_fees) . " total fees");
     }
     
-    // SAFE: Only remove from fees array by key (no aggressive caching)
-    foreach ($fees as $key => $fee) {
-        if (strpos($fee->name, 'Credit Card Surcharge') !== false || 
-            strpos($fee->name, 'Surcharge') !== false) {
-            if (APW_WOO_DEBUG_MODE) {
-                apw_woo_log("SAFE REMOVAL: Removing fee '$fee->name' (amount: $" . number_format($fee->amount, 2) . ") via key: $key");
-            }
-            unset($cart->fees[$key]);
+    // Step 1: Filter out surcharge fees using WooCommerce's fee structure
+    $filtered_fees = array_filter($all_fees, function($fee) use (&$removed_count) {
+        $is_surcharge = strpos($fee->name, 'Credit Card Surcharge') !== false || 
+                       strpos($fee->name, 'Surcharge') !== false;
+        
+        if ($is_surcharge) {
             $removed_count++;
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log("NATIVE REMOVAL: Will remove fee '$fee->name' (amount: $" . number_format($fee->amount, 2) . ")");
+            }
+        }
+        
+        return !$is_surcharge;
+    });
+    
+    // Step 2: Use WooCommerce's native API to replace the fees array
+    // Reset array keys to prevent gaps
+    $filtered_fees = array_values($filtered_fees);
+    
+    // Step 3: Replace the entire fees array using WooCommerce's internal structure
+    // This approach ensures WooCommerce's internal state is properly updated
+    if (method_exists($cart, 'fees_api') && method_exists($cart->fees_api(), 'set_fees')) {
+        // Use official fees API if available
+        $cart->fees_api()->set_fees($filtered_fees);
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log("NATIVE REMOVAL: Used WooCommerce fees_api()->set_fees() method");
+        }
+    } else {
+        // Fallback: Direct assignment but with proper WooCommerce structure
+        $cart->fees = $filtered_fees;
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log("NATIVE REMOVAL: Used direct fees array assignment (fallback method)");
         }
     }
     
     if (APW_WOO_DEBUG_MODE) {
-        apw_woo_log("SAFE REMOVAL: Removed $removed_count surcharge fees");
-        apw_woo_log("SAFE REMOVAL: Remaining fees after removal: " . count($cart->get_fees()));
+        apw_woo_log("NATIVE REMOVAL: Removed $removed_count surcharge fees");
+        apw_woo_log("NATIVE REMOVAL: Remaining fees after native removal: " . count($cart->get_fees()));
+        
+        // Debug: List remaining fees
+        $remaining_fees = $cart->get_fees();
+        foreach ($remaining_fees as $i => $fee) {
+            apw_woo_log("NATIVE REMOVAL: Remaining fee [$i]: '$fee->name' ($" . number_format($fee->amount, 2) . ")");
+        }
     }
 }
 
 /**
- * Apply credit card surcharge fee (SAFE v1.23.23)
+ * Apply credit card surcharge fee (NATIVE API v1.23.24)
  * 
- * Simple fee application without forced recalculation to prevent infinite loops
+ * Uses native WooCommerce fee management with complete fee replacement workflow
  */
 function apw_woo_apply_credit_card_surcharge() {
-    // Step 1: Remove existing surcharge to prevent duplicates
+    // Step 1: Remove existing surcharge using native API
     apw_woo_remove_credit_card_surcharge();
     
     // Step 2: Calculate new surcharge
     $surcharge = apw_woo_calculate_credit_card_surcharge();
     
     if ($surcharge > 0) {
-        // Step 3: Simple deduplication check
-        $existing_fees = WC()->cart->get_fees();
-        $surcharge_exists = false;
+        // Step 3: Add new surcharge using WooCommerce's standard method
+        // Since we've already removed all surcharges above, no deduplication needed
+        WC()->cart->add_fee(__('Credit Card Surcharge (3%)', 'apw-woo-plugin'), $surcharge, true);
         
-        foreach ($existing_fees as $fee) {
-            if (strpos($fee->name, 'Credit Card Surcharge') !== false) {
-                $surcharge_exists = true;
-                if (APW_WOO_DEBUG_MODE) {
-                    apw_woo_log("SAFE APPLY: Found existing surcharge fee: '$fee->name' ($" . number_format($fee->amount, 2) . ")");
-                }
-                break;
-            }
-        }
-        
-        // Step 4: Only add if no existing surcharge found
-        if (!$surcharge_exists) {
-            WC()->cart->add_fee(__('Credit Card Surcharge (3%)', 'apw-woo-plugin'), $surcharge, true);
-            
-            if (APW_WOO_DEBUG_MODE) {
-                apw_woo_log("SAFE APPLY: Added new surcharge: $" . number_format($surcharge, 2));
-            }
-        } else {
-            if (APW_WOO_DEBUG_MODE) {
-                apw_woo_log("SAFE APPLY: Skipped adding surcharge - already exists");
-            }
-        }
-        
-        // SAFE: NO forced recalculation or aggressive cache clearing
         if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log("SAFE APPLY: Final fee count: " . count(WC()->cart->get_fees()));
+            apw_woo_log("NATIVE APPLY: Added new surcharge: $" . number_format($surcharge, 2));
+            apw_woo_log("NATIVE APPLY: Final fee count: " . count(WC()->cart->get_fees()));
+            
+            // Debug: Verify the surcharge was added correctly
+            $final_fees = WC()->cart->get_fees();
+            foreach ($final_fees as $i => $fee) {
+                if (strpos($fee->name, 'Credit Card Surcharge') !== false) {
+                    apw_woo_log("NATIVE APPLY: Verified surcharge fee [$i]: '$fee->name' ($" . number_format($fee->amount, 2) . ")");
+                    break;
+                }
+            }
+        }
+    } else {
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log("NATIVE APPLY: No surcharge to apply (amount: $0.00)");
         }
     }
 }
 
 /**
- * Main surcharge fee handler for WooCommerce hooks (SAFE v1.23.23)
+ * Main surcharge fee handler for WooCommerce hooks (NATIVE API v1.23.24)
  * 
  * This function is called by WooCommerce during cart calculation
+ * Uses native WooCommerce fee management to ensure proper state handling
  */
 function apw_woo_add_intuit_surcharge_fee() {
     // Standard validations - early exits when fee shouldn't apply
@@ -376,18 +397,18 @@ function apw_woo_add_intuit_surcharge_fee() {
     $chosen_gateway = WC()->session->get('chosen_payment_method');
     if ($chosen_gateway !== 'intuit_payments_credit_card') {
         if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log("SAFE HANDLER: No surcharge - payment method is: " . ($chosen_gateway ?: 'none'));
+            apw_woo_log("NATIVE HANDLER: No surcharge - payment method is: " . ($chosen_gateway ?: 'none'));
         }
-        // SAFE: Only remove surcharge, no forced recalculation
+        // Use native API to remove surcharge when payment method changes
         apw_woo_remove_credit_card_surcharge();
         return;
     }
     
-    // SAFE: Apply surcharge without forced recalculation
+    // Use native API to apply surcharge
     apw_woo_apply_credit_card_surcharge();
     
     if (APW_WOO_DEBUG_MODE) {
-        apw_woo_log("SAFE HANDLER: Surcharge processing completed");
+        apw_woo_log("NATIVE HANDLER: Surcharge processing completed using WooCommerce native API");
     }
 }
 
