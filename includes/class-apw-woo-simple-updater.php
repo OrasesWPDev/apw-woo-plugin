@@ -72,19 +72,18 @@ class APW_Woo_Simple_Updater {
         }
         
         try {
-            // Initialize the update checker with 1 minute check period (1/60 hours)
+            // Initialize the update checker with 1 hour check period
             $this->update_checker = YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
                 $this->github_repo_url,
                 $this->plugin_file,
                 'apw-woo-plugin',
-                1/60  // Check period in hours (1 minute)
+                1  // Check period in hours (1 hour)
             );
             
             // Set branch (optional, defaults to 'main')
             $this->update_checker->setBranch('main');
             
-            // Alternative: Set check period via scheduler property after initialization
-            // $this->update_checker->scheduler->checkPeriod = 1/60;
+            // Check period is set via buildUpdateChecker parameter above
             
             // Add GitHub token if available (for private repos)
             $github_token = defined('APW_GITHUB_TOKEN') ? APW_GITHUB_TOKEN : null;
@@ -95,7 +94,7 @@ class APW_Woo_Simple_Updater {
             
             apw_woo_log('Plugin Update Checker initialized successfully');
             apw_woo_log('Repository: ' . $this->github_repo_url);
-            apw_woo_log('Check period: 1 minute');
+            apw_woo_log('Check period: 1 hour');
             apw_woo_log('Authentication: ' . ($github_token ? 'Enabled' : 'Disabled'));
             
             return true;
