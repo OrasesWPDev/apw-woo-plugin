@@ -1381,7 +1381,14 @@ function apw_woo_reapply_admin_discounts_before_calc($and_taxes, $order) {
             // This ensures tax is calculated even if the after_calculate_totals hook doesn't fire
             $fee_total = $fee->get_total();
             if ($fee_total < 0) { // Only for discount fees
-                $tax_rates = WC_Tax::get_rates($fee->get_tax_class(), $order->get_tax_address());
+                // HOT FIX v1.24.4: Build tax address from order data (get_tax_address() doesn't exist on Order objects)
+                $tax_address = array(
+                    'country'  => $order->get_billing_country() ?: $order->get_shipping_country(),
+                    'state'    => $order->get_billing_state() ?: $order->get_shipping_state(),
+                    'postcode' => $order->get_billing_postcode() ?: $order->get_shipping_postcode(),
+                    'city'     => $order->get_billing_city() ?: $order->get_shipping_city()
+                );
+                $tax_rates = WC_Tax::get_rates($fee->get_tax_class(), $tax_address);
                 $fee_taxes = WC_Tax::calc_tax(abs($fee_total), $tax_rates, false);
                 
                 if (!empty($fee_taxes)) {
