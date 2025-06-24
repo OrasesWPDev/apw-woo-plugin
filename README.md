@@ -2,7 +2,7 @@
 
 A comprehensive WordPress plugin that extends WooCommerce functionality with advanced e-commerce features. Built specifically for the **Flatsome theme**, this plugin provides enhanced product displays, custom checkout processes, dynamic pricing integration, payment gateway enhancements, and sophisticated cart management systems.
 
-**Current Version**: 1.23.20
+**Current Version**: 1.24.4
 
 ## 🚀 Features
 
@@ -58,10 +58,10 @@ A comprehensive WordPress plugin that extends WooCommerce functionality with adv
 3. **Activate** the plugin through WordPress Admin → Plugins
 4. **Configure** settings as needed (see Configuration section)
 
-## 🧪 Live Server Testing (v1.23.20 Payment Bug Fix)
+## 🧪 Live Server Testing (v1.24.4 Current Version)
 
 ### Critical Payment Surcharge Test
-To verify the Phase 1 payment bug fix is working correctly on your live server:
+To verify the current payment system is working correctly on your live server:
 
 #### Test Scenario Setup
 1. **Product**: Use Product #80 (or any product priced at $109)
@@ -392,7 +392,16 @@ Log files will be created in the `logs/` directory.
 
 ## 📝 Changelog
 
-### Version 1.23.20 (Latest)
+### Version 1.24.4 (Latest)
+- **🔒 SECURITY FIX**: Implement secure environment variable token loading for GitHub authentication
+- **🛠️ HOT FIX**: Fix admin order tax address error preventing order management
+- **🏗️ PHASE 2 COMPLETE**: Complete service consolidation for Payment, Product, Cart, and Customer services
+- **🧹 CODE OPTIMIZATION**: Significant codebase consolidation following DRY and KISS principles
+- **⚡ PERFORMANCE**: Enhanced plugin architecture with consolidated service classes
+- **🔧 MAINTAINABILITY**: Improved code organization for easier maintenance and updates
+- **✅ STABILITY**: Comprehensive testing and quality assurance improvements
+
+### Version 1.23.20
 - **🚀 CRITICAL PAYMENT BUG FIXED**: Phase 1 implementation completely resolves credit card surcharge calculation issue
 - **💰 VERIFIED CALCULATION**: Product #80 (qty 5) with Frederick MD shipping now shows correct $15.64 surcharge (was $17.14)
 - **🔧 ROOT CAUSE RESOLVED**: Fixed undefined $existing_fees variable that prevented VIP discount deduction
