@@ -52,8 +52,39 @@ define('APW_WOO_DEBUG_MODE', true);
 /**
  * GitHub Token for Auto-Updater
  * Required for accessing private repository releases
+ * 
+ * SECURITY: Token is loaded from environment variables to prevent exposure in version control
+ * 1. Create .env file in plugin root with: APW_GITHUB_TOKEN=your_token_here
+ * 2. Or add to wp-config.php: define('APW_GITHUB_TOKEN_CONFIG', 'your_token_here');
+ * 3. Or set server environment variable: APW_GITHUB_TOKEN
  */
-define('APW_GITHUB_TOKEN', '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');
+
+// Load GitHub token from environment (secure method)
+if (!defined('APW_GITHUB_TOKEN')) {
+    // Method 1: Load from .env file (development)
+    $env_file = plugin_dir_path(__FILE__) . '.env';
+    if (file_exists($env_file)) {
+        $env_vars = parse_ini_file($env_file);
+        if (isset($env_vars['APW_GITHUB_TOKEN']) && !empty($env_vars['APW_GITHUB_TOKEN'])) {
+            define('APW_GITHUB_TOKEN', $env_vars['APW_GITHUB_TOKEN']);
+        }
+    }
+    
+    // Method 2: Load from wp-config.php (production)
+    if (!defined('APW_GITHUB_TOKEN') && defined('APW_GITHUB_TOKEN_CONFIG')) {
+        define('APW_GITHUB_TOKEN', APW_GITHUB_TOKEN_CONFIG);
+    }
+    
+    // Method 3: Load from server environment variable
+    if (!defined('APW_GITHUB_TOKEN') && getenv('APW_GITHUB_TOKEN')) {
+        define('APW_GITHUB_TOKEN', getenv('APW_GITHUB_TOKEN'));
+    }
+    
+    // If no token found, log warning (only in debug mode)
+    if (!defined('APW_GITHUB_TOKEN') && defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE) {
+        error_log('APW WooCommerce Plugin: GitHub token not found. Auto-updater may not function properly.');
+    }
+}
 
 /**
  * WooCommerce HPOS compatibility declaration
