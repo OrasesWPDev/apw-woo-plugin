@@ -152,43 +152,56 @@
         });
     }
 
-    // Initialize when document is ready
-    $(document).ready(function () {
-        debugLog('APW WooCommerce Dynamic Pricing JS file loaded');
-        
-        // Global form submission prevention for cart forms when Enter is pressed in quantity fields
-        $(document).on('submit', 'form.cart', function (e) {
-            // Check if the form submission was triggered by Enter key in a quantity input
-            const activeElement = document.activeElement;
-            if (activeElement && 
-                (activeElement.type === 'number' || 
-                 activeElement.classList.contains('qty') ||
-                 activeElement.name === 'quantity' ||
-                 $(activeElement).closest('.quantity').length > 0)) {
-                
-                debugLog('Form submission prevented - triggered by quantity input');
-                e.preventDefault();
-                e.stopPropagation();
-                
-                // Trigger price update instead
-                const qty = parseInt($(activeElement).val(), 10) || 1;
-                debugLog('Triggering price update for quantity: ' + qty);
-                
-                return false;
+    // Main initialization function
+    function initializeDynamicPricing() {
+        // Log what type of localization we're using
+        if (typeof apwWooDynamicPricing !== 'undefined') {
+            if (apwWooDynamicPricing.fallback_used) {
+                debugLog('Using fallback localization object');
+            } else if (apwWooDynamicPricing.emergency_fallback) {
+                debugLog('Using emergency fallback localization object');
+            } else {
+                debugLog('Using normal localization object');
             }
-        });
-        // Add this near the top of the document ready function
-        debugLog('Analyzing DOM structure for quantity inputs:');
-        debugLog('- form.cart exists: ' + ($('form.cart').length > 0));
-        debugLog('- .quantity exists: ' + ($('.quantity').length > 0));
-        debugLog('- All inputs: ' + $('input').length);
-        debugLog('- Number inputs: ' + $('input[type="number"]').length);
-        $('input').each(function () {
-            debugLog('Input: ' + this.name + ' (type: ' + $(this).attr('type') + ')');
-        });
+        }
 
         if (typeof apwWooDynamicPricing === 'undefined') {
-            errorLog('Dynamic Pricing data not available');
+            errorLog('Dynamic Pricing data not available - checking for fallback options');
+            
+            // Try to wait for fallback localization
+            let fallbackAttempts = 0;
+            const maxFallbackAttempts = 10;
+            
+            const checkFallback = setInterval(function() {
+                fallbackAttempts++;
+                debugLog(`Fallback check attempt ${fallbackAttempts}/${maxFallbackAttempts}`);
+                
+                if (typeof apwWooDynamicPricing !== 'undefined') {
+                    clearInterval(checkFallback);
+                    debugLog('Fallback localization found, continuing initialization');
+                    initializeDynamicPricing(); // Recursive call to continue initialization
+                    return;
+                }
+                
+                if (fallbackAttempts >= maxFallbackAttempts) {
+                    clearInterval(checkFallback);
+                    errorLog('No fallback localization available after maximum attempts');
+                    
+                    // Create minimal emergency fallback
+                    window.apwWooDynamicPricing = {
+                        ajax_url: '/wp-admin/admin-ajax.php',
+                        debug_mode: true,
+                        price_selector: '.price .amount, .woocommerce-Price-amount',
+                        addon_exclusion_selector: '.addon-wrap',
+                        is_product: true,
+                        emergency_fallback: true
+                    };
+                    
+                    debugLog('Created emergency fallback localization object');
+                    initializeDynamicPricing(); // Try again with emergency fallback
+                }
+            }, 100);
+            
             return;
         }
 
@@ -621,5 +634,45 @@
 
         // Focus only on single product page functionality
         debugLog('Single product page dynamic pricing initialized');
+    }
+
+    // Initialize when document is ready
+    $(document).ready(function () {
+        debugLog('APW WooCommerce Dynamic Pricing JS file loaded');
+        
+        // Global form submission prevention for cart forms when Enter is pressed in quantity fields
+        $(document).on('submit', 'form.cart', function (e) {
+            // Check if the form submission was triggered by Enter key in a quantity input
+            const activeElement = document.activeElement;
+            if (activeElement && 
+                (activeElement.type === 'number' || 
+                 activeElement.classList.contains('qty') ||
+                 activeElement.name === 'quantity' ||
+                 $(activeElement).closest('.quantity').length > 0)) {
+                
+                debugLog('Form submission prevented - triggered by quantity input');
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Trigger price update instead
+                const qty = parseInt($(activeElement).val(), 10) || 1;
+                debugLog('Triggering price update for quantity: ' + qty);
+                
+                return false;
+            }
+        });
+        
+        // Add DOM structure analysis for debugging
+        debugLog('Analyzing DOM structure for quantity inputs:');
+        debugLog('- form.cart exists: ' + ($('form.cart').length > 0));
+        debugLog('- .quantity exists: ' + ($('.quantity').length > 0));
+        debugLog('- All inputs: ' + $('input').length);
+        debugLog('- Number inputs: ' + $('input[type="number"]').length);
+        $('input').each(function () {
+            debugLog('Input: ' + this.name + ' (type: ' + $(this).attr('type') + ')');
+        });
+
+        // Start the initialization process
+        initializeDynamicPricing();
     });
 })(jQuery);
