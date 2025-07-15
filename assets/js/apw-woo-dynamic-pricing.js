@@ -187,15 +187,49 @@
                     clearInterval(checkFallback);
                     errorLog('No fallback localization available after maximum attempts');
                     
-                    // Create minimal emergency fallback
+                    // Create minimal emergency fallback with nonce detection
+                    // Try to find existing nonces from other WooCommerce scripts
+                    let emergencyNonce = '';
+                    let emergencyThresholdNonce = '';
+                    
+                    // Check if WooCommerce has any nonce available
+                    if (typeof wc_add_to_cart_params !== 'undefined' && wc_add_to_cart_params.ajax_url) {
+                        // Try to extract nonce from WooCommerce params
+                        if (wc_add_to_cart_params.wc_ajax_url) {
+                            const urlParams = new URLSearchParams(wc_add_to_cart_params.wc_ajax_url.split('?')[1]);
+                            emergencyNonce = urlParams.get('wc-ajax') || '';
+                        }
+                    }
+                    
+                    // Check for any meta elements with nonce
+                    const nonceMeta = document.querySelector('meta[name="nonce"]');
+                    if (nonceMeta && !emergencyNonce) {
+                        emergencyNonce = nonceMeta.getAttribute('content');
+                    }
+                    
+                    // If still no nonce, try to get from any form with nonce field
+                    if (!emergencyNonce) {
+                        const nonceInput = document.querySelector('input[name*="nonce"], input[name*="_wpnonce"]');
+                        if (nonceInput) {
+                            emergencyNonce = nonceInput.value;
+                        }
+                    }
+                    
                     window.apwWooDynamicPricing = {
                         ajax_url: '/wp-admin/admin-ajax.php',
+                        nonce: emergencyNonce,
+                        threshold_nonce: emergencyNonce, // Use same nonce as fallback
                         debug_mode: true,
                         price_selector: '.price .amount, .woocommerce-Price-amount',
                         addon_exclusion_selector: '.addon-wrap',
                         is_product: true,
                         emergency_fallback: true
                     };
+                    
+                    debugLog('Emergency fallback nonce found: ' + (emergencyNonce ? 'YES' : 'NO'));
+                    if (emergencyNonce) {
+                        debugLog('Emergency nonce value: ' + emergencyNonce.substring(0, 8) + '...');
+                    }
                     
                     debugLog('Created emergency fallback localization object');
                     initializeDynamicPricing(); // Try again with emergency fallback
