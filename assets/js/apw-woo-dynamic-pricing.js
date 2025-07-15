@@ -120,6 +120,12 @@
         lastCheckedProductId = productId;
         lastCheckedQuantity = quantity;
 
+        // Check if we need to generate nonces first
+        if (apwWooDynamicPricing.needs_nonce_generation && !apwWooDynamicPricing.threshold_nonce) {
+            debugLog('Emergency fallback: Skipping threshold check until nonces are generated');
+            return;
+        }
+
         // Make immediate request for faster response
         pendingThresholdRequest = $.ajax({
             type: 'POST',
@@ -187,49 +193,21 @@
                     clearInterval(checkFallback);
                     errorLog('No fallback localization available after maximum attempts');
                     
-                    // Create minimal emergency fallback with nonce detection
-                    // Try to find existing nonces from other WooCommerce scripts
-                    let emergencyNonce = '';
-                    let emergencyThresholdNonce = '';
+                    // Create minimal emergency fallback with proper nonce generation
+                    debugLog('Creating emergency fallback - will generate nonces via AJAX');
                     
-                    // Check if WooCommerce has any nonce available
-                    if (typeof wc_add_to_cart_params !== 'undefined' && wc_add_to_cart_params.ajax_url) {
-                        // Try to extract nonce from WooCommerce params
-                        if (wc_add_to_cart_params.wc_ajax_url) {
-                            const urlParams = new URLSearchParams(wc_add_to_cart_params.wc_ajax_url.split('?')[1]);
-                            emergencyNonce = urlParams.get('wc-ajax') || '';
-                        }
-                    }
-                    
-                    // Check for any meta elements with nonce
-                    const nonceMeta = document.querySelector('meta[name="nonce"]');
-                    if (nonceMeta && !emergencyNonce) {
-                        emergencyNonce = nonceMeta.getAttribute('content');
-                    }
-                    
-                    // If still no nonce, try to get from any form with nonce field
-                    if (!emergencyNonce) {
-                        const nonceInput = document.querySelector('input[name*="nonce"], input[name*="_wpnonce"]');
-                        if (nonceInput) {
-                            emergencyNonce = nonceInput.value;
-                        }
-                    }
-                    
+                    // Create emergency fallback that will generate correct nonces
                     window.apwWooDynamicPricing = {
                         ajax_url: '/wp-admin/admin-ajax.php',
-                        nonce: emergencyNonce,
-                        threshold_nonce: emergencyNonce, // Use same nonce as fallback
+                        nonce: '', // Will be generated dynamically
+                        threshold_nonce: '', // Will be generated dynamically
                         debug_mode: true,
                         price_selector: '.price .amount, .woocommerce-Price-amount',
                         addon_exclusion_selector: '.addon-wrap',
                         is_product: true,
-                        emergency_fallback: true
+                        emergency_fallback: true,
+                        needs_nonce_generation: true
                     };
-                    
-                    debugLog('Emergency fallback nonce found: ' + (emergencyNonce ? 'YES' : 'NO'));
-                    if (emergencyNonce) {
-                        debugLog('Emergency nonce value: ' + emergencyNonce.substring(0, 8) + '...');
-                    }
                     
                     debugLog('Created emergency fallback localization object');
                     initializeDynamicPricing(); // Try again with emergency fallback
@@ -389,6 +367,40 @@
         let updateTimeout = null;
         let pendingPriceRequest = null;
 
+        // Function to generate nonces and then update price
+        function generateNoncesAndUpdatePrice(quantity) {
+            debugLog('Generating nonces for emergency fallback');
+            
+            // Make AJAX request to generate nonces
+            $.ajax({
+                type: 'POST',
+                url: apwWooDynamicPricing.ajax_url,
+                data: {
+                    action: 'apw_woo_generate_nonces'
+                },
+                success: function (response) {
+                    if (response.success && response.data) {
+                        debugLog('Nonces generated successfully');
+                        
+                        // Update the localization object with proper nonces
+                        apwWooDynamicPricing.nonce = response.data.nonce;
+                        apwWooDynamicPricing.threshold_nonce = response.data.threshold_nonce;
+                        apwWooDynamicPricing.needs_nonce_generation = false;
+                        
+                        // Now proceed with the price update
+                        updatePrice(quantity);
+                    } else {
+                        errorLog('Failed to generate nonces:', response);
+                        $priceDisplay.removeClass('updating');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    errorLog('Error generating nonces:', error);
+                    $priceDisplay.removeClass('updating');
+                }
+            });
+        }
+
         // Function to update price via AJAX
         function updatePrice(quantity) {
             // Don't update if quantity hasn't changed
@@ -419,6 +431,13 @@
             // Clear any pending updates
             if (updateTimeout) {
                 clearTimeout(updateTimeout);
+            }
+
+            // Check if we need to generate nonces first
+            if (apwWooDynamicPricing.needs_nonce_generation && !apwWooDynamicPricing.nonce) {
+                debugLog('Emergency fallback: Generating nonces first');
+                generateNoncesAndUpdatePrice(quantity);
+                return;
             }
 
             // Prepare data for AJAX request

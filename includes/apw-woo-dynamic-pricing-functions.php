@@ -683,7 +683,9 @@ function apw_woo_fallback_localization()
     }
 
     // Check if script was enqueued but localization failed
-    if (wp_script_is('apw-woo-dynamic-pricing', 'enqueued')) {
+    $script_enqueued = wp_script_is('apw-woo-dynamic-pricing', 'enqueued') || wp_script_is('apw-woo-dynamic-pricing', 'done');
+    
+    if ($script_enqueued) {
         if (APW_WOO_DEBUG_MODE) {
             apw_woo_log('FALLBACK LOCALIZATION: Script is enqueued, adding fallback localization');
         }
@@ -700,16 +702,22 @@ function apw_woo_fallback_localization()
             'fallback_used' => true
         );
 
-        // Output fallback JavaScript object
+        // Output robust fallback JavaScript object
         echo '<script type="text/javascript">';
         echo 'if (typeof apwWooDynamicPricing === "undefined") {';
         echo 'window.apwWooDynamicPricing = ' . json_encode($fallback_data) . ';';
         echo 'console.log("APW: Using fallback localization object");';
+        echo '} else {';
+        echo 'console.log("APW: Main localization object found");';
         echo '}';
         echo '</script>';
 
         if (APW_WOO_DEBUG_MODE) {
             apw_woo_log('FALLBACK LOCALIZATION: Fallback localization object created');
+        }
+    } else {
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('FALLBACK LOCALIZATION: Script not enqueued, skipping fallback');
         }
     }
 }
@@ -903,6 +911,10 @@ function apw_woo_init_dynamic_pricing()
     // Register threshold message AJAX handlers
     add_action('wp_ajax_apw_woo_get_threshold_messages', 'apw_woo_ajax_get_threshold_messages');
     add_action('wp_ajax_nopriv_apw_woo_get_threshold_messages', 'apw_woo_ajax_get_threshold_messages');
+
+    // Register nonce generation AJAX handlers (for emergency fallback)
+    add_action('wp_ajax_apw_woo_generate_nonces', 'apw_woo_ajax_generate_nonces');
+    add_action('wp_ajax_nopriv_apw_woo_generate_nonces', 'apw_woo_ajax_generate_nonces');
 
     // Replace the default price display with our dynamic version - place it in quantity row
     // Priority 10 to run before apw_woo_close_quantity_row (priority 15)
@@ -1331,6 +1343,28 @@ function apw_woo_ajax_get_threshold_messages() {
         'debug_info' => APW_WOO_DEBUG_MODE ? array(
             'user_roles' => wp_get_current_user()->roles,
             'messages_found' => count($threshold_messages)
+        ) : null
+    ));
+}
+
+/**
+ * AJAX handler for generating nonces (emergency fallback)
+ */
+function apw_woo_ajax_generate_nonces() {
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log("NONCE GENERATION: Emergency fallback generating nonces");
+    }
+
+    // Generate the proper nonces
+    $nonce = wp_create_nonce('apw_woo_dynamic_pricing');
+    $threshold_nonce = wp_create_nonce('apw_woo_threshold_check');
+
+    wp_send_json_success(array(
+        'nonce' => $nonce,
+        'threshold_nonce' => $threshold_nonce,
+        'debug_info' => APW_WOO_DEBUG_MODE ? array(
+            'generated_at' => current_time('mysql'),
+            'user_id' => get_current_user_id()
         ) : null
     ));
 }
