@@ -661,8 +661,19 @@ function apw_woo_enqueue_dynamic_pricing_scripts()
  */
 function apw_woo_fallback_localization()
 {
-    // Only run on product pages
-    if (!is_product()) {
+    // Only run on product pages (including custom URL structure)
+    $is_product_page = is_product();
+    
+    // Check for custom URL structure if standard check fails
+    if (!$is_product_page && class_exists('APW_Woo_Page_Detector')) {
+        global $wp;
+        $is_product_page = APW_Woo_Page_Detector::is_product_page($wp);
+    }
+    
+    if (!$is_product_page) {
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('FALLBACK LOCALIZATION: Not a product page, skipping fallback');
+        }
         return;
     }
 
