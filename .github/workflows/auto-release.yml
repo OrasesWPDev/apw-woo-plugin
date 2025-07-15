@@ -1,0 +1,51 @@
+name: Auto Release
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+jobs:
+  release:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Extract version from plugin file
+      id: get_version
+      run: |
+        VERSION=$(grep -E "^ \* Version:" apw-woo-plugin.php | sed -E 's/^ \* Version: *([0-9.]+).*$/\1/')
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Extracted version: $VERSION"
+        
+    - name: Check if release already exists
+      id: check_release
+      run: |
+        if gh release view "v${{ steps.get_version.outputs.version }}" >/dev/null 2>&1; then
+          echo "exists=true" >> $GITHUB_OUTPUT
+          echo "Release v${{ steps.get_version.outputs.version }} already exists"
+        else
+          echo "exists=false" >> $GITHUB_OUTPUT
+          echo "Release v${{ steps.get_version.outputs.version }} does not exist"
+        fi
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Create GitHub release
+      if: steps.check_release.outputs.exists == 'false'
+      run: |
+        gh release create "v${{ steps.get_version.outputs.version }}" \
+          --title "APW WooCommerce Plugin v${{ steps.get_version.outputs.version }}" \
+          --generate-notes \
+          --latest
+        echo "Created release v${{ steps.get_version.outputs.version }}"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Skip release creation
+      if: steps.check_release.outputs.exists == 'true'
+      run: |
+        echo "Skipping release creation - v${{ steps.get_version.outputs.version }} already exists"

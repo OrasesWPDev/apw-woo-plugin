@@ -517,15 +517,33 @@ function apw_woo_enqueue_dynamic_pricing_scripts()
     $is_custom_product_page = false;
     global $wp;
     $current_url = $wp->request ?? ''; // Use null coalescing operator
+    
+    // Add enhanced debug logging for page detection
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log('PAGE DETECTION: Starting page detection for script enqueuing');
+        apw_woo_log('PAGE DETECTION: is_product(): ' . ($is_standard_product_page ? 'YES' : 'NO'));
+        apw_woo_log('PAGE DETECTION: Current URL: ' . $current_url);
+        apw_woo_log('PAGE DETECTION: Page Detector class exists: ' . (class_exists('APW_Woo_Page_Detector') ? 'YES' : 'NO'));
+        apw_woo_log('PAGE DETECTION: is_product_page method exists: ' . (method_exists('APW_Woo_Page_Detector', 'is_product_page') ? 'YES' : 'NO'));
+    }
+    
     // Use the more specific Page Detector class if available
     if (class_exists('APW_Woo_Page_Detector') && method_exists('APW_Woo_Page_Detector', 'is_product_page')) {
         // Use the detector which includes the URL check and other methods
         $is_custom_product_page = APW_Woo_Page_Detector::is_product_page($wp);
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('PAGE DETECTION: Custom product page (Page Detector): ' . ($is_custom_product_page ? 'YES' : 'NO'));
+        }
     } elseif (preg_match('#^products/([^/]+)/([^/]+)$#', $current_url)) {
         // Fallback URL check if detector class isn't loaded yet (less reliable)
         $is_custom_product_page = true;
         if (APW_WOO_DEBUG_MODE) {
-            apw_woo_log('Dynamic pricing enqueue: Page Detector class not found, using basic URL match for custom product page.');
+            apw_woo_log('PAGE DETECTION: Page Detector class not found, using basic URL match for custom product page.');
+            apw_woo_log('PAGE DETECTION: Custom product page (URL match): YES');
+        }
+    } else {
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('PAGE DETECTION: Custom product page: NO (URL pattern not matched)');
         }
     }
 
@@ -549,13 +567,21 @@ function apw_woo_enqueue_dynamic_pricing_scripts()
             return; // Stop if file is missing
         }
 
-        // Enqueue the JavaScript file
+        // Add enhanced debug logging for script loading
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('SCRIPT LOADING: Attempting to enqueue dynamic pricing script');
+            apw_woo_log('SCRIPT LOADING: Script file exists: ' . (file_exists($js_path) ? 'YES' : 'NO'));
+            apw_woo_log('SCRIPT LOADING: Script URL: ' . $js_dir . $js_file);
+            apw_woo_log('SCRIPT LOADING: Script version: ' . filemtime($js_path));
+        }
+
+        // Enqueue the JavaScript file with WooCommerce 10.0.2 compatible dependencies
         wp_enqueue_script(
             'apw-woo-dynamic-pricing',
             $js_dir . $js_file,
-            array('jquery'), // Dependency
+            array('jquery', 'wc-settings'), // WooCommerce 10.0.2 requires wc-settings dependency for footer loading
             filemtime($js_path), // Cache busting
-            true // Load in footer
+            true // CRITICAL: Must be true for footer loading per WooCommerce 10.0.2
         );
 
         // Create specific selector that excludes addon areas
@@ -573,20 +599,40 @@ function apw_woo_enqueue_dynamic_pricing_scripts()
             apw_woo_log('Excluding addon price elements from dynamic pricing updates');
         }
 
+        // Prepare localization data
+        $localization_data = array(
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('apw_woo_dynamic_pricing'),
+            'threshold_nonce' => wp_create_nonce('apw_woo_threshold_check'),
+            'price_selector' => implode(', ', $main_price_selectors),
+            'addon_exclusion_selector' => '.addon-wrap, .apw-woo-product-addons, .wc-pao-addon-wrap',
+            'is_product' => true, // Script only loads on product pages now
+            'debug_mode' => APW_WOO_DEBUG_MODE // Pass debug mode status
+        );
+
+        // Add debug logging for localization
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('SCRIPT LOADING: Preparing localization data');
+            apw_woo_log('SCRIPT LOADING: AJAX URL: ' . $localization_data['ajax_url']);
+            apw_woo_log('SCRIPT LOADING: Nonce generated: ' . (!empty($localization_data['nonce']) ? 'YES' : 'NO'));
+            apw_woo_log('SCRIPT LOADING: Threshold nonce generated: ' . (!empty($localization_data['threshold_nonce']) ? 'YES' : 'NO'));
+            apw_woo_log('SCRIPT LOADING: Price selector: ' . $localization_data['price_selector']);
+        }
+
         // Localize script with data needed for AJAX
-        wp_localize_script(
+        $localization_result = wp_localize_script(
             'apw-woo-dynamic-pricing',
             'apwWooDynamicPricing',
-            array(
-                'ajax_url' => admin_url('admin-ajax.php'),
-                'nonce' => wp_create_nonce('apw_woo_dynamic_pricing'),
-                'threshold_nonce' => wp_create_nonce('apw_woo_threshold_check'),
-                'price_selector' => implode(', ', $main_price_selectors),
-                'addon_exclusion_selector' => '.addon-wrap, .apw-woo-product-addons, .wc-pao-addon-wrap',
-                'is_product' => true, // Script only loads on product pages now
-                'debug_mode' => APW_WOO_DEBUG_MODE // Pass debug mode status
-            )
+            $localization_data
         );
+
+        // Log localization result
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('SCRIPT LOADING: Localization result: ' . ($localization_result ? 'SUCCESS' : 'FAILED'));
+            if (!$localization_result) {
+                apw_woo_log('SCRIPT LOADING: ERROR - Localization failed for apw-woo-dynamic-pricing script');
+            }
+        }
 
         if (APW_WOO_DEBUG_MODE) {
             apw_woo_log('Dynamic pricing script successfully enqueued.');
@@ -606,6 +652,54 @@ function apw_woo_enqueue_dynamic_pricing_scripts()
             apw_woo_log('Skipping dynamic pricing script enqueue: Currently on ' . $reason);
         }
         return; // Explicitly return to prevent further execution
+    }
+}
+
+/**
+ * Fallback localization function for WooCommerce 10.0.2 compatibility
+ * This ensures the JavaScript object is available even if the main localization fails
+ */
+function apw_woo_fallback_localization()
+{
+    // Only run on product pages
+    if (!is_product()) {
+        return;
+    }
+
+    // Only run if main localization failed
+    if (APW_WOO_DEBUG_MODE) {
+        apw_woo_log('FALLBACK LOCALIZATION: Checking if fallback localization is needed');
+    }
+
+    // Check if script was enqueued but localization failed
+    if (wp_script_is('apw-woo-dynamic-pricing', 'enqueued')) {
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('FALLBACK LOCALIZATION: Script is enqueued, adding fallback localization');
+        }
+
+        // Create minimal fallback localization object
+        $fallback_data = array(
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('apw_woo_dynamic_pricing'),
+            'threshold_nonce' => wp_create_nonce('apw_woo_threshold_check'),
+            'price_selector' => '.price .amount, .woocommerce-Price-amount',
+            'addon_exclusion_selector' => '.addon-wrap, .apw-woo-product-addons',
+            'is_product' => true,
+            'debug_mode' => APW_WOO_DEBUG_MODE,
+            'fallback_used' => true
+        );
+
+        // Output fallback JavaScript object
+        echo '<script type="text/javascript">';
+        echo 'if (typeof apwWooDynamicPricing === "undefined") {';
+        echo 'window.apwWooDynamicPricing = ' . json_encode($fallback_data) . ';';
+        echo 'console.log("APW: Using fallback localization object");';
+        echo '}';
+        echo '</script>';
+
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('FALLBACK LOCALIZATION: Fallback localization object created');
+        }
     }
 }
 
@@ -785,8 +879,11 @@ function apw_woo_init_dynamic_pricing()
         }
     }
 
-    // Add script enqueuing
-    add_action('wp_enqueue_scripts', 'apw_woo_enqueue_dynamic_pricing_scripts');
+    // Add script enqueuing with priority 20 to load after WooCommerce core scripts (WooCommerce 10.0.2 compatibility)
+    add_action('wp_enqueue_scripts', 'apw_woo_enqueue_dynamic_pricing_scripts', 20);
+
+    // Add fallback localization in footer for WooCommerce 10.0.2 compatibility
+    add_action('wp_print_footer_scripts', 'apw_woo_fallback_localization', 5);
 
     // Register AJAX handlers
     add_action('wp_ajax_apw_woo_get_dynamic_price', 'apw_woo_ajax_get_dynamic_price');
