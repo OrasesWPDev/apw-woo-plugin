@@ -5,6 +5,11 @@ on:
     types: [closed]
     branches: [main]
 
+permissions:
+  contents: write
+  issues: read
+  pull-requests: read
+
 jobs:
   release:
     if: github.event.pull_request.merged == true
@@ -32,7 +37,7 @@ jobs:
           echo "Release v${{ steps.get_version.outputs.version }} does not exist"
         fi
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
     - name: Create GitHub release
       if: steps.check_release.outputs.exists == 'false'
@@ -43,7 +48,7 @@ jobs:
           --latest
         echo "Created release v${{ steps.get_version.outputs.version }}"
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         
     - name: Skip release creation
       if: steps.check_release.outputs.exists == 'true'
