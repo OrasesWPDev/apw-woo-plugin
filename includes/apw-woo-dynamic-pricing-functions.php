@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
  * Get tax address compatible with both WC_Order and Admin\Overrides\Order
  * 
  * @param WC_Order $order The order object
- * @return array Tax address array
+ * @return array Tax address array (indexed format for WC_Tax::get_rates_from_location)
  * @since 1.24.14
  */
 function apw_woo_get_compatible_tax_address($order) {
@@ -24,12 +24,33 @@ function apw_woo_get_compatible_tax_address($order) {
     }
     
     // Fallback for Admin Overrides Order - manual construction
+    // Format: [country, state, postcode, city] for WC_Tax::get_rates_from_location
     return array(
-        'country'  => $order->get_billing_country() ?: $order->get_shipping_country(),
-        'state'    => $order->get_billing_state() ?: $order->get_shipping_state(),
-        'postcode' => $order->get_billing_postcode() ?: $order->get_shipping_postcode(),
-        'city'     => $order->get_billing_city() ?: $order->get_shipping_city()
+        $order->get_billing_country() ?: $order->get_shipping_country(),
+        $order->get_billing_state() ?: $order->get_shipping_state(),
+        $order->get_billing_postcode() ?: $order->get_shipping_postcode(),
+        $order->get_billing_city() ?: $order->get_shipping_city()
     );
+}
+
+/**
+ * Get tax rates for order using appropriate WooCommerce method
+ * 
+ * @param string $tax_class The tax class
+ * @param WC_Order $order The order object
+ * @return array Tax rates array
+ * @since 1.24.15
+ */
+function apw_woo_get_tax_rates_for_order($tax_class, $order) {
+    // Check if get_tax_address() method exists (standard WC_Order)
+    if (method_exists($order, 'get_tax_address')) {
+        // Standard WC_Order - use get_rates with customer object approach
+        return WC_Tax::get_rates($tax_class, null);
+    }
+    
+    // Admin Overrides Order - use get_rates_from_location with location array
+    $location = apw_woo_get_compatible_tax_address($order);
+    return WC_Tax::get_rates_from_location($tax_class, $location);
 }
 
 /**
@@ -1545,8 +1566,8 @@ function apw_woo_reapply_admin_discounts_before_calc($and_taxes, $order) {
             // This ensures tax is calculated even if the after_calculate_totals hook doesn't fire
             $fee_total = $fee->get_total();
             if ($fee_total < 0) { // Only for discount fees
-                // FIX v1.24.14: Use compatibility helper for tax address (fixes Admin Overrides Order)
-                $tax_rates = WC_Tax::get_rates($fee->get_tax_class(), apw_woo_get_compatible_tax_address($order));
+                // FIX v1.24.15: Use correct WooCommerce tax method for order type
+                $tax_rates = apw_woo_get_tax_rates_for_order($fee->get_tax_class(), $order);
                 $fee_taxes = WC_Tax::calc_tax(abs($fee_total), $tax_rates, false);
                 
                 if (!empty($fee_taxes)) {
@@ -1631,7 +1652,7 @@ function apw_woo_ensure_discount_tax_calculated($order) {
             if ($fee_total < 0) { // Only for discount fees (negative amounts)
                 
                 // Calculate tax on the fee amount using WooCommerce's tax calculation
-                $tax_rates = WC_Tax::get_rates($fee->get_tax_class(), apw_woo_get_compatible_tax_address($order));
+                $tax_rates = apw_woo_get_tax_rates_for_order($fee->get_tax_class(), $order);
                 $fee_taxes = WC_Tax::calc_tax(abs($fee_total), $tax_rates, false);
                 
                 if (!empty($fee_taxes)) {
