@@ -11,7 +11,7 @@
  * Plugin Name:       APW WooCommerce Plugin
  * Plugin URI:        https://github.com/OrasesWPDev/apw-woo-plugin
  * Description:       Custom WooCommerce enhancements for displaying products across shop, category, and product pages.
- * Version:           1.24.11
+ * Version:           1.24.12
  * Requires at least: 5.3
  * Tested up to:      6.4
  * Requires PHP:      7.2
@@ -34,7 +34,7 @@ if (!defined('ABSPATH')) {
 /**
  * Plugin constants
  */
-define('APW_WOO_VERSION', '1.24.11');
+define('APW_WOO_VERSION', '1.24.12');
 define('APW_WOO_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('APW_WOO_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('APW_WOO_PLUGIN_FILE', __FILE__);
@@ -797,6 +797,10 @@ function apw_woo_init()
 
     // PHASE 2: Initialize consolidated Product Service (replaces add-ons and dynamic pricing)
     apw_woo_initialize_product_service();
+
+    // CRITICAL FIX v1.24.12: Restore dynamic pricing initialization that was removed during Phase 2 refactoring
+    // This call is essential for price display and discount notices to work properly
+    apw_woo_init_dynamic_pricing();
 
     // PHASE 2: Initialize consolidated Payment Service (replaces recurring billing and Intuit integration)
     apw_woo_initialize_payment_service();
