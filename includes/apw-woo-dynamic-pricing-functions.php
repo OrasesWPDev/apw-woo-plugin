@@ -11,6 +11,28 @@ if (!defined('ABSPATH')) {
 }
 
 /**
+ * Get tax address compatible with both WC_Order and Admin\Overrides\Order
+ * 
+ * @param WC_Order $order The order object
+ * @return array Tax address array
+ * @since 1.24.14
+ */
+function apw_woo_get_compatible_tax_address($order) {
+    // Check if get_tax_address() method exists (standard WC_Order)
+    if (method_exists($order, 'get_tax_address')) {
+        return $order->get_tax_address();
+    }
+    
+    // Fallback for Admin Overrides Order - manual construction
+    return array(
+        'country'  => $order->get_billing_country() ?: $order->get_shipping_country(),
+        'state'    => $order->get_billing_state() ?: $order->get_shipping_state(),
+        'postcode' => $order->get_billing_postcode() ?: $order->get_shipping_postcode(),
+        'city'     => $order->get_billing_city() ?: $order->get_shipping_city()
+    );
+}
+
+/**
  * Check if WooCommerce Dynamic Pricing plugin is active and available
  *
  * @return bool True if Dynamic Pricing is active
@@ -1523,8 +1545,8 @@ function apw_woo_reapply_admin_discounts_before_calc($and_taxes, $order) {
             // This ensures tax is calculated even if the after_calculate_totals hook doesn't fire
             $fee_total = $fee->get_total();
             if ($fee_total < 0) { // Only for discount fees
-                // FIX v1.24.13: Use order's get_tax_address() method instead of manual array construction
-                $tax_rates = WC_Tax::get_rates($fee->get_tax_class(), $order->get_tax_address());
+                // FIX v1.24.14: Use compatibility helper for tax address (fixes Admin Overrides Order)
+                $tax_rates = WC_Tax::get_rates($fee->get_tax_class(), apw_woo_get_compatible_tax_address($order));
                 $fee_taxes = WC_Tax::calc_tax(abs($fee_total), $tax_rates, false);
                 
                 if (!empty($fee_taxes)) {
@@ -1609,7 +1631,7 @@ function apw_woo_ensure_discount_tax_calculated($order) {
             if ($fee_total < 0) { // Only for discount fees (negative amounts)
                 
                 // Calculate tax on the fee amount using WooCommerce's tax calculation
-                $tax_rates = WC_Tax::get_rates($fee->get_tax_class(), $order->get_tax_address());
+                $tax_rates = WC_Tax::get_rates($fee->get_tax_class(), apw_woo_get_compatible_tax_address($order));
                 $fee_taxes = WC_Tax::calc_tax(abs($fee_total), $tax_rates, false);
                 
                 if (!empty($fee_taxes)) {
