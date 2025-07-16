@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The **APW WooCommerce Plugin** is a comprehensive WordPress plugin that extends WooCommerce functionality. This file contains development-specific information for maintaining and extending the codebase.
 
-**Current Version**: 1.23.11
+**Current Version**: 1.24.12
 
 ## Core Architecture
 
@@ -520,6 +520,58 @@ The credit card surcharge calculation issue where surcharge shows incorrect amou
 - Keep current v1.23.10 code as backup
 - Document all changes for easy reversion
 - Test thoroughly in staging environment first
+
+## CRITICAL: Dynamic Pricing Initialization Requirements
+
+### **NEVER DELETE: apw_woo_init_dynamic_pricing() Call**
+
+**CRITICAL REQUIREMENT**: The `apw_woo_init_dynamic_pricing()` function call in `apw-woo-plugin.php` at line ~803 is **ESSENTIAL** and must **NEVER** be removed or commented out.
+
+```php
+// CRITICAL FIX v1.24.12: Restore dynamic pricing initialization that was removed during Phase 2 refactoring
+// This call is essential for price display and discount notices to work properly
+apw_woo_init_dynamic_pricing();
+```
+
+### Why This Call is Critical
+
+This function registers essential hooks that enable:
+
+1. **Price Display**: `add_action('woocommerce_after_add_to_cart_quantity', 'apw_woo_replace_price_display', 10)`
+2. **Discount Notices**: `add_action('wp_ajax_apw_woo_get_threshold_messages', 'apw_woo_ajax_get_threshold_messages')`
+3. **VIP/Bulk Discounts**: `add_action('woocommerce_before_calculate_totals', 'apw_woo_apply_role_based_bulk_discounts', 5)`
+4. **Dynamic Pricing JavaScript**: Enqueues `apw-woo-dynamic-pricing.js` with proper localization
+5. **Cart Item Price Filtering**: `add_filter('woocommerce_cart_item_price', 'apw_woo_filter_cart_item_price', 10, 3)`
+
+### Historical Context
+
+- **v1.18.1**: Function was properly called in main initialization
+- **Phase 2 Refactoring**: Call was removed during service consolidation
+- **v1.24.12**: **RESTORED** - This call is now **MANDATORY** for proper functionality
+
+### Symptoms of Missing Call
+
+Without this initialization:
+- ❌ No price display ($109.00) on product pages
+- ❌ No discount threshold messages
+- ❌ VIP discounts don't work (distro10 role)
+- ❌ Bulk discounts don't work (5+ quantity)
+- ❌ AJAX handlers not registered
+- ❌ JavaScript localization fails
+
+### Initialization Order
+
+The call must be placed **after** Product Service initialization but **before** other services:
+
+```php
+// PHASE 2: Initialize consolidated Product Service
+apw_woo_initialize_product_service();
+
+// CRITICAL: Initialize dynamic pricing (DO NOT REMOVE)
+apw_woo_init_dynamic_pricing();
+
+// PHASE 2: Initialize other services...
+```
 
 ## Development Notes
 

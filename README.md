@@ -2,7 +2,7 @@
 
 A comprehensive WordPress plugin that extends WooCommerce functionality with advanced e-commerce features. Built specifically for the **Flatsome theme**, this plugin provides enhanced product displays, custom checkout processes, dynamic pricing integration, payment gateway enhancements, and sophisticated cart management systems.
 
-**Current Version**: 1.24.4
+**Current Version**: 1.24.12
 
 ## 🚀 Features
 
@@ -392,7 +392,18 @@ Log files will be created in the `logs/` directory.
 
 ## 📝 Changelog
 
-### Version 1.24.4 (Latest)
+### Version 1.24.12 (Latest)
+- **🔧 CRITICAL FIX**: Restored missing dynamic pricing initialization that was removed during Phase 2 refactoring
+- **💰 PRICE DISPLAY RESTORED**: Fixed missing $109.00 price display on product pages
+- **🎯 DISCOUNT NOTICES FIXED**: Restored VIP and bulk discount threshold messages
+- **📊 COMPLETE FUNCTIONALITY**: All dynamic pricing features now working correctly
+- **🛡️ ROOT CAUSE RESOLVED**: Fixed core issue where `apw_woo_init_dynamic_pricing()` was never called
+- **⚡ HOOKS RESTORED**: All essential hooks for price display and discount functionality now registered
+- **🔄 AJAX WORKING**: Dynamic pricing AJAX handlers and JavaScript properly initialized
+- **✅ TESTED**: Verified working on staging site with all pricing and discount features functional
+- **📋 DOCUMENTATION**: Updated CLAUDE.md with critical requirements to prevent future removal
+
+### Version 1.24.4
 - **🔒 SECURITY FIX**: Implement secure environment variable token loading for GitHub authentication
 - **🛠️ HOT FIX**: Fix admin order tax address error preventing order management
 - **🏗️ PHASE 2 COMPLETE**: Complete service consolidation for Payment, Product, Cart, and Customer services
