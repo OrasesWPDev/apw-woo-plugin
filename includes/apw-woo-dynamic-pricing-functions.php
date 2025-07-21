@@ -1336,14 +1336,27 @@ function apw_woo_simulate_bulk_discount_thresholds($product_id, $quantity) {
         );
     }
 
-    // Add shipping threshold if quantity is 10+
-    $shipping_threshold = apply_filters('apw_woo_free_shipping_threshold', 10, $product_id);
-    if ($quantity >= $shipping_threshold) {
-        $messages[] = array(
-            'type' => 'shipping',
-            'message' => 'Free ground shipping at qty ' . $shipping_threshold,
-            'threshold' => $shipping_threshold
-        );
+    // Product-specific threshold messages
+    if ((int)$product_id === 80) {
+        // I-22 Wireless Router - 4-month delayed billing at qty 10+
+        $shipping_threshold = apply_filters('apw_woo_free_shipping_threshold', 10, $product_id);
+        if ($quantity >= $shipping_threshold) {
+            $messages[] = array(
+                'type' => 'billing',
+                'message' => 'Orders of 10 or more grants 4-month delayed billing.',
+                'threshold' => $shipping_threshold
+            );
+        }
+    } elseif ((int)$product_id === 647) {
+        // Cudy LT400 Wireless Router - Free shipping at qty 5+
+        $shipping_threshold = apply_filters('apw_woo_free_shipping_threshold', 5, $product_id);
+        if ($quantity >= $shipping_threshold) {
+            $messages[] = array(
+                'type' => 'shipping',
+                'message' => 'Free ground shipping at qty ' . $shipping_threshold,
+                'threshold' => $shipping_threshold
+            );
+        }
     }
 
     if (APW_WOO_DEBUG_MODE) {

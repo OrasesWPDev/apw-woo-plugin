@@ -188,3 +188,19 @@
     background-color: #bbdefb;
     border-color: #1565c0;
 }
+
+/* Billing threshold message styling */
+.apw-threshold-billing {
+    background-color: #fff8e1;
+    border: 1px solid #ffc107;
+    color: #e65100;
+}
+
+.apw-threshold-billing .message-icon {
+    color: #ffc107;
+}
+
+.apw-threshold-billing.achieved {
+    background-color: #fff3c4;
+    border-color: #ff8f00;
+}
