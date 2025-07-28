@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The **APW WooCommerce Plugin** is a comprehensive WordPress plugin that extends WooCommerce functionality. This file contains development-specific information for maintaining and extending the codebase.
 
-**Current Version**: 1.24.12
+**Current Version**: 1.24.16
 
 ## Core Architecture
 
