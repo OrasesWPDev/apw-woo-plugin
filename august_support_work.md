@@ -41,7 +41,6 @@ integration requirements in May 2025
 ### 🔄 Task 3: Order Email Formatting - **TODO**
 - **Status**: TODO  
 - **Priority**: Low
-
 ## Development Tasks
 
 ### 1. Allpoint Command Integration & Order Processing (TOP PRIORITY)
