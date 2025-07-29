@@ -11,7 +11,7 @@
  * Plugin Name:       APW WooCommerce Plugin
  * Plugin URI:        https://github.com/OrasesWPDev/apw-woo-plugin
  * Description:       Custom WooCommerce enhancements for displaying products across shop, category, and product pages.
- * Version:           1.24.16
+ * Version:           2.0.0
  * Requires at least: 5.3
  * Tested up to:      6.4
  * Requires PHP:      7.2
@@ -34,7 +34,7 @@ if (!defined('ABSPATH')) {
 /**
  * Plugin constants
  */
-define('APW_WOO_VERSION', '1.24.16');
+define('APW_WOO_VERSION', '2.0.0');
 define('APW_WOO_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('APW_WOO_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('APW_WOO_PLUGIN_FILE', __FILE__);
@@ -810,6 +810,11 @@ function apw_woo_init()
     
     // PHASE 2: Initialize consolidated Cart Service (replaces cart indicators and checkout fields)
     apw_woo_initialize_cart_service();
+
+    // VERSION 2.0.0: Initialize Allpoint Command Integration System
+    apw_woo_initialize_environment_manager();
+    apw_woo_initialize_allpoint_command_integration();
+    apw_woo_initialize_order_notifications();
 
     // Initialize Account Fields customization
     if (file_exists(APW_WOO_PLUGIN_DIR . 'includes/apw-woo-account-functions.php')) {
