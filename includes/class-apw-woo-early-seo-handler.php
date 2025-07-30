@@ -496,6 +496,9 @@ class APW_Woo_Early_SEO_Handler
         add_filter('wpseo_opengraph_image', array($this, 'filter_yoast_og_image'), 10, 2);
         add_filter('wpseo_opengraph_image_id', array($this, 'filter_yoast_og_image_id'), 10, 2);
         add_filter('wpseo_twitter_image', array($this, 'filter_yoast_twitter_image'), 10, 2);
+        
+        // FIX v2.0.3: Add breadcrumb filter to prevent "Cat 5 Cable" contamination
+        add_filter('wpseo_breadcrumb_links', array($this, 'filter_yoast_breadcrumb_links'), 10, 1);
 
         $this->yoast_filters_registered = true;
 
@@ -964,6 +967,44 @@ class APW_Woo_Early_SEO_Handler
     }
 
     /**
+     * Filter Yoast breadcrumb links using detected product
+     *
+     * FIX v2.0.3: Prevents "Cat 5 Cable" contamination in breadcrumbs
+     * by ensuring the correct product name appears in the breadcrumb trail.
+     *
+     * @param array $links Breadcrumb links array
+     * @return array Modified breadcrumb links
+     */
+    public function filter_yoast_breadcrumb_links($links)
+    {
+        if (!$this->wc_product || !is_array($links) || empty($links)) {
+            return $links;
+        }
+
+        // Find and replace the last item in the breadcrumb trail (the product name)
+        $last_index = count($links) - 1;
+        
+        if (isset($links[$last_index]) && is_array($links[$last_index])) {
+            $product_name = $this->wc_product->get_name();
+            $product_url = get_permalink($this->detected_product->ID);
+            
+            // Store original text for debugging
+            $original_text = isset($links[$last_index]['text']) ? $links[$last_index]['text'] : 'undefined';
+            
+            // Update the last breadcrumb item with correct product info
+            $links[$last_index]['text'] = $product_name;
+            $links[$last_index]['url'] = $product_url;
+            
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log("BREADCRUMB FIX: Updated last breadcrumb from '{$original_text}' to '{$product_name}'");
+                apw_woo_log("BREADCRUMB FIX: Updated breadcrumb URL to '{$product_url}'");
+            }
+        }
+
+        return $links;
+    }
+
+    /**
      * Cleanup after page render
      *
      * Removes Yoast filters and cleans up global state to prevent
@@ -985,6 +1026,9 @@ class APW_Woo_Early_SEO_Handler
             remove_filter('wpseo_opengraph_image', array($this, 'filter_yoast_og_image'), 10);
             remove_filter('wpseo_opengraph_image_id', array($this, 'filter_yoast_og_image_id'), 10);
             remove_filter('wpseo_twitter_image', array($this, 'filter_yoast_twitter_image'), 10);
+            
+            // FIX v2.0.3: Remove breadcrumb filter
+            remove_filter('wpseo_breadcrumb_links', array($this, 'filter_yoast_breadcrumb_links'), 10);
 
             $this->yoast_filters_registered = false;
 
