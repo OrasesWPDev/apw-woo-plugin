@@ -498,6 +498,9 @@ class APW_Woo_Template_Resolver
             if ($apw_debug_mode && $apw_log_exists) {
                 apw_woo_log("PRODUCT DETECTION (maybe_get_product_template): No product found with slug: " . $product_slug);
             }
+            
+            // Cleanup: Restore original global state when product lookup fails
+            $this->cleanup_failed_product_setup($apw_debug_mode, $apw_log_exists);
             return false;
         }
 
@@ -518,6 +521,9 @@ class APW_Woo_Template_Resolver
             if ($apw_debug_mode && $apw_log_exists) {
                 apw_woo_log("PRODUCT DETECTION ERROR (maybe_get_product_template): Could not find product template at: " . $custom_template, 'error');
             }
+            
+            // Cleanup: Restore original global state when template loading fails
+            $this->cleanup_failed_product_setup($apw_debug_mode, $apw_log_exists);
             return false;
         }
     }
@@ -565,6 +571,15 @@ class APW_Woo_Template_Resolver
         $apw_debug_mode = defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE;
         $apw_log_exists = function_exists('apw_woo_log');
 
+        // Validate input to prevent SEO metadata pollution
+        if (!$product_post || !is_a($product_post, 'WP_Post') || $product_post->post_type !== 'product') {
+            if ($apw_debug_mode && $apw_log_exists) {
+                apw_woo_log('PRODUCT SETUP ERROR: Invalid product post provided to setup_product_for_template', 'error');
+            }
+            $this->cleanup_failed_product_setup($apw_debug_mode, $apw_log_exists);
+            return false;
+        }
+
         global $post; // Ensure global $post is accessible
         if ($apw_debug_mode && $apw_log_exists) {
             apw_woo_log("PRODUCT SETUP: Setting up globals for product '" . $product_post->post_title . "' (ID: " . $product_post->ID . ") from URL: " . $request_url);
@@ -584,17 +599,8 @@ class APW_Woo_Template_Resolver
         }
 
 
-        // Add early filters for title to ensure they use the correct product
-        add_filter('pre_get_document_title', function ($title) use ($product_post) {
-            $site_name = get_bloginfo('name');
-            $product_title = $product_post->post_title;
-            $new_title = $product_title . ' - ' . $site_name;
-            // Only log if debug mode is on
-            if (defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE && function_exists('apw_woo_log')) {
-                apw_woo_log("EARLY TITLE FIX: Set document title to \"" . $new_title . "\"");
-            }
-            return $new_title;
-        }, 0);  // Priority 0 to run before other filters
+        // Store product data for Yoast filters (applied only during template rendering)
+        $GLOBALS['apw_current_product_for_seo'] = $product_post;
 
         // Force the WP query object to use our product
         global $wp_query;
@@ -631,14 +637,92 @@ class APW_Woo_Template_Resolver
             apw_woo_log('PRODUCT SETUP WARNING: template_loader->register_product_restoration_hooks method not found.', 'warning');
         }
 
-        // Add hooks to fix Yoast SEO breadcrumbs and page title
-        // Ensure template_loader object exists before adding filters that depend on it
-        if (isset($this->template_loader) && is_object($this->template_loader)) {
-            add_filter('wpseo_breadcrumb_links', array($this->template_loader, 'fix_yoast_breadcrumbs'), 5);
-            add_filter('wpseo_title', array($this->template_loader, 'fix_yoast_title'), 5);
-            add_filter('pre_get_document_title', array($this->template_loader, 'fix_document_title'), 5); // Note: We added another pre_get_document_title filter earlier, this one might override or chain depending on exact priorities later.
+        // Register Yoast SEO fix hooks to be applied only during template rendering
+        // This prevents SEO metadata pollution across different product pages
+        $this->register_scoped_yoast_fixes($product_post);
+
+        return true;
+    }
+
+    /**
+     * Register Yoast SEO fixes that are scoped only to actual template rendering
+     * 
+     * This prevents SEO metadata pollution by ensuring Yoast filters only apply
+     * when we're actually rendering a product template, not during URL resolution.
+     * 
+     * @param WP_Post $product_post The product post object
+     */
+    private function register_scoped_yoast_fixes($product_post)
+    {
+        $apw_debug_mode = defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE;
+        $apw_log_exists = function_exists('apw_woo_log');
+
+        // Only register Yoast fixes if template_loader is available
+        if (!isset($this->template_loader) || !is_object($this->template_loader)) {
+            if ($apw_debug_mode && $apw_log_exists) {
+                apw_woo_log('YOAST SETUP WARNING: template_loader not available for scoped Yoast fixes', 'warning');
+            }
+            return;
+        }
+
+        // Use 'template_redirect' hook to ensure filters are only applied during actual page rendering
+        add_action('template_redirect', function() use ($product_post, $apw_debug_mode, $apw_log_exists) {
+            // Double-check we're still on the correct product page
+            if (isset($GLOBALS['apw_current_product_for_seo']) && 
+                $GLOBALS['apw_current_product_for_seo']->ID === $product_post->ID) {
+                
+                if ($apw_debug_mode && $apw_log_exists) {
+                    apw_woo_log("YOAST SETUP: Applying scoped Yoast fixes for product '{$product_post->post_title}'");
+                }
+
+                // Apply Yoast SEO fixes only during actual template rendering
+                add_filter('wpseo_breadcrumb_links', array($this->template_loader, 'fix_yoast_breadcrumbs'), 5);
+                add_filter('wpseo_title', array($this->template_loader, 'fix_yoast_title'), 5);
+                add_filter('pre_get_document_title', array($this->template_loader, 'fix_document_title'), 5);
+
+                // Also register cleanup for after template rendering
+                add_action('wp_footer', function() use ($apw_debug_mode, $apw_log_exists) {
+                    // Clean up global SEO data after rendering
+                    unset($GLOBALS['apw_current_product_for_seo']);
+                    
+                    if ($apw_debug_mode && $apw_log_exists) {
+                        apw_woo_log('YOAST CLEANUP: Cleaned up SEO data after template rendering');
+                    }
+                }, 99);
+            }
+        }, 1); // Early priority to ensure filters are in place before Yoast processing
+    }
+
+    /**
+     * Cleanup failed product setup to prevent SEO metadata pollution
+     * 
+     * This method ensures that when product lookup or template loading fails,
+     * we restore the original WordPress global state to prevent incorrect
+     * SEO metadata from persisting.
+     * 
+     * @param bool $apw_debug_mode Whether debug mode is enabled
+     * @param bool $apw_log_exists Whether logging function exists
+     */
+    private function cleanup_failed_product_setup($apw_debug_mode, $apw_log_exists)
+    {
+        // Restore original global state using Page Detector
+        if (class_exists('APW_Woo_Page_Detector') && method_exists('APW_Woo_Page_Detector', 'restore_original_global_state')) {
+            APW_Woo_Page_Detector::restore_original_global_state();
+            
+            if ($apw_debug_mode && $apw_log_exists) {
+                apw_woo_log('CLEANUP: Restored original global state after failed product setup');
+            }
         } elseif ($apw_debug_mode && $apw_log_exists) {
-            apw_woo_log('PRODUCT SETUP WARNING: template_loader object not available for Yoast fix hooks.', 'warning');
+            apw_woo_log('CLEANUP WARNING: Could not restore original global state - method not found', 'warning');
+        }
+
+        // Clean up any global flags that might have been set
+        unset($GLOBALS['apw_is_custom_product_url']);
+        unset($GLOBALS['apw_current_product_for_seo']);
+        unset($GLOBALS['apw_woo_is_custom_product_page']);
+
+        if ($apw_debug_mode && $apw_log_exists) {
+            apw_woo_log('CLEANUP: Cleared custom global flags after failed product setup');
         }
     }
 

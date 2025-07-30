@@ -28,6 +28,13 @@ class APW_Woo_Page_Detector
     private static $detected_products = [];
 
     /**
+     * Store original global state for restoration
+     *
+     * @var array
+     */
+    private static $original_global_state = null;
+
+    /**
      * Detect if current page is a product page using multiple detection methods
      *
      * @param object $wp The WordPress environment object
@@ -177,12 +184,30 @@ class APW_Woo_Page_Detector
 
     /**
      * Set up global variables for product page rendering
+     * 
+     * CRITICAL: This method stores original global state to prevent SEO metadata pollution
+     * that was causing "Cat 5 Cable" to appear on all product pages.
      *
      * @param WP_Post $product_post The product post object
      */
     public static function setup_product_page_globals($product_post)
     {
         global $post, $wp_query;
+
+        // Validate input
+        if (!$product_post || !is_a($product_post, 'WP_Post') || $product_post->post_type !== 'product') {
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log('GLOBAL SETUP ERROR: Invalid product post provided to setup_product_page_globals', 'error');
+            }
+            return false;
+        }
+
+        // Store original global state BEFORE making any changes (prevents SEO pollution)
+        self::store_original_global_state();
+
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log("GLOBAL SETUP: Setting up globals for product '{$product_post->post_title}' (ID: {$product_post->ID})");
+        }
 
         // Make sure WP knows we're on this product
         $post = $product_post;
@@ -210,6 +235,104 @@ class APW_Woo_Page_Detector
 
         // Let other code know what happened
         do_action('apw_woo_after_product_page_setup', $post, $GLOBALS['product']);
+
+        return true;
+    }
+
+    /**
+     * Store original global state for later restoration
+     * 
+     * This prevents SEO metadata pollution by preserving the original
+     * WordPress query and post state.
+     */
+    private static function store_original_global_state()
+    {
+        // Only store once per request to avoid overwriting with modified state
+        if (self::$original_global_state !== null) {
+            return;
+        }
+
+        global $post, $wp_query;
+
+        self::$original_global_state = [
+            'post' => $post,
+            'queried_object' => isset($wp_query->queried_object) ? $wp_query->queried_object : null,
+            'queried_object_id' => isset($wp_query->queried_object_id) ? $wp_query->queried_object_id : 0,
+            'is_single' => isset($wp_query->is_single) ? $wp_query->is_single : false,
+            'is_singular' => isset($wp_query->is_singular) ? $wp_query->is_singular : false,
+            'is_product' => isset($wp_query->is_product) ? $wp_query->is_product : false,
+            'is_post_type_archive' => isset($wp_query->is_post_type_archive) ? $wp_query->is_post_type_archive : false,
+            'is_archive' => isset($wp_query->is_archive) ? $wp_query->is_archive : false,
+            'is_tax' => isset($wp_query->is_tax) ? $wp_query->is_tax : false,
+            'is_category' => isset($wp_query->is_category) ? $wp_query->is_category : false,
+            'product_query_var' => isset($GLOBALS['wp']->query_vars['product']) ? $GLOBALS['wp']->query_vars['product'] : null,
+            'global_product' => isset($GLOBALS['product']) ? $GLOBALS['product'] : null,
+        ];
+
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('GLOBAL STATE: Stored original global state for restoration');
+        }
+    }
+
+    /**
+     * Restore original global state
+     * 
+     * Call this method to restore WordPress globals to their original state,
+     * preventing SEO metadata pollution.
+     */
+    public static function restore_original_global_state()
+    {
+        if (self::$original_global_state === null) {
+            if (APW_WOO_DEBUG_MODE) {
+                apw_woo_log('GLOBAL STATE: No original state stored, nothing to restore');
+            }
+            return;
+        }
+
+        global $post, $wp_query;
+
+        // Restore global post
+        $post = self::$original_global_state['post'];
+        if ($post) {
+            setup_postdata($post);
+        } else {
+            wp_reset_postdata();
+        }
+
+        // Restore WP_Query properties
+        $wp_query->queried_object = self::$original_global_state['queried_object'];
+        $wp_query->queried_object_id = self::$original_global_state['queried_object_id'];
+        $wp_query->is_single = self::$original_global_state['is_single'];
+        $wp_query->is_singular = self::$original_global_state['is_singular'];
+        $wp_query->is_product = self::$original_global_state['is_product'];
+        $wp_query->is_post_type_archive = self::$original_global_state['is_post_type_archive'];
+        $wp_query->is_archive = self::$original_global_state['is_archive'];
+        $wp_query->is_tax = self::$original_global_state['is_tax'];
+        $wp_query->is_category = self::$original_global_state['is_category'];
+
+        // Restore wp query vars
+        if (self::$original_global_state['product_query_var'] !== null) {
+            $GLOBALS['wp']->query_vars['product'] = self::$original_global_state['product_query_var'];
+        } else {
+            unset($GLOBALS['wp']->query_vars['product']);
+        }
+
+        // Restore global product
+        if (self::$original_global_state['global_product'] !== null) {
+            $GLOBALS['product'] = self::$original_global_state['global_product'];
+        } else {
+            unset($GLOBALS['product']);
+        }
+
+        // Clean up custom flags
+        unset($GLOBALS['apw_woo_is_custom_product_page']);
+
+        if (APW_WOO_DEBUG_MODE) {
+            apw_woo_log('GLOBAL STATE: Restored original global state');
+        }
+
+        // Clear stored state
+        self::$original_global_state = null;
     }
 
     /**
