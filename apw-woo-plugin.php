@@ -11,7 +11,7 @@
  * Plugin Name:       APW WooCommerce Plugin
  * Plugin URI:        https://github.com/OrasesWPDev/apw-woo-plugin
  * Description:       Custom WooCommerce enhancements for displaying products across shop, category, and product pages.
- * Version:           2.0.1
+ * Version:           2.0.2
  * Requires at least: 5.3
  * Tested up to:      6.4
  * Requires PHP:      7.2
@@ -34,7 +34,7 @@ if (!defined('ABSPATH')) {
 /**
  * Plugin constants
  */
-define('APW_WOO_VERSION', '2.0.1');
+define('APW_WOO_VERSION', '2.0.2');
 define('APW_WOO_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('APW_WOO_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('APW_WOO_PLUGIN_FILE', __FILE__);
@@ -784,6 +784,15 @@ function apw_woo_init()
 
     // Initialize main plugin class
     apw_woo_initialize_main_class();
+
+    // FIX v2.0.2: Initialize early SEO handler for custom product URLs
+    // This fixes SEO metadata issues where wrong product titles appeared in social sharing
+    if (class_exists('APW_Woo_Early_SEO_Handler')) {
+        APW_Woo_Early_SEO_Handler::get_instance()->init();
+        apw_woo_log('Early SEO handler initialized for custom product URLs.');
+    } else {
+        apw_woo_log('Early SEO handler class not found.', 'warning');
+    }
 
     // Initialize asset management system
     if (class_exists('APW_Woo_Assets')) {

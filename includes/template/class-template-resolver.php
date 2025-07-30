@@ -599,8 +599,7 @@ class APW_Woo_Template_Resolver
         }
 
 
-        // Store product data for Yoast filters (applied only during template rendering)
-        $GLOBALS['apw_current_product_for_seo'] = $product_post;
+        // Note: SEO metadata is now handled by APW_Woo_Early_SEO_Handler
 
         // Force the WP query object to use our product
         global $wp_query;
@@ -637,61 +636,11 @@ class APW_Woo_Template_Resolver
             apw_woo_log('PRODUCT SETUP WARNING: template_loader->register_product_restoration_hooks method not found.', 'warning');
         }
 
-        // Register Yoast SEO fix hooks to be applied only during template rendering
-        // This prevents SEO metadata pollution across different product pages
-        $this->register_scoped_yoast_fixes($product_post);
+        // Note: Yoast SEO fixes are now handled by APW_Woo_Early_SEO_Handler
 
         return true;
     }
 
-    /**
-     * Register Yoast SEO fixes that are scoped only to actual template rendering
-     * 
-     * This prevents SEO metadata pollution by ensuring Yoast filters only apply
-     * when we're actually rendering a product template, not during URL resolution.
-     * 
-     * @param WP_Post $product_post The product post object
-     */
-    private function register_scoped_yoast_fixes($product_post)
-    {
-        $apw_debug_mode = defined('APW_WOO_DEBUG_MODE') && APW_WOO_DEBUG_MODE;
-        $apw_log_exists = function_exists('apw_woo_log');
-
-        // Only register Yoast fixes if template_loader is available
-        if (!isset($this->template_loader) || !is_object($this->template_loader)) {
-            if ($apw_debug_mode && $apw_log_exists) {
-                apw_woo_log('YOAST SETUP WARNING: template_loader not available for scoped Yoast fixes', 'warning');
-            }
-            return;
-        }
-
-        // Use 'template_redirect' hook to ensure filters are only applied during actual page rendering
-        add_action('template_redirect', function() use ($product_post, $apw_debug_mode, $apw_log_exists) {
-            // Double-check we're still on the correct product page
-            if (isset($GLOBALS['apw_current_product_for_seo']) && 
-                $GLOBALS['apw_current_product_for_seo']->ID === $product_post->ID) {
-                
-                if ($apw_debug_mode && $apw_log_exists) {
-                    apw_woo_log("YOAST SETUP: Applying scoped Yoast fixes for product '{$product_post->post_title}'");
-                }
-
-                // Apply Yoast SEO fixes only during actual template rendering
-                add_filter('wpseo_breadcrumb_links', array($this->template_loader, 'fix_yoast_breadcrumbs'), 5);
-                add_filter('wpseo_title', array($this->template_loader, 'fix_yoast_title'), 5);
-                add_filter('pre_get_document_title', array($this->template_loader, 'fix_document_title'), 5);
-
-                // Also register cleanup for after template rendering
-                add_action('wp_footer', function() use ($apw_debug_mode, $apw_log_exists) {
-                    // Clean up global SEO data after rendering
-                    unset($GLOBALS['apw_current_product_for_seo']);
-                    
-                    if ($apw_debug_mode && $apw_log_exists) {
-                        apw_woo_log('YOAST CLEANUP: Cleaned up SEO data after template rendering');
-                    }
-                }, 99);
-            }
-        }, 1); // Early priority to ensure filters are in place before Yoast processing
-    }
 
     /**
      * Cleanup failed product setup to prevent SEO metadata pollution
@@ -718,7 +667,6 @@ class APW_Woo_Template_Resolver
 
         // Clean up any global flags that might have been set
         unset($GLOBALS['apw_is_custom_product_url']);
-        unset($GLOBALS['apw_current_product_for_seo']);
         unset($GLOBALS['apw_woo_is_custom_product_page']);
 
         if ($apw_debug_mode && $apw_log_exists) {
